@@ -1,0 +1,101 @@
+{% extends "public_base.html" %}
+{% block title %}Terms of Service — PhishGuard{% endblock %}
+
+{% block extra_head %}
+<style>
+        .info-hero { background: linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #020617 100%); padding: 100px 0 64px; text-align: center; }
+        .info-hero-tag { display: inline-block; background: rgba(37,99,235,.15); color: #93c5fd; border: 1px solid rgba(37,99,235,.3); border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 18px; }
+        .info-hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; color: #fff; margin: 0 0 14px; line-height: 1.15; }
+        .info-hero p { color: rgba(255,255,255,.65); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+        .legal-wrap { display: flex; gap: 40px; max-width: 1020px; margin: 0 auto; padding: 64px 24px 80px; }
+        .legal-sidebar { min-width: 200px; position: sticky; top: 90px; align-self: flex-start; }
+        .legal-sidebar ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+        .legal-sidebar li a { display: block; padding: 7px 12px; border-radius: 8px; font-size: .85rem; color: #475569; text-decoration: none; transition: background .15s, color .15s; }
+        .legal-sidebar li a:hover { background: rgba(37,99,235,.08); color: #2563eb; font-weight: 600; }
+        .legal-content { flex: 1; min-width: 0; }
+        .back-link { display: inline-flex; align-items: center; gap: 6px; color: #2563eb; text-decoration: none; font-size: .9rem; font-weight: 500; margin-bottom: 32px; }
+        .back-link:hover { opacity: .8; }
+        .legal-content h2 { font-size: 1.25rem; font-weight: 700; color: #18181b; margin: 40px 0 10px; }
+        .legal-content h2:first-of-type { margin-top: 0; }
+        .legal-content p, .legal-content li { color: #475569; line-height: 1.8; font-size: .95rem; }
+        .legal-content ul { padding-left: 20px; margin: 10px 0 16px; }
+        .legal-content ul li { margin-bottom: 6px; }
+        .legal-updated { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 18px; color: #64748b; font-size: .85rem; margin-bottom: 36px; }
+        @media (max-width: 680px) { .legal-wrap { flex-direction: column; } .legal-sidebar { position: static; min-width: unset; } }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-panel">
+<div class="info-hero">
+        <div class="container">
+            <div class="info-hero-tag">Legal</div>
+            <h1>Terms of Service</h1>
+            <p>The rules and agreements governing your use of PhishGuard.</p>
+        </div>
+    </div>
+
+    <div class="legal-wrap">
+        <nav class="legal-sidebar" aria-label="ToS sections">
+            <ul>
+                <li><a href="#acceptance">Acceptance</a></li>
+                <li><a href="#service">The Service</a></li>
+                <li><a href="#accounts">Accounts</a></li>
+                <li><a href="#acceptable-use">Acceptable Use</a></li>
+                <li><a href="#ip">Intellectual Property</a></li>
+                <li><a href="#disclaimer">Disclaimer</a></li>
+                <li><a href="#liability">Limitation of Liability</a></li>
+                <li><a href="#termination">Termination</a></li>
+                <li><a href="#changes">Changes</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+
+        <div class="legal-content">
+            <a href="/" class="back-link">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                Back to Home
+            </a>
+            <div class="legal-updated">Last updated: April 1, 2026 &nbsp;·&nbsp; Effective: April 1, 2026</div>
+
+            <h2 id="acceptance">1. Acceptance of Terms</h2>
+            <p>By accessing or using PhishGuard ("Service"), you agree to be bound by these Terms of Service and our Privacy Policy. If you do not agree, you may not use the Service.</p>
+
+            <h2 id="service">2. Description of the Service</h2>
+            <p>PhishGuard provides email and URL phishing detection, threat intelligence cross-referencing, and security reporting tools. The Service is provided "as is" for informational security purposes. Results are probabilistic and should be used as one input in a broader security process — not as sole deterministic proof of phishing or safety.</p>
+
+            <h2 id="accounts">3. Accounts</h2>
+            <p>You must provide accurate information when creating an account. You are responsible for maintaining the security of your account credentials. You must notify us immediately of any unauthorized access. We reserve the right to suspend accounts for security violations.</p>
+
+            <h2 id="acceptable-use">4. Acceptable Use</h2>
+            <p>You agree not to:</p>
+            <ul>
+                <li>Use the Service for any illegal purpose or in violation of any laws.</li>
+                <li>Attempt to reverse-engineer, scrape, or systematically access the Service's API in excess of your plan limits.</li>
+                <li>Submit content that violates third-party intellectual property rights.</li>
+                <li>Use the Service to attempt to evade phishing detection (e.g., probing to learn what bypasses our models).</li>
+                <li>Share your account credentials or resell access without a valid reseller agreement.</li>
+                <li>Attempt to disrupt or degrade the availability of the Service.</li>
+            </ul>
+
+            <h2 id="ip">5. Intellectual Property</h2>
+            <p>All software, algorithms, design elements, and content of the PhishGuard platform are owned by PhishGuard and protected by copyright and intellectual property law. You retain ownership of any content you submit. By submitting content, you grant us a limited, non-exclusive license to process it solely for the purpose of providing the Service.</p>
+
+            <h2 id="disclaimer">6. Disclaimer of Warranties</h2>
+            <p>THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT. WE DO NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, ERROR-FREE, OR THAT DETECTION RESULTS WILL BE ACCURATE IN ALL CASES.</p>
+
+            <h2 id="liability">7. Limitation of Liability</h2>
+            <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, PHISHGUARD SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING FROM YOUR USE OF THE SERVICE. OUR AGGREGATE LIABILITY SHALL NOT EXCEED THE AMOUNT PAID BY YOU TO PHISHGUARD IN THE 12 MONTHS PRECEDING THE CLAIM.</p>
+
+            <h2 id="termination">8. Termination</h2>
+            <p>You may terminate your account at any time. We may suspend or terminate access if you violate these Terms. Upon termination, your data will be deleted in accordance with our retention policy.</p>
+
+            <h2 id="changes">9. Changes to Terms</h2>
+            <p>We may update these Terms from time to time. We will notify registered users by email at least 14 days before material changes take effect. Continued use after the effective date constitutes acceptance of the updated Terms.</p>
+
+            <h2 id="contact">10. Contact</h2>
+            <p>For questions about these Terms, contact <a href="mailto:legal@phishguard.io" style="color:#2563eb;">legal@phishguard.io</a>.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

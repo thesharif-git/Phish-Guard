@@ -1,0 +1,677 @@
+{% extends "base.html" %}
+
+{% block title %}Domain Reputation &middot; PhishGuard{% endblock %}
+
+{% block content %}
+<style>
+  .spin { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .fade-in { animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .pulse-skeleton { animation: pulse 1.5s infinite ease-in-out; }
+  @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+</style>
+
+<div class="w-full flex flex-col gap-4 max-w-[1200px] mx-auto pb-4">
+
+  <!-- Header Area -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2 border-b border-border pb-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span class="material-symbols-outlined text-[13px]">domain</span> Domain Intelligence
+        </span>
+        <span class="text-[11px] font-medium text-muted">• WHOIS &amp; Infrastructure Audit</span>
+      </div>
+      <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-text mt-1">Domain Reputation</h1>
+      <p class="text-sm text-subtext mt-0.5">Analyze WHOIS history, registrar reputation, IP geolocation, and threat blacklist feeds.</p>
+    </div>
+  </div>
+
+  <!-- Sleek Single-Line Domain Search Bar -->
+  <div class="bg-panel border border-border rounded-xl p-4 sm:p-5 shadow-md flex flex-col h-fit">
+    <div class="flex items-center justify-between mb-1">
+      <h2 class="text-sm font-bold text-text">Check Domain Reputation</h2>
+      <span class="text-[11px] font-semibold text-muted uppercase tracking-wider">Deep Audit</span>
+    </div>
+    <p class="text-xs text-subtext mb-4">Analyze any domain for WHOIS registration age, IP geolocation, SSL validity, and threat signals.</p>
+
+    <div class="bg-panel2 border border-border rounded-xl shadow-sm p-1.5 flex items-center gap-2 focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-emerald-500 transition-all">
+      <div class="flex items-center gap-1.5 pl-3 pr-2 py-1 bg-panel3 text-emerald-400 rounded-md text-xs font-mono font-medium flex-shrink-0 border border-border">
+        <span class="material-symbols-outlined text-[15px] text-emerald-400">language</span>
+        <span>domain:</span>
+      </div>
+      <input id="domain-input" type="text" placeholder="example.com or login-verify.net" class="w-full bg-transparent border-none focus:ring-0 text-xs text-text font-medium py-2 px-1 focus:outline-none placeholder:text-muted" />
+      <button onclick="document.getElementById('domain-input').value=''" title="Clear" class="text-muted hover:text-text transition-colors cursor-pointer bg-transparent border-none p-1 flex items-center">
+        <span class="material-symbols-outlined text-[16px]">close</span>
+      </button>
+      <button onclick="scanDomain()" id="scan-domain-btn" class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-emerald-900/20 cursor-pointer border-none flex-shrink-0">
+        <span class="material-symbols-outlined text-[16px]">search</span> Check Reputation
+      </button>
+    </div>
+
+    <!-- Quick Preset Test Buttons -->
+    <div class="flex items-center gap-2 mt-3 pt-3 border-t border-border flex-wrap">
+      <span class="text-[11px] font-medium text-muted">Quick Test:</span>
+      <button onclick="setDomain('google.com')" class="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-md border border-emerald-500/30 transition-colors cursor-pointer">🌐 google.com</button>
+      <button onclick="setDomain('paypal-secure.net')" class="text-[11px] font-semibold text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 px-2.5 py-1 rounded-md border border-rose-500/30 transition-colors cursor-pointer">🚨 paypal-secure.net</button>
+      <button onclick="setDomain('login-verify.com')" class="text-[11px] font-semibold text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 px-2.5 py-1 rounded-md border border-amber-500/30 transition-colors cursor-pointer">⚠️ login-verify.com</button>
+    </div>
+  </div>
+
+  <!-- SKELETON LOADING CONTAINER -->
+  <div id="domain-loading" class="hidden fade-in bg-panel border border-border rounded-xl p-6 flex flex-col items-center text-center shadow-md">
+    <span class="material-symbols-outlined text-[36px] text-emerald-400 spin mb-3">sync</span>
+    <p class="text-sm font-bold text-text">Auditing Domain Telemetry...</p>
+    <p class="text-xs text-subtext mt-1 leading-relaxed">Running WHOIS registrar queries, IP geolocation, SSL validation, and threat feeds</p>
+  </div>
+
+  <!-- ERROR CONTAINER -->
+  <div id="domain-error" class="hidden fade-in bg-rose-500/10 border border-rose-500/30 rounded-xl p-4 text-center shadow-md flex items-center justify-center gap-3">
+    <span class="material-symbols-outlined text-rose-400 text-[20px]">error</span>
+    <p id="domain-error-msg" class="text-xs font-bold text-rose-300"></p>
+  </div>
+
+  <!-- Pre-Scan Interactive Dashboard (shown before any domain is searched) -->
+  <div id="domain-empty-state" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="bg-panel border border-border rounded-xl p-5 shadow-md flex flex-col gap-3">
+      <div class="flex items-center justify-between border-b border-border pb-3">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-emerald-400 text-[18px]">dns</span>
+          <h3 class="text-xs font-bold text-text uppercase tracking-wider">DNS &amp; Registrar Intelligence</h3>
+        </div>
+        <span class="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Active Sync
+        </span>
+      </div>
+      <div class="space-y-2 text-xs">
+        <div class="flex items-center justify-between p-2.5 rounded-lg bg-panel2 border border-border">
+          <div class="flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-emerald-400 text-[16px]">schedule</span>
+            <span class="font-semibold text-text">WHOIS Registration Age</span>
+          </div>
+          <span class="text-[11px] font-medium text-subtext">Day Count Audit</span>
+        </div>
+        <div class="flex items-center justify-between p-2.5 rounded-lg bg-panel2 border border-border">
+          <div class="flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-emerald-400 text-[16px]">public</span>
+            <span class="font-semibold text-text">IP Geolocation &amp; ASN</span>
+          </div>
+          <span class="text-[11px] font-medium text-subtext">Host Provider Lookup</span>
+        </div>
+        <div class="flex items-center justify-between p-2.5 rounded-lg bg-panel2 border border-border">
+          <div class="flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-amber-400 text-[16px]">lock</span>
+            <span class="font-semibold text-text">SSL Certificate Chain</span>
+          </div>
+          <span class="text-[11px] font-medium text-subtext">Issuer &amp; Expiry Check</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-panel border border-border rounded-xl p-5 shadow-md flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between border-b border-border pb-3 mb-3">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-emerald-400 text-[18px]">verified</span>
+            <h3 class="text-xs font-bold text-text uppercase tracking-wider">Domain Risk Protocol</h3>
+          </div>
+          <span class="text-[11px] font-semibold text-muted">Ready</span>
+        </div>
+        <p class="text-xs text-subtext leading-relaxed mb-3">
+          Our threat engine cross-references WHOIS domain registration dates, VirusTotal feeds, PhishTank, and URLhaus to calculate a real-time risk score.
+        </p>
+        <div class="flex items-center gap-4 text-xs text-subtext font-medium">
+          <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Safe (&lt;45)</span>
+          <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Suspicious (45-74)</span>
+          <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-rose-500"></span> High Risk (&ge;75)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN SCAN RESULTS CONTAINER (hidden until scan) -->
+  <div id="domain-results" class="hidden fade-in flex-col gap-4">
+
+    <!-- 3-COLUMN COMPACT GRID -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      
+      <!-- COLUMN 1: Threat Status & Risk Indicators -->
+      <div class="flex flex-col gap-4">
+        <div class="bg-panel border border-border rounded-xl p-4 sm:p-5 shadow-md flex flex-col gap-4 h-fit">
+          <div class="flex items-center justify-between border-b border-border pb-3">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-emerald-400 text-[18px]">shield</span>
+              <h3 class="text-xs font-bold text-text uppercase tracking-wider">Threat Status</h3>
+            </div>
+            <span id="checked-timestamp" class="text-[11px] font-medium text-muted">Just now</span>
+          </div>
+
+          <!-- Alert Level Box -->
+          <div id="threat-alert-box" class="bg-panel2 border border-border rounded-lg p-3.5 flex items-start gap-3">
+            <svg id="threat-alert-icon" class="w-6 h-6 text-rose-500 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <div>
+              <div id="threat-badge-text" class="text-xs font-extrabold text-rose-400 leading-none uppercase">HIGH RISK</div>
+              <div id="threat-description" class="text-[11px] text-subtext mt-1 leading-normal">This domain poses a significant threat. Avoid interacting with this website.</div>
+            </div>
+          </div>
+
+          <!-- Confidence Score Bar -->
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-semibold text-subtext uppercase tracking-wider">Confidence Score</span>
+              <div id="confidence-score-label" class="text-xs font-bold text-text">0 / 100</div>
+            </div>
+            <div id="confidence-bar-container" class="flex gap-1 items-center w-full">
+              <!-- 10 segments populated by JS -->
+            </div>
+          </div>
+
+          <!-- Key Threat Indicators List -->
+          <div id="indicators-list" class="flex flex-col gap-2 pt-2 border-t border-border text-xs">
+            <div class="flex justify-between items-center p-2 rounded-lg bg-panel2 border border-border">
+              <span class="font-medium text-subtext">Blacklist Status</span>
+              <span id="tag-blacklist" class="px-2 py-0.5 rounded text-[10px] font-bold">Clean</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-panel2 border border-border">
+              <span class="font-medium text-subtext">Phishing Risk</span>
+              <span id="tag-phishing" class="px-2 py-0.5 rounded text-[10px] font-bold">Low</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-panel2 border border-border">
+              <span class="font-medium text-subtext">Malware Risk</span>
+              <span id="tag-malware" class="px-2 py-0.5 rounded text-[10px] font-bold">Clean</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-panel2 border border-border">
+              <span class="font-medium text-subtext">Spam Risk</span>
+              <span id="tag-spam" class="px-2 py-0.5 rounded text-[10px] font-bold">Low</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-panel2 border border-border">
+              <span class="font-medium text-subtext">Trust Score</span>
+              <span id="tag-trust" class="px-2 py-0.5 rounded text-[10px] font-bold">High</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security Checks Card -->
+        <div class="bg-panel border border-border rounded-xl p-4 sm:p-5 shadow-md flex flex-col gap-3">
+          <h3 class="text-xs font-bold text-text uppercase tracking-wider border-b border-border pb-2">Security Checks</h3>
+          <div id="security-checks-list" class="flex flex-col gap-2 text-xs">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- COLUMN 2: Domain Information & Technology -->
+      <div class="flex flex-col gap-4">
+        <div class="bg-panel border border-border rounded-xl p-4 sm:p-5 shadow-md flex flex-col gap-3">
+          <h3 class="text-xs font-bold text-text uppercase tracking-wider border-b border-border pb-2">Domain Information</h3>
+          <div class="space-y-2 text-xs">
+            <div class="flex justify-between items-center p-2 rounded-lg bg-panel2 border border-border">
+              <span class="text-subtext font-medium">Domain Name</span>
+              <span id="info-domain" class="font-bold text-text">—</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-panel2 border border-border">
+              <span class="text-subtext font-medium">Registrar</span>
+              <span id="info-registrar" class="font-semibold text-text truncate max-w-[180px]">—</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-panel2 border border-border">
+              <span class="text-subtext font-medium">Registered On</span>
+              <span id="info-created" class="font-semibold text-text">—</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-panel2 border border-border">
+              <span class="text-subtext font-medium">Expires On</span>
+              <span id="info-expires" class="font-semibold text-text">—</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-panel2 border border-border">
+              <span class="text-subtext font-medium">Domain Age</span>
+              <span id="info-age" class="font-bold text-emerald-400">—</span>
+            </div>
+            <div class="p-2 rounded-lg bg-panel2 border border-border">
+              <span class="text-subtext font-medium block mb-1">Nameservers</span>
+              <div id="info-nameservers" class="font-mono text-[11px] text-text space-y-0.5">—</div>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-panel2 border border-border">
+              <span class="text-subtext font-medium">IP Address</span>
+              <span id="info-ip" class="font-mono font-bold text-text">—</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-panel2 border border-border">
+              <span class="text-subtext font-medium">Hosting Provider</span>
+              <span id="info-isp" class="font-semibold text-text truncate max-w-[180px]">—</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-panel2 border border-border">
+              <span class="text-subtext font-medium">SSL Certificate</span>
+              <div class="flex items-center gap-1">
+                <span id="info-ssl-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Valid</span>
+                <span id="info-ssl-issuer" class="text-[11px] text-subtext"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tech Profile -->
+        <div class="bg-panel border border-border rounded-xl p-4 sm:p-5 shadow-md flex flex-col gap-3">
+          <h3 class="text-xs font-bold text-text uppercase tracking-wider border-b border-border pb-2">Technology Profile</h3>
+          <div id="tech-profile-list" class="flex flex-col gap-2 text-xs">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- COLUMN 3: WHOIS History & Geolocation -->
+      <div class="flex flex-col gap-4">
+        <!-- WHOIS History Timeline -->
+        <div class="bg-panel border border-border rounded-xl p-4 sm:p-5 shadow-md flex flex-col gap-3">
+          <div class="flex items-center justify-between border-b border-border pb-2">
+            <h3 class="text-xs font-bold text-text uppercase tracking-wider">WHOIS Timeline</h3>
+            <a id="whois-external-link" href="#" target="_blank" class="text-[11px] font-semibold text-emerald-400 hover:underline flex items-center gap-1">
+              External WHOIS <span class="material-symbols-outlined text-[13px]">open_in_new</span>
+            </a>
+          </div>
+          <div id="timeline-container" class="space-y-3 relative pl-2 text-xs pt-1">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Geolocation Card -->
+        <div class="bg-panel border border-border rounded-xl p-4 sm:p-5 shadow-md flex flex-col gap-3">
+          <h3 class="text-xs font-bold text-text uppercase tracking-wider border-b border-border pb-2">Server Geolocation</h3>
+          <div class="space-y-2 text-xs">
+            <div class="flex items-center justify-between p-2 rounded-lg bg-panel2 border border-border">
+              <span class="text-subtext font-medium">IP Address</span>
+              <span id="geo-ip" class="font-mono font-bold text-text">—</span>
+            </div>
+            <div class="flex items-center justify-between p-2 rounded-lg bg-panel2 border border-border">
+              <span class="text-subtext font-medium">Location</span>
+              <span id="geo-ip-location" class="font-semibold text-text truncate max-w-[170px]">—</span>
+            </div>
+            <div class="flex items-center justify-between p-2 rounded-lg bg-panel2 border border-border">
+              <span class="text-subtext font-medium">Country</span>
+              <div class="flex items-center gap-1.5 font-semibold text-text">
+                <span id="geo-country-flag">🌐</span>
+                <span id="geo-country-name">—</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between p-2 rounded-lg bg-panel2 border border-border">
+              <span class="text-subtext font-medium">ISP / Network</span>
+              <span id="geo-isp" class="font-semibold text-text truncate max-w-[170px]">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+function setDomain(d) {
+  document.getElementById('domain-input').value = d;
+  scanDomain();
+}
+
+function renderConfidenceBar(score) {
+  const container = document.getElementById('confidence-bar-container');
+  if (!container) return;
+  const numActive = Math.min(10, Math.max(1, Math.ceil((score / 100) * 10)));
+  const barColor = score >= 75 ? 'bg-rose-500' : score >= 45 ? 'bg-amber-500' : 'bg-emerald-500';
+  let html = '';
+  for (let i = 0; i < 10; i++) {
+    if (i < numActive) html += `<div class="h-2.5 flex-1 rounded-sm ${barColor}"></div>`;
+    else html += `<div class="h-2.5 flex-1 rounded-sm bg-slate-200"></div>`;
+  }
+  container.innerHTML = html;
+  
+  const scoreLabel = document.getElementById('confidence-score-label');
+  if (scoreLabel) {
+    const textColor = score >= 75 ? 'text-rose-600' : score >= 45 ? 'text-amber-600' : 'text-emerald-600';
+    scoreLabel.innerHTML = `<span class="${textColor}">${score}</span> <span class="text-slate-400 font-normal">/ 100</span>`;
+  }
+}
+
+function renderReputationResults(data) {
+  // Domain Info
+  document.getElementById('info-domain').textContent = data.domain;
+  document.getElementById('info-registrar').textContent = data.registrar;
+  document.getElementById('info-created').textContent = data.registeredOn;
+  document.getElementById('info-expires').textContent = data.expiresOn;
+  document.getElementById('info-age').textContent = data.age;
+  
+  const nsContainer = document.getElementById('info-nameservers');
+  if (Array.isArray(data.nameservers)) {
+    nsContainer.innerHTML = data.nameservers.map(ns => `<div>${ns}</div>`).join('');
+  } else {
+    nsContainer.textContent = data.nameservers;
+  }
+  
+  document.getElementById('info-ip').textContent = data.ip;
+  document.getElementById('info-isp').textContent = data.hosting;
+  
+  const sslBadge = document.getElementById('info-ssl-badge');
+  sslBadge.textContent = data.ssl.status;
+  sslBadge.className = data.ssl.green
+    ? "px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold rounded"
+    : "px-2 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/30 text-[10px] font-bold rounded";
+    
+  document.getElementById('info-ssl-issuer').textContent = data.ssl.issuer;
+  
+  // Verdict details
+  const alertBox = document.getElementById('threat-alert-box');
+  const alertIcon = document.getElementById('threat-alert-icon');
+  const badgeText = document.getElementById('threat-badge-text');
+  const descText = document.getElementById('threat-description');
+  
+  badgeText.textContent = data.verdictLabel;
+  descText.textContent = data.verdictDescription;
+  
+  if (data.riskLevel === 'critical') {
+    alertBox.className = "bg-rose-500/10 border border-rose-500/30 rounded-lg p-3.5 flex items-start gap-3";
+    alertIcon.className = "w-6 h-6 text-rose-400 flex-shrink-0 mt-0.5";
+    badgeText.className = "text-xs font-extrabold text-rose-400 leading-none";
+    descText.className = "text-[11px] text-rose-300 mt-1 leading-normal";
+  } else if (data.riskLevel === 'medium') {
+    alertBox.className = "bg-amber-500/10 border border-amber-500/30 rounded-lg p-3.5 flex items-start gap-3";
+    alertIcon.className = "w-6 h-6 text-amber-400 flex-shrink-0 mt-0.5";
+    badgeText.className = "text-xs font-extrabold text-amber-400 leading-none";
+    descText.className = "text-[11px] text-amber-300 mt-1 leading-normal";
+  } else {
+    alertBox.className = "bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3.5 flex items-start gap-3";
+    alertIcon.className = "w-6 h-6 text-emerald-400 flex-shrink-0 mt-0.5";
+    badgeText.className = "text-xs font-extrabold text-emerald-400 leading-none";
+    descText.className = "text-[11px] text-emerald-300 mt-1 leading-normal";
+  }
+  
+  renderConfidenceBar(data.riskScore);
+  
+  document.getElementById('checked-timestamp').textContent = data.lastChecked;
+  
+  // Key Tags
+  const blacklistEl = document.getElementById('tag-blacklist');
+  blacklistEl.textContent = data.tags.blacklist.value;
+  blacklistEl.className = `px-2 py-0.5 rounded text-[10px] font-bold border ${data.tags.blacklist.value === 'Listed' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'}`;
+
+  const phishingEl = document.getElementById('tag-phishing');
+  phishingEl.textContent = data.tags.phishing.value;
+  phishingEl.className = `px-2 py-0.5 rounded text-[10px] font-bold border ${
+    data.tags.phishing.value === 'Confirmed' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' :
+    data.tags.phishing.value === 'Suspected' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
+    'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'}`;
+
+  const malwareEl = document.getElementById('tag-malware');
+  malwareEl.textContent = data.tags.malware.value;
+  malwareEl.className = `px-2 py-0.5 rounded text-[10px] font-bold border ${data.tags.malware.value === 'Detected' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'}`;
+
+  const spamEl = document.getElementById('tag-spam');
+  spamEl.textContent = data.tags.spam.value;
+  spamEl.className = `px-2 py-0.5 rounded text-[10px] font-bold border ${data.tags.spam.value === 'Detected' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'}`;
+
+  const trustEl = document.getElementById('tag-trust');
+  trustEl.textContent = data.tags.trust.value;
+  trustEl.className = `px-2 py-0.5 rounded text-[10px] font-bold border ${
+    data.tags.trust.value === 'Very Low' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' :
+    data.tags.trust.value === 'Moderate' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
+    'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'}`;
+
+  // Timeline
+  const timelineContainer = document.getElementById('timeline-container');
+  timelineContainer.innerHTML = data.timeline.map(ev => {
+    const dotBgClass = ev.redDot ? "bg-rose-500" : "bg-emerald-500";
+    return `<div class="relative flex items-start gap-3">
+      <span class="w-[70px] text-[10px] font-bold text-muted text-right flex-shrink-0 mt-0.5">${ev.date}</span>
+      <div class="w-2 h-2 rounded-full ${dotBgClass} mt-1 flex-shrink-0"></div>
+      <div class="flex-1 min-w-0">
+        <div class="text-xs font-bold text-text leading-tight">${ev.event}</div>
+        <div class="text-[11px] text-subtext truncate">${ev.detail}</div>
+      </div>
+    </div>`;
+  }).join('');
+  
+  document.getElementById('whois-external-link').href = `https://whois.domaintools.com/${data.domain}`;
+  
+  // Security Checks
+  const checksList = document.getElementById('security-checks-list');
+  checksList.innerHTML = data.checks.map(ck => {
+    const colorClass = ck.isOk ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/30" : "text-rose-400 bg-rose-500/10 border-rose-500/30";
+    return `<div class="flex justify-between items-center p-2 rounded-lg bg-panel2 border border-border">
+      <span class="font-medium text-subtext">${ck.name}</span>
+      <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${colorClass}">${ck.status}</span>
+    </div>`;
+  }).join('');
+  
+  // Tech Profile
+  const techList = document.getElementById('tech-profile-list');
+  techList.innerHTML = data.tech.map(t => {
+    return `<div class="flex justify-between items-center p-2 rounded-lg bg-panel2 border border-border">
+      <span class="font-medium text-subtext">${t.name}</span>
+      <span class="font-bold text-text truncate max-w-[160px]">${t.val}</span>
+    </div>`;
+  }).join('');
+  
+  // Geolocation
+  document.getElementById('geo-ip').textContent = data.geo.ip;
+  document.getElementById('geo-ip-location').textContent = data.geo.location;
+  document.getElementById('geo-isp').textContent = data.geo.isp;
+  document.getElementById('geo-country-flag').textContent = data.geo.countryFlag;
+  document.getElementById('geo-country-name').textContent = data.geo.countryName;
+}
+
+function cleanDomainInput(input) {
+  try {
+    if (input.startsWith('http://') || input.startsWith('https://')) {
+      return new URL(input).hostname.replace(/^www\./, '');
+    }
+    return input.replace(/^www\./, '').split('/')[0].trim();
+  } catch (e) {
+    return input.trim();
+  }
+}
+
+async function scanDomain() {
+  const rawInput = document.getElementById('domain-input').value.trim();
+  if (!rawInput) {
+    alert('Please enter a domain name.');
+    return;
+  }
+  
+  const domain = cleanDomainInput(rawInput);
+  
+  document.getElementById('domain-empty-state').classList.add('hidden');
+  document.getElementById('domain-results').classList.add('hidden');
+  document.getElementById('domain-error').classList.add('hidden');
+  document.getElementById('domain-loading').classList.remove('hidden');
+  
+  try {
+    const response = await fetch('/api/scan-domain', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domain: domain })
+    });
+    
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || 'Reputation audit failed.');
+    
+    const score = data.final_score ?? data.risk_score ?? 0;
+    const isHigh   = score >= 75;
+    const isMedium = score >= 45 && score < 75;
+    
+    // ── WHOIS / Domain Age ──
+    const da     = data.threat_intel?.domain_age || {};
+    const hasDA  = da.available === true;
+
+    const registrarVal    = hasDA ? da.registrar || "Privacy Protected / Not Disclosed" : "Not available";
+    const registeredOnVal = hasDA && da.created   ? da.created   : "Not available";
+    const expiresOnVal    = hasDA && da.expires   ? da.expires   : "Not available";
+    const ageVal          = hasDA && typeof da.age_days === 'number' ? `${da.age_days} days` : "Not available";
+    const nameserversVal  = (hasDA && Array.isArray(da.nameservers) && da.nameservers.length > 0) ? da.nameservers : ["Not available"];
+
+    // ── Threat Intel signals ──
+    const ti        = data.threat_intel || {};
+    const vtData    = ti.virustotal  || {};
+    const ptData    = ti.phishtank   || {};
+    const uhData    = ti.urlhaus     || {};
+    const vtMal     = vtData.malicious   || 0;
+    const vtTotal   = vtData.total_engines || 0;
+    const isVtAvail = vtData.available === true;
+
+    // Fix: use vtMal >= 1 (not >= 2) to detect blacklisting; also check overall_score >= 75
+    const isBlacklisted = (isVtAvail && vtMal >= 1) || (ti.overall_score >= 75);
+    const isPhishing    = ptData.is_phishing === true || (data.html_analysis?.brand_mismatch === true);
+    const isMalware     = uhData.is_malicious === true || (isVtAvail && vtMal > 0);
+    // Fix: hasSpam = vtMal >= 1 (any detection = spam risk) or new domain
+    const hasSpam       = (isVtAvail && vtMal >= 1) || (hasDA && da.age_days < 30);
+    const isNewDomain   = hasDA && da.age_days < 30;
+
+    // ── SSL — use real ssl_info, not fallback to is_https ──
+    const htmlAnalysis = data.html_analysis || {};
+    const sslInfo      = htmlAnalysis.ssl_info || {};
+    const sslScanOk    = sslInfo.available === true;
+    // Only use is_https as ssl fallback if ssl_info wasn't available at all AND there's no error message
+    const sslValid     = sslScanOk ? sslInfo.valid === true : false;
+    
+    // Build SSL display strings — don't mislead with "SSL Active" when we didn't verify it
+    let sslStatus, sslIssuer;
+    if (sslScanOk && sslInfo.valid) {
+      sslStatus = "Valid";
+      const issuerStr = (sslInfo.issuer && !['Unknown','Could not retrieve',''].includes(sslInfo.issuer)) ? sslInfo.issuer : '';
+      const expiryStr = sslInfo.expires ? ` · exp. ${sslInfo.expires}` : '';
+      sslIssuer = issuerStr ? `(${issuerStr}${expiryStr})` : expiryStr || '';
+    } else if (sslScanOk && !sslInfo.valid) {
+      sslStatus = "Invalid / Expired";
+      sslIssuer = '';
+    } else {
+      // SSL scan didn't complete — be honest about it
+      sslStatus = data.is_https ? "Not Verified" : "None (HTTP)";
+      sslIssuer = data.is_https ? "(HTTPS, cert unverified)" : "(No encryption)";
+    }
+
+    // ── Technology from HTML analysis ──
+    const htmlScanOk = htmlAnalysis.success === true;
+    const notScanned = "Could not retrieve";
+    const techData   = htmlAnalysis.tech || {};
+    const _srvBad    = ['Unknown', 'Could not retrieve', ''];
+    const srvRaw     = data.server || htmlAnalysis.server || "";
+    const srvDisplay = !_srvBad.includes(srvRaw) ? srvRaw : (htmlScanOk ? "Unknown" : "Could not retrieve");
+    const srvHeader  = srvDisplay.toLowerCase();
+
+    const cmsVal       = htmlScanOk ? ((techData.cms && techData.cms.length > 0) ? techData.cms.join(", ") : "None detected") : notScanned;
+    const analyticsVal = htmlScanOk ? ((techData.analytics && techData.analytics.length > 0) ? techData.analytics.join(", ") : "None detected") : notScanned;
+    const trackingVal  = htmlScanOk ? ((techData.tracking && techData.tracking.length > 0) ? techData.tracking.join(", ") : "None detected") : notScanned;
+
+    let cdnVal;
+    if (!htmlScanOk && _srvBad.includes(srvRaw)) cdnVal = "Could not retrieve";
+    else if (srvHeader.includes("cloudflare")) cdnVal = "Cloudflare CDN";
+    else if (srvHeader.includes("vercel"))     cdnVal = "Vercel Edge Network";
+    else if (srvHeader.includes("gws") || srvHeader.includes("google")) cdnVal = "Google CDN";
+    else cdnVal = htmlScanOk ? "None detected" : "Could not retrieve";
+
+    const rawLang = techData.language || "";
+    const langVal = !htmlScanOk ? notScanned : (rawLang && !['Unknown','Could not retrieve'].includes(rawLang) ? rawLang : "Unknown");
+
+    // ── Tags — accurate labels from real signals ──
+    const tags = {
+      blacklist: { value: isBlacklisted ? "Listed" : "Clean" },
+      // Fix: phishing tag based only on confirmed phishing, not risk level
+      phishing: { value: isPhishing ? "Confirmed" : isHigh ? "Suspected" : "Low" },
+      malware:  { value: isMalware ? "Detected" : "Clean" },
+      spam:     { value: hasSpam ? "Detected" : "Low" },
+      trust:    { value: isHigh ? "Very Low" : (isMedium ? "Moderate" : "High") }
+    };
+
+    // ── Security checks — accurate isOk flags ──
+    const checks = [
+      { name: "Blacklisted",       status: isBlacklisted ? "Detected" : "Clean",   isOk: !isBlacklisted },
+      { name: "Phishing",          status: isPhishing ? "Detected" : "Clean",       isOk: !isPhishing },
+      { name: "Malware",           status: isMalware ? "Detected" : "Clean",        isOk: !isMalware },
+      { name: "Spam Activity",     status: hasSpam ? "Detected" : "None found",     isOk: !hasSpam },
+      { name: "SSL Certificate",   status: sslStatus,                               isOk: sslValid }
+    ];
+
+    // ── Timeline — only real events ──
+    const timeline = [];
+    if (registeredOnVal !== "Not available") {
+      timeline.push({ date: registeredOnVal, event: "Domain registered", detail: `Registrar: ${registrarVal}`, redDot: false });
+    }
+    if (hasDA && isNewDomain) {
+      timeline.push({ date: registeredOnVal, event: "Very new domain", detail: `Only ${da.age_days} days old — high risk`, redDot: true });
+    }
+    if (isVtAvail && vtMal > 0) {
+      timeline.push({ date: "Recent", event: "Flagged on VirusTotal", detail: `${vtMal}/${vtTotal} engines confirmed threats`, redDot: true });
+    }
+    if (isPhishing) {
+      timeline.push({ date: "Recent", event: "Confirmed phishing", detail: "Flagged by PhishTank or brand mismatch detected", redDot: true });
+    }
+    // Real scan timestamp
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    timeline.push({ date: timeStr, event: "Reputation audit completed", detail: `Risk Score: ${score}/100 — ${isHigh ? 'High Risk' : (isMedium ? 'Medium Risk' : 'Clean')}`, redDot: false });
+
+    // ── Use real backend summary for verdict description ──
+    const rawSummary = (data.summary || '').replace(/^[🚨⚠️✅]\s*/, '');
+    const verdictDesc = rawSummary || (isHigh
+      ? "High risk threat vectors detected. Avoid interacting with this site."
+      : isMedium ? "Suspicious elements spotted. Visit with caution."
+      : "No significant security flags were triggered. Safe to proceed.");
+
+    const dynamicData = {
+      domain: domain,
+      registrar: registrarVal,
+      registeredOn: registeredOnVal,
+      expiresOn: expiresOnVal,
+      age: ageVal,
+      nameservers: nameserversVal,
+      ip: data.geo?.ip || "Unknown",
+      hosting: data.geo?.isp || "Unknown Provider",
+      ssl: { status: sslStatus, issuer: sslIssuer, green: sslValid },
+      riskScore: score,
+      riskLevel: isHigh ? "critical" : (isMedium ? "medium" : "safe"),
+      verdictLabel: isHigh ? "HIGH RISK" : (isMedium ? "MEDIUM RISK" : "CLEAN DOMAIN"),
+      verdictDescription: verdictDesc,
+      // Real timestamp instead of always "Just now"
+      lastChecked: `Checked at ${timeStr}`,
+      tags,
+      timeline,
+      checks,
+      tech: [
+        { name: "Web Server",            val: srvDisplay,   isMuted: false },
+        { name: "CMS",                   val: cmsVal,       isMuted: false },
+        { name: "Programming Language",  val: langVal,      isMuted: false },
+        { name: "CDN",                   val: cdnVal,       isMuted: false },
+        { name: "Analytics",             val: analyticsVal, isMuted: false }
+      ],
+      geo: (() => {
+        const g = data.geo || {};
+        const cc = (g.countryCode || "").toUpperCase();
+        const flag = cc.length === 2 ? String.fromCodePoint(...[...cc].map(c => 0x1F1E0 - 65 + c.charCodeAt(0))) : "🌐";
+        const location = [g.city, g.region, g.country].filter(Boolean).join(", ");
+        return {
+          ip: g.ip || "Unknown",
+          location: location || "Unknown",
+          isp: g.isp || "Unknown",
+          countryName: g.country || "Unknown",
+          countryFlag: flag
+        };
+      })()
+    };
+    
+    document.getElementById('domain-loading').classList.add('hidden');
+    document.getElementById('domain-results').classList.remove('hidden');
+    document.getElementById('domain-results').classList.add('flex');
+    renderReputationResults(dynamicData);
+    
+  } catch (error) {
+    document.getElementById('domain-loading').classList.add('hidden');
+    document.getElementById('domain-error').classList.remove('hidden');
+    document.getElementById('domain-error-msg').textContent = 'Error: ' + (error.message || 'Scan failed');
+  }
+}
+
+document.getElementById('domain-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') scanDomain();
+});
+</script>
+{% endblock %}

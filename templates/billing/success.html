@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Payment Successful &middot; PhishGuard{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center min-h-[60vh] text-center max-w-lg mx-auto">
+    <!-- Animated success icon -->
+    <div class="relative w-24 h-24 mb-8">
+        <div class="absolute inset-0 rounded-full bg-emerald-100 animate-ping opacity-30"></div>
+        <div class="relative w-24 h-24 bg-safe rounded-full flex items-center justify-center shadow-lg shadow-emerald-200">
+            <span class="material-symbols-outlined text-white text-[44px]" style="font-variation-settings: 'FILL' 1">check_circle</span>
+        </div>
+    </div>
+
+    <h1 class="text-3xl font-extrabold text-text mb-3 tracking-tight">You're all set!</h1>
+    <p class="text-[15px] text-subtext font-medium mb-2">
+        Your 
+        <span class="font-bold text-subtext">
+            {% if user and user.plan == 'pro' %}Team{% elif user and user.plan == 'free_plus' %}Pro{% else %}plan{% endif %}
+        </span>
+        subscription is now active.
+    </p>
+    <p class="text-sm text-muted mb-10">Full AI-powered phishing protection is now enabled on your account.</p>
+
+    <div class="flex flex-col sm:flex-row gap-3">
+        <a href="/dashboard"
+           class="inline-flex items-center gap-2 px-6 py-3 bg-brand hover:opacity-90 text-white text-[13px] font-bold rounded-xl hover:bg-slate-800 transition-all shadow-sm">
+            <span class="material-symbols-outlined text-[18px]">dashboard</span>
+            Go to Dashboard
+        </a>
+        <a href="/settings"
+           class="inline-flex items-center gap-2 px-6 py-3 border border-border text-subtext text-[13px] font-bold rounded-xl hover:bg-panel2 transition-all">
+            <span class="material-symbols-outlined text-[18px]">credit_card</span>
+            Manage Billing
+        </a>
+    </div>
+</div>
+{% endblock %}

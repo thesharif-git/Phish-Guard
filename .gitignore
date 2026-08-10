@@ -1,0 +1,53 @@
+# ── Secrets & Config ──────────────────────────────────────────────
+.env
+*.env.*
+
+# ── Database (never commit live user data) ────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+phishguard.db
+
+# ── Logs ──────────────────────────────────────────────────────────
+*.log
+server.log
+startup_*.txt
+server_start_log.txt
+logs/
+
+# ── Python ────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ── Virtual Environment ────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── IDE ───────────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ── OS ────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── ML Models (large binary files — use git-lfs or download separately) ──
+# models/*.pkl   # Uncomment if you don't want to track model files
+
+# ── Alembic versions (keep tracked, but ignore generated cache) ───
+alembic/__pycache__/

@@ -1,0 +1,15 @@
+From: "Security Team" <alerts@fake-bank.com>
+To: target@company.com
+Subject: Action Required: Confirm Your Identity
+Date: Mon, 9 Mar 2026 12:00:00 -0400
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+
+Dear Customer,
+
+We detected suspicious activity on your account. Please click the link below to verify your identity within 24 hours to avoid suspension.
+
+http://fake-bank-login-secure.net/auth
+
+Thank you,
+Security Team

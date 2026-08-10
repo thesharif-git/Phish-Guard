@@ -1,0 +1,500 @@
+{% extends "base.html" %}
+{% block title %}Pricing · PhishGuard{% endblock %}
+
+{% block content %}
+<!-- Top Enterprise Header -->
+<div class="flex justify-end items-center mb-6">
+  <a href="/contact" class="inline-flex items-center gap-2 text-sm font-semibold text-[#2563eb] hover:text-[#1e40af] transition-colors">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+    </svg>
+    Enterprise? Contact Sales
+  </a>
+</div>
+
+<!-- Header Section -->
+<div class="text-center max-w-3xl mx-auto mb-10 relative">
+  <!-- Subtle top glow -->
+  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[150px] bg-brand/5 blur-[80px] rounded-full pointer-events-none -z-10"></div>
+  
+  <h1 class="text-4xl font-bold text-text tracking-tight leading-tight mb-3">
+    Simple, Transparent Pricing
+  </h1>
+  <p class="text-[15px] font-medium text-subtext">
+    Choose the perfect plan for your needs. Upgrade, downgrade, or cancel anytime.
+  </p>
+</div>
+
+<!-- Monthly/Yearly Toggle -->
+<div class="flex justify-center mb-12">
+  <div class="inline-flex items-center p-1 bg-panel3 border border-border rounded-full relative shadow-sm">
+    <button id="toggle-monthly" onclick="setBillingCycle('monthly')" class="px-6 py-2 rounded-full text-sm font-semibold text-text transition-all duration-200 z-10">
+      Monthly
+    </button>
+    <button id="toggle-yearly" onclick="setBillingCycle('yearly')" class="inline-flex items-center gap-1.5 px-6 py-2 rounded-full text-sm font-semibold text-subtext transition-all duration-200 z-10">
+      Yearly
+      <span id="badge-yearly" class="inline-block bg-[#10b981]/15 text-[#10b981] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider transition-colors duration-200">
+        Save 20%
+      </span>
+    </button>
+    <!-- Background slider -->
+    <div id="toggle-slider" class="absolute top-1 bottom-1 left-1 rounded-full bg-[#0f172a] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-sm"></div>
+  </div>
+</div>
+
+<!-- 4 Plan Cards Layout -->
+<div class="grid md:grid-cols-2 xl:grid-cols-4 gap-6 max-w-[1200px] mx-auto items-stretch mb-12">
+  
+  <!-- FREE CARD -->
+  <div class="bg-panel border border-border rounded-2xl p-7 flex flex-col h-full hover:shadow-soft hover:border-border-hi transition-all duration-300 relative shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)]">
+    <div class="mb-5">
+      <h3 class="text-lg font-bold text-text mb-1">Free</h3>
+      <p class="text-[13px] text-subtext leading-relaxed font-medium">For individuals getting started with phishing protection.</p>
+    </div>
+    
+    <div class="flex items-baseline gap-1 mb-6">
+      <span class="text-4xl font-bold text-text tracking-tight">$0</span>
+      <span class="text-[13px] font-semibold text-muted">/month</span>
+    </div>
+    
+    <div class="mb-8">
+      <a href="/dashboard" class="block w-full py-2.5 text-center rounded-xl border border-border text-[13px] font-bold text-subtext bg-panel hover:bg-panel2 hover:border-border-hi transition shadow-sm">
+        Get Started
+      </a>
+    </div>
+    
+    <!-- Feature Checklist -->
+    <ul class="space-y-4 flex-1">
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <!-- Circular Blue Check SVG -->
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        10 Scans / Month
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Basic Email Analysis
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        URL & Link Scanning
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Threat Summary
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Community Support
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-muted font-medium">
+        <!-- Circular Gray X SVG -->
+        <svg class="w-4 h-4 text-muted flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 9l-6 6M9 9l6 6" />
+        </svg>
+        Advanced AI Analysis
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-muted font-medium">
+        <svg class="w-4 h-4 text-muted flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 9l-6 6M9 9l6 6" />
+        </svg>
+        Reports & Exports
+      </li>
+    </ul>
+  </div>
+
+  <!-- PRO CARD (HIGHLIGHTED) -->
+  <div class="bg-panel border border-[#2563eb]/80 rounded-2xl p-7 shadow-[0_8px_30px_rgb(37,99,235,0.04)] flex flex-col h-full hover:shadow-[0_8px_30px_rgb(37,99,235,0.08)] transition-all duration-300 relative pt-10">
+    <!-- "MOST POPULAR" Badge -->
+    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#2563eb] text-white text-[10px] font-bold uppercase tracking-wider px-4 py-1.5 rounded-full shadow-sm">
+      Most Popular
+    </div>
+    
+    <div class="mb-5">
+      <h3 class="text-lg font-bold text-text mb-1">Pro</h3>
+      <p class="text-[13px] text-subtext leading-relaxed font-medium">For professionals who want advanced protection.</p>
+    </div>
+    
+    <div class="mb-6 h-[60px]">
+      <div class="flex items-baseline gap-1">
+        <span id="price-pro" class="text-4xl font-bold text-text tracking-tight transition-all duration-200">$19</span>
+        <span class="text-[13px] font-semibold text-muted">/month</span>
+      </div>
+      <!-- Discount saving pill badge -->
+      <span id="save-pro" class="hidden inline-block bg-[#10b981]/10 text-[#10b981] text-[11px] font-bold px-2.5 py-0.5 rounded-md mt-1.5 transition-all">
+        Save $48 yearly
+      </span>
+    </div>
+    
+    <div class="mb-8">
+      <form action="/billing/create-checkout" method="POST">
+        <!-- UI "Pro" corresponds to stripe checkout key "free_plus" -->
+        <input type="hidden" name="plan" value="free_plus">
+        <button type="submit" class="block w-full py-2.5 text-center rounded-xl bg-[#2563eb] hover:bg-[#1e40af] text-[13px] font-bold text-white transition-all shadow-sm">
+          Start 7-Day Free Trial
+        </button>
+      </form>
+    </div>
+    
+    <!-- Feature Checklist -->
+    <ul class="space-y-4 flex-1">
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Unlimited Scans
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Advanced AI Analysis
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Email & Link Scanning
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Attachments Analysis
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Real-time Threat Detection
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Reports & Exports
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Priority Support
+      </li>
+    </ul>
+  </div>
+
+  <!-- TEAM CARD -->
+  <div class="bg-panel border border-border rounded-2xl p-7 flex flex-col h-full hover:shadow-soft hover:border-border-hi transition-all duration-300 relative shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)]">
+    <div class="mb-5">
+      <h3 class="text-lg font-bold text-text mb-1">Team</h3>
+      <p class="text-[13px] text-subtext leading-relaxed font-medium">For teams that need collaboration and centralized protection.</p>
+    </div>
+    
+    <div class="mb-6 h-[60px]">
+      <div class="flex items-baseline gap-1">
+        <span id="price-team" class="text-4xl font-bold text-text tracking-tight transition-all duration-200">$49</span>
+        <span class="text-[13px] font-semibold text-muted">/month</span>
+      </div>
+      <!-- Discount saving pill badge -->
+      <span id="save-team" class="hidden inline-block bg-[#10b981]/10 text-[#10b981] text-[11px] font-bold px-2.5 py-0.5 rounded-md mt-1.5 transition-all">
+        Save $120 yearly
+      </span>
+    </div>
+    
+    <div class="mb-8">
+      <form action="/billing/create-checkout" method="POST">
+        <!-- UI "Team" corresponds to stripe checkout key "pro" -->
+        <input type="hidden" name="plan" value="pro">
+        <button type="submit" class="block w-full py-2.5 text-center rounded-xl border border-[#2563eb] text-[13px] font-bold text-[#2563eb] bg-panel hover:bg-panel2 transition shadow-sm">
+          Start 7-Day Free Trial
+        </button>
+      </form>
+    </div>
+    
+    <!-- Feature Checklist -->
+    <ul class="space-y-4 flex-1">
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Everything in Pro
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Team Management
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Shared Scan History
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Custom Role Permissions
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        API Access
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Detailed Reports
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Priority Support
+      </li>
+    </ul>
+  </div>
+
+  <!-- ENTERPRISE CARD -->
+  <div class="bg-panel border border-border rounded-2xl p-7 flex flex-col h-full hover:shadow-soft hover:border-border-hi transition-all duration-300 relative shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)]">
+    <div class="mb-5">
+      <h3 class="text-lg font-bold text-text mb-1">Enterprise</h3>
+      <p class="text-[13px] text-subtext leading-relaxed font-medium">For organizations with advanced security and compliance needs.</p>
+    </div>
+    
+    <div class="mb-6 h-[60px]">
+      <div class="flex items-baseline gap-1">
+        <span class="text-4xl font-bold text-text tracking-tight">Custom</span>
+      </div>
+    </div>
+    
+    <div class="mb-8">
+      <a href="/contact" class="block w-full py-2.5 text-center rounded-xl border border-[#2563eb] text-[13px] font-bold text-[#2563eb] bg-panel hover:bg-panel2 transition shadow-sm">
+        Contact Sales
+      </a>
+    </div>
+    
+    <!-- Feature Checklist -->
+    <ul class="space-y-4 flex-1">
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Everything in Team
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        SSO / SAML Integration
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Advanced Threat Intelligence
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Custom Integrations
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Compliance Support
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        Dedicated Account Manager
+      </li>
+      <li class="flex items-start gap-2.5 text-[13px] text-subtext font-medium">
+        <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+        </svg>
+        24/7 Priority Support
+      </li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- BOTTOM TRUST BADGES CONTAINER -->
+<div class="max-w-[1200px] mx-auto bg-panel2 border border-border rounded-2xl p-8 mb-10 shadow-sm">
+  <div class="grid md:grid-cols-3 gap-8">
+    
+    <!-- Badge 1 -->
+    <div class="flex items-start gap-4">
+      <div class="w-12 h-12 rounded-full bg-[#2563eb]/5 flex items-center justify-center flex-shrink-0">
+        <svg class="w-6 h-6 text-[#2563eb]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+      </div>
+      <div>
+        <h4 class="text-sm font-bold text-text mb-1">7-Day Free Trial</h4>
+        <p class="text-xs text-subtext font-medium leading-relaxed">Test all premium features with no commitment.</p>
+      </div>
+    </div>
+    
+    <!-- Badge 2 -->
+    <div class="flex items-start gap-4">
+      <div class="w-12 h-12 rounded-full bg-[#2563eb]/5 flex items-center justify-center flex-shrink-0">
+        <svg class="w-6 h-6 text-[#2563eb]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+        </svg>
+      </div>
+      <div>
+        <h4 class="text-sm font-bold text-text mb-1">Cancel Anytime</h4>
+        <p class="text-xs text-subtext font-medium leading-relaxed">No contracts. Cancel or change your plan anytime.</p>
+      </div>
+    </div>
+    
+    <!-- Badge 3 -->
+    <div class="flex items-start gap-4">
+      <div class="w-12 h-12 rounded-full bg-[#2563eb]/5 flex items-center justify-center flex-shrink-0">
+        <svg class="w-6 h-6 text-[#2563eb]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      </div>
+      <div>
+        <h4 class="text-sm font-bold text-text mb-1">Secure & Private</h4>
+        <p class="text-xs text-subtext font-medium leading-relaxed">Your data is encrypted and never shared with third parties.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- BOTTOM CONTACT SALES LINK -->
+<div class="text-center pb-6">
+  <p class="text-sm text-subtext font-medium">
+    Need a custom plan? 
+    <a href="/contact" class="text-[#2563eb] hover:text-[#1e40af] font-semibold inline-flex items-center gap-1 group transition-all ml-1">
+      Contact our sales team 
+      <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+      </svg>
+    </a>
+  </p>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let activeCycle = 'yearly'; // default to matching the mockup screenshot (Yearly)
+
+  function updateToggleSlider() {
+    const slider = document.getElementById('toggle-slider');
+    const monthlyBtn = document.getElementById('toggle-monthly');
+    const yearlyBtn = document.getElementById('toggle-yearly');
+    const yearlyBadge = document.getElementById('badge-yearly');
+
+    if (activeCycle === 'monthly') {
+      slider.style.left = monthlyBtn.offsetLeft + 'px';
+      slider.style.width = monthlyBtn.offsetWidth + 'px';
+      
+      monthlyBtn.classList.add('text-white');
+      monthlyBtn.classList.remove('text-text', 'text-subtext');
+      
+      yearlyBtn.classList.add('text-subtext');
+      yearlyBtn.classList.remove('text-white', 'text-text');
+      
+      yearlyBadge.classList.add('bg-[#10b981]/15', 'text-[#10b981]');
+      yearlyBadge.classList.remove('bg-panel', 'text-white');
+    } else {
+      slider.style.left = yearlyBtn.offsetLeft + 'px';
+      slider.style.width = yearlyBtn.offsetWidth + 'px';
+      
+      yearlyBtn.classList.add('text-white');
+      yearlyBtn.classList.remove('text-text', 'text-subtext');
+      
+      monthlyBtn.classList.add('text-subtext');
+      monthlyBtn.classList.remove('text-white', 'text-text');
+      
+      yearlyBadge.classList.remove('bg-[#10b981]/15', 'text-[#10b981]');
+      yearlyBadge.classList.add('bg-panel', 'text-white');
+    }
+  }
+
+  function setBillingCycle(cycle) {
+    activeCycle = cycle;
+    
+    const pricePro = document.getElementById('price-pro');
+    const priceTeam = document.getElementById('price-team');
+    
+    const savePro = document.getElementById('save-pro');
+    const saveTeam = document.getElementById('save-team');
+    
+    if (cycle === 'monthly') {
+      pricePro.innerText = '$19';
+      priceTeam.innerText = '$49';
+      
+      savePro.classList.add('hidden');
+      saveTeam.classList.add('hidden');
+    } else {
+      pricePro.innerText = '$15';
+      priceTeam.innerText = '$39';
+      
+      savePro.classList.remove('hidden');
+      saveTeam.classList.remove('hidden');
+    }
+    
+    updateToggleSlider();
+  }
+
+  // Initialize toggle slider position on load
+  window.addEventListener('DOMContentLoaded', () => {
+    // Set initial cycle to Yearly first to initialize correctly
+    setBillingCycle('yearly');
+    setTimeout(updateToggleSlider, 100);
+  });
+  
+  // Also hook up resize to reposition slider correctly
+  window.addEventListener('resize', updateToggleSlider);
+</script>
+{% endblock %}

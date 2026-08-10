@@ -1,0 +1,456 @@
+/* ============================================================
+   PhishGuard — Auth Pages (Login & Register)
+   White theme — matches landing page aesthetic exactly.
+   Clean centered-card layout inspired by modern SaaS auth.
+   ============================================================ */
+
+@import url('/static/css/tokens.css');
+
+/* ── Auth-specific light-theme tokens ───────────────────────── */
+:root {
+  --auth-bg:        #f1f5f9;   /* same as landing --bg-mist */
+  --auth-card:      #ffffff;
+  --auth-border:    #e2e8f0;
+  --auth-border-hi: #cbd5e1;
+
+  --auth-text:      #0f172a;   /* same as landing --navy */
+  --auth-subtext:   #475569;   /* same as landing --body */
+  --auth-muted:     #94a3b8;
+
+  /* Aliases for any template references to --info etc */
+  --info:     var(--blue);
+  --info-hi:  var(--blue-hi);
+  --info-dim: var(--blue-dim);
+  --info-md:  var(--blue-md);
+  --info-bd:  var(--blue-bd);
+
+  --safe:     var(--green);
+  --safe-dim: var(--green-dim);
+  --safe-bd:  var(--green-bd);
+
+  --danger:     var(--red);
+  --danger-dim: var(--red-dim);
+  --danger-bd:  var(--red-bd);
+
+  /* Map generic panel/border vars in case templates use them */
+  --panel:      var(--auth-card);
+  --panel2:     var(--auth-bg);
+  --border:     var(--auth-border);
+  --border-hi:  var(--auth-border-hi);
+  --subtext:    var(--auth-subtext);
+  --muted:      var(--auth-muted);
+  --bg:         var(--auth-bg);
+  --text:       var(--auth-text);
+
+  --shadow-card: 0 4px 6px -1px rgba(0,0,0,0.07),
+                 0 2px 4px -2px rgba(0,0,0,0.05);
+  --shadow-card-hover: 0 10px 15px -3px rgba(0,0,0,0.08),
+                       0 4px 6px -4px rgba(0,0,0,0.04);
+}
+
+/* ── Base ──────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  font-family: var(--sans);
+  background: var(--auth-bg);
+  color: var(--auth-subtext);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+}
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--auth-bg); }
+::-webkit-scrollbar-thumb { background: var(--auth-border); border-radius: 4px; }
+
+/* ── Top Navigation Bar ────────────────────────────────────── */
+.auth-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--auth-border);
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+}
+
+.auth-nav-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--auth-subtext);
+  text-decoration: none;
+  transition: color 0.16s;
+}
+
+.auth-nav-back:hover { color: var(--auth-text); }
+
+.auth-nav-brand {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.auth-nav-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--blue), var(--blue-dk));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px var(--blue-dim);
+  flex-shrink: 0;
+}
+
+.auth-nav-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--auth-text);
+  letter-spacing: -.03em;
+}
+
+/* ── Page shell ────────────────────────────────────────────── */
+.auth-shell {
+  min-height: calc(100vh - 60px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+/* ── Card ──────────────────────────────────────────────────── */
+.auth-card {
+  background: var(--auth-card);
+  border: 1px solid var(--auth-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  width: 100%;
+  max-width: 440px;
+  padding: 40px;
+  animation: fadeInUp 0.45s var(--ease) both;
+}
+
+/* ── Card header ───────────────────────────────────────────── */
+.auth-card-header {
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+/* Brand mark inside card (top) */
+.auth-card-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.auth-card-logo-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--blue), var(--blue-dk));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px var(--blue-dim);
+}
+
+.auth-card-logo-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--auth-text);
+  letter-spacing: -.04em;
+}
+
+.auth-card-header h1 {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--auth-text);
+  letter-spacing: -.03em;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.auth-card-header p {
+  font-size: 14px;
+  color: var(--auth-subtext);
+  line-height: 1.6;
+}
+
+/* ── Divider ────────────────────────────────────────────────── */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0;
+}
+
+.auth-divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--auth-border);
+}
+
+.auth-divider span {
+  font-size: 12px;
+  color: var(--auth-muted);
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+/* ── Feedback boxes ─────────────────────────────────────────── */
+.msg-box {
+  display: none;
+  padding: 11px 14px;
+  border-radius: var(--r);
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+
+.msg-error {
+  background: var(--red-dim);
+  border: 1px solid var(--red-bd);
+  color: #b91c1c;
+}
+
+.msg-success {
+  background: var(--green-dim);
+  border: 1px solid var(--green-bd);
+  color: #065f46;
+}
+
+/* ── Form ───────────────────────────────────────────────────── */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.form-group { margin-bottom: 18px; }
+
+.form-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--auth-text);
+  margin-bottom: 7px;
+}
+
+.form-label a {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--blue);
+  text-decoration: none;
+}
+
+.form-label a:hover { text-decoration: underline; }
+
+/* ── Inputs ─────────────────────────────────────────────────── */
+.input-wrap { position: relative; }
+
+.input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--auth-muted);
+  pointer-events: none;
+}
+
+.form-input {
+  width: 100%;
+  background: #fff;
+  border: 1.5px solid var(--auth-border);
+  border-radius: var(--r);
+  padding: 11px 13px 11px 38px;
+  font-size: 14px;
+  color: var(--auth-text);
+  outline: none;
+  transition: border-color 0.16s, box-shadow 0.16s;
+  font-family: var(--sans);
+}
+
+.form-input.no-icon { padding-left: 13px; }
+
+.form-input:focus {
+  border-color: var(--blue);
+  box-shadow: var(--focus-ring);
+}
+
+.form-input::placeholder { color: var(--auth-muted); }
+
+/* ── Remember / Terms rows ──────────────────────────────────── */
+.remember-row,
+.terms-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-bottom: 20px;
+}
+
+.remember-row input[type="checkbox"],
+.terms-row   input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--blue);
+  cursor: pointer;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.remember-row label,
+.terms-row   label {
+  font-size: 13px;
+  color: var(--auth-subtext);
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.terms-row label a { color: var(--blue); }
+.terms-row label a:hover { text-decoration: underline; }
+
+/* ── Primary CTA — matches landing page .btn-primary exactly ── */
+.btn-submit {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 20px;
+  background: var(--gradient-blue);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: var(--r);
+  border: none;
+  cursor: pointer;
+  transition: background var(--t-base), box-shadow var(--t-base), transform var(--t-base);
+  font-family: var(--sans);
+  letter-spacing: -.01em;
+}
+
+.btn-submit:hover {
+  background: var(--gradient-blue-hi);
+  box-shadow: 0 4px 20px rgba(37,99,235,0.28), 0 2px 8px rgba(37,99,235,0.16);
+  transform: translateY(-1px);
+}
+
+.btn-submit:active { transform: translateY(0); }
+
+.btn-submit svg { transition: transform var(--t-base); }
+.btn-submit:hover svg { transform: translateX(3px); }
+
+/* ── Footer link ─────────────────────────────────────────────── */
+.auth-footer-link {
+  text-align: center;
+  font-size: 14px;
+  color: var(--auth-subtext);
+  margin-top: 20px;
+}
+
+.auth-footer-link a {
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.auth-footer-link a:hover { text-decoration: underline; }
+
+/* ── Trust badges row (below card) ─────────────────────────── */
+.auth-trust-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.auth-trust-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--auth-muted);
+  letter-spacing: 0.02em;
+}
+
+.auth-trust-pill svg { color: var(--green); flex-shrink: 0; }
+
+.auth-trust-sep {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--auth-border);
+}
+
+/* ── Steps list (register page) ─────────────────────────────── */
+.auth-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: var(--auth-bg);
+  border: 1px solid var(--auth-border);
+  border-radius: var(--r);
+}
+
+.auth-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.auth-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--blue-dim);
+  border: 1px solid var(--blue-bd);
+  color: var(--blue);
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.auth-step-text strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--auth-text);
+  display: block;
+}
+
+.auth-step-text span {
+  font-size: 12px;
+  color: var(--auth-subtext);
+  line-height: 1.5;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 520px) {
+  .auth-card { padding: 28px 20px; border-radius: var(--r-md); }
+  .form-row { grid-template-columns: 1fr; }
+  .auth-nav { padding: 0 16px; }
+}

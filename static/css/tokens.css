@@ -1,0 +1,162 @@
+/* ============================================================
+   PhishGuard — Shared Design Tokens
+   Single source of truth for brand, typography, status colors,
+   radii, and focus styles. Imported by ALL stylesheets.
+   ============================================================ */
+
+/* ── Google Fonts — loaded ONCE here ───────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ── Premium Obsidian Dark Theme & Design Tokens ─────────────── */
+:root {
+  /* Brand accent — Cyber Emerald / Mint Green (No Blue / No Navy) */
+  --brand:      #10b981;
+  --brand-hi:   #34d399;
+  --brand-dk:   #059669;
+  --brand-dim:  rgba(16, 185, 129, 0.10);
+  --brand-md:   rgba(16, 185, 129, 0.20);
+  --brand-bd:   rgba(16, 185, 129, 0.35);
+  --brand-glow: rgba(16, 185, 129, 0.40);
+
+  /* Obsidian Charcoal Surfaces (No Blue Navy) */
+  --navy:       #18181b;
+  --navy-hi:    #27272a;
+  --navy-dk:    #09090b;
+
+  /* Status Colors */
+  --green:      #10b981;
+  --green-hi:   #34d399;
+  --green-dim:  rgba(16, 185, 129, 0.12);
+  --green-bd:   rgba(16, 185, 129, 0.35);
+
+  --amber:      #f59e0b;
+  --amber-hi:   #fbbf24;
+  --amber-dim:  rgba(245, 158, 11, 0.12);
+  --amber-bd:   rgba(245, 158, 11, 0.35);
+
+  --red:        #f43f5e;
+  --red-hi:     #fb7185;
+  --red-dim:    rgba(244, 63, 94, 0.12);
+  --red-bd:     rgba(244, 63, 94, 0.35);
+
+  /* Typography — Plus Jakarta Sans & Inter */
+  --sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+  /* Radii */
+  --r-xs:  6px;
+  --r-sm:  8px;
+  --r:    10px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --r-pill: 999px;
+
+  /* Focus ring */
+  --focus-ring: 0 0 0 3px rgba(16, 185, 129, 0.25);
+
+  /* Brand gradients */
+  --gradient-primary:    linear-gradient(135deg, #18181b, #09090b);
+  --gradient-brand:      linear-gradient(135deg, #10b981, #059669);
+
+  /* Easing */
+  --ease:   cubic-bezier(0.16, 1, 0.3, 1);
+  --t-fast: 0.16s;
+  --t-base: 0.20s;
+  --t-slow: 0.35s;
+
+  /* Dashboard Surfaces (Obsidian Dark Default) */
+  --bg:        #09090b; /* Deep Obsidian Charcoal */
+  --panel:     #121215; /* Elevated Obsidian Card */
+  --panel2:    #1a1a20; /* Secondary Contrast Surface */
+  --panel3:    #24242c; /* Hover & Control Surface */
+  --border:    rgba(255, 255, 255, 0.08);
+  --border-hi: rgba(255, 255, 255, 0.16);
+
+  --text:    #f8fafc; /* Crisp Bright White */
+  --subtext: #94a3b8; /* Slate Silver */
+  --muted:   #64748b; /* Muted Slate */
+
+  /* Dashboard status aliases */
+  --info:     var(--brand);
+  --info-hi:  var(--brand-hi);
+  --info-dim: var(--brand-dim);
+  --info-md:  var(--brand-md);
+  --info-bd:  var(--brand-bd);
+
+  --safe:     var(--green);
+  --safe-dim: var(--green-dim);
+  --safe-bd:  var(--green-bd);
+
+  --medium:     var(--amber);
+  --medium-dim: var(--amber-dim);
+  --medium-bd:  var(--amber-bd);
+
+  --danger:     var(--red);
+  --danger-dim: var(--red-dim);
+  --danger-bd:  var(--red-bd);
+}
+
+/* ── Explicit html[data-theme="dark"] & html[data-theme="light"] ── */
+html[data-theme="dark"] {
+  --bg:        #09090b;
+  --panel:     #121215;
+  --panel2:    #1a1a20;
+  --panel3:    #24242c;
+  --border:    rgba(255, 255, 255, 0.08);
+  --border-hi: rgba(255, 255, 255, 0.16);
+  --text:      #f8fafc;
+  --subtext:   #94a3b8;
+  --muted:     #64748b;
+}
+
+html[data-theme="light"] {
+  --bg:        #f8fafc;
+  --panel:     #ffffff;
+  --panel2:    #f1f5f9;
+  --panel3:    #e2e8f0;
+  --border:    rgba(0, 0, 0, 0.08);
+  --border-hi: rgba(0, 0, 0, 0.16);
+  --text:      #0f172a;
+  --subtext:   #475569;
+  --muted:     #94a3b8;
+}
+
+/* ── Shared base reset ─────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html { scroll-behavior: smooth; }
+a { color: inherit; text-decoration: none; }
+
+::selection { background: var(--blue); color: #fff; }
+
+/* ── Shared keyframes ──────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(124,58,237,0.4); }
+  50%       { opacity: 0.7; box-shadow: 0 0 0 5px rgba(124,58,237,0); }
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25%       { transform: translateX(-4px); }
+  75%       { transform: translateX(4px); }
+}

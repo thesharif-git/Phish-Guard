@@ -1,0 +1,721 @@
+{% extends "base.html" %}
+
+{% block title %}URL Scanner &middot; PhishGuard{% endblock %}
+
+{% block content %}
+<style>
+  .spin { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<div class="max-w-[1200px] w-full flex flex-col gap-4">
+
+  <!-- Header Area -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2 border-b border-border pb-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span class="material-symbols-outlined text-[13px]">public</span> Threat Intelligence
+        </span>
+        <span class="text-[11px] font-medium text-muted">• URL &amp; Domain Inspection</span>
+      </div>
+      <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-text mt-1">URL Scanner</h1>
+      <p class="text-sm text-subtext mt-0.5">Analyze links, domains, and redirect chains for phishing threats and malware.</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    
+    <!-- ==================== LEFT COLUMN ==================== -->
+    <div class="flex flex-col gap-4 h-full">
+      
+      <!-- Scan Input Card with Inline Search Bar -->
+      <div class="bg-panel border border-border rounded-xl p-4 sm:p-5 shadow-md flex flex-col h-fit">
+        <div class="flex items-center justify-between mb-1">
+          <h2 class="text-sm font-bold text-text">Scan a URL</h2>
+          <span class="text-[11px] font-semibold text-muted uppercase tracking-wider">Deep Inspection</span>
+        </div>
+        <p class="text-xs text-subtext mb-4">Analyze any URL, IP, or domain for phishing vectors, redirects, and SSL validity.</p>
+        
+        <!-- Sleek Single-Line Inline Search Bar -->
+        <div class="bg-panel2 border border-border rounded-xl shadow-sm p-1.5 flex items-center gap-2 focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-emerald-500 transition-all">
+          <div class="flex items-center gap-1.5 pl-3 pr-2 py-1 bg-panel3 text-emerald-400 rounded-md text-xs font-mono font-medium flex-shrink-0 border border-border">
+            <span class="material-symbols-outlined text-[15px] text-emerald-400">link</span>
+            <span>https://</span>
+          </div>
+          <input id="url-input" type="text" placeholder="example.com/login?verify=true" class="w-full bg-transparent border-none focus:ring-0 text-xs text-text font-medium py-2 px-1 focus:outline-none placeholder:text-muted" />
+          <button onclick="document.getElementById('url-input').value=''" title="Clear" class="text-muted hover:text-text transition-colors cursor-pointer bg-transparent border-none p-1 flex items-center">
+            <span class="material-symbols-outlined text-[16px]">close</span>
+          </button>
+          <button onclick="scanUrl()" id="scan-btn" class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-emerald-900/20 cursor-pointer border-none flex-shrink-0">
+            <span class="material-symbols-outlined text-[16px]">search</span> Scan URL
+          </button>
+        </div>
+
+        <!-- Sample Presets for Quick Testing -->
+        <div class="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+          <span class="text-[11px] font-medium text-muted">Quick Test:</span>
+          <button onclick="document.getElementById('url-input').value='https://youtube.com/watch?v=6Z8yD_CiIIE'; scanUrl();" class="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-md border border-emerald-500/30 transition-colors cursor-pointer">
+            🌐 Safe Link
+          </button>
+          <button onclick="document.getElementById('url-input').value='http://verify-paypal-secure-login.xyz/account/login'; scanUrl();" class="text-[11px] font-semibold text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 px-2.5 py-1 rounded-md border border-rose-500/30 transition-colors cursor-pointer">
+            🚨 Phishing Link
+          </button>
+        </div>
+
+        <div class="flex items-center gap-1.5 text-muted mt-3 text-[11px]">
+          <span class="material-symbols-outlined text-[14px]">lock</span>
+          <p>We do not store or share analyzed URLs. Privacy is our priority.</p>
+        </div>
+      </div>
+
+      <!-- Pre-Scan Threat Feeds Card (shown when no scan is active) -->
+      <div id="threat-feeds-prescan" class="bg-panel border border-border rounded-xl p-4 sm:p-5 shadow-md flex flex-col gap-3">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-emerald-400 text-[18px]">hub</span>
+            <h3 class="text-xs font-bold text-text uppercase tracking-wider">Active Blacklists &amp; Feeds</h3>
+          </div>
+          <span class="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Live Feeds Synced
+          </span>
+        </div>
+        <div class="space-y-2 text-xs">
+          <div class="flex items-center justify-between p-2.5 rounded-lg bg-panel2 border border-border">
+            <div class="flex items-center gap-2.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span class="font-semibold text-text">VirusTotal Global Intelligence</span>
+            </div>
+            <span class="text-[11px] font-medium text-subtext">70+ Engines Live</span>
+          </div>
+          <div class="flex items-center justify-between p-2.5 rounded-lg bg-panel2 border border-border">
+            <div class="flex items-center gap-2.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span class="font-semibold text-text">PhishTank Feed</span>
+            </div>
+            <span class="text-[11px] font-medium text-subtext">Verified Database</span>
+          </div>
+          <div class="flex items-center justify-between p-2.5 rounded-lg bg-panel2 border border-border">
+            <div class="flex items-center gap-2.5">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+              <span class="font-semibold text-text">URLhaus Malware Feed</span>
+            </div>
+            <span class="text-[11px] font-medium text-subtext">Real-time Blocklist</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- URL Analysis Details (hidden until scan runs) -->
+      <div id="details-section" class="hidden bg-panel border border-border rounded-xl p-4 sm:p-5 shadow-md flex-col">
+        <div class="flex items-center justify-between border-b border-border pb-3 mb-4">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-emerald-400 text-[18px]">dns</span>
+            <h2 class="text-sm font-bold text-text">URL Analysis Details</h2>
+          </div>
+          <span class="text-[11px] font-semibold text-muted uppercase tracking-wider">Infrastructure</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-3 mb-2 flex-1">
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-panel2 border border-border">
+            <span class="material-symbols-outlined text-muted text-[18px] mt-0.5">link</span>
+            <div class="min-w-0 flex-1">
+              <div class="text-[11px] font-semibold text-subtext uppercase tracking-wide">Final URL</div>
+              <div id="info-final-url" class="text-xs font-semibold text-text truncate w-full" title="">—</div>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-panel2 border border-border">
+            <span class="material-symbols-outlined text-muted text-[18px] mt-0.5">lock</span>
+            <div class="min-w-0 flex-1">
+              <div class="text-[11px] font-semibold text-subtext uppercase tracking-wide">HTTPS Status</div>
+              <div id="info-status" class="text-xs font-bold text-text">—</div>
+            </div>
+          </div>
+          
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-panel2 border border-border">
+            <span class="material-symbols-outlined text-muted text-[18px] mt-0.5">public</span>
+            <div class="min-w-0 flex-1">
+              <div class="text-[11px] font-semibold text-subtext uppercase tracking-wide">Domain</div>
+              <div id="info-domain" class="text-xs font-semibold text-text truncate w-full">—</div>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-panel2 border border-border">
+            <span class="material-symbols-outlined text-muted text-[18px] mt-0.5">turn_right</span>
+            <div class="min-w-0 flex-1">
+              <div class="text-[11px] font-semibold text-subtext uppercase tracking-wide">Redirect Chain</div>
+              <div id="info-content-type" class="text-xs font-semibold text-subtext truncate w-full">—</div>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-panel2 border border-border">
+            <span class="material-symbols-outlined text-muted text-[18px] mt-0.5">location_on</span>
+            <div class="min-w-0 flex-1">
+              <div class="text-[11px] font-semibold text-subtext uppercase tracking-wide">Resolved Target</div>
+              <div id="info-resolved-url" class="text-xs font-semibold text-text truncate w-full">—</div>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-panel2 border border-border">
+            <span class="material-symbols-outlined text-muted text-[18px] mt-0.5">schedule</span>
+            <div class="min-w-0 flex-1">
+              <div class="text-[11px] font-semibold text-subtext uppercase tracking-wide">Domain Age</div>
+              <div id="info-domain-age" class="text-xs font-semibold text-subtext">—</div>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-panel2 border border-border">
+            <span class="material-symbols-outlined text-muted text-[18px] mt-0.5">code</span>
+            <div class="min-w-0 flex-1">
+              <div class="text-[11px] font-semibold text-subtext uppercase tracking-wide">URL Parameters</div>
+              <div id="info-parameters" class="text-xs font-semibold text-subtext">—</div>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-panel2 border border-border">
+            <span class="material-symbols-outlined text-muted text-[18px] mt-0.5">verified_user</span>
+            <div class="min-w-0 flex-1">
+              <div class="text-[11px] font-semibold text-subtext uppercase tracking-wide">SSL/TLS Cert</div>
+              <div id="info-ssl" class="text-xs font-bold text-text flex items-center gap-1">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==================== RIGHT COLUMN (Pre-scan Protocol Checklist & Post-scan Security Workbench) ==================== -->
+    <div id="right-column" class="flex flex-col gap-4 h-full">
+      
+      <!-- Pre-Scan Security Checklist Card (Replaces empty column space) -->
+      <div id="prescan-checklist" class="bg-panel border border-border rounded-xl p-5 shadow-md flex flex-col justify-between h-full min-h-[360px]">
+        <div>
+          <div class="flex items-center justify-between border-b border-border pb-3 mb-4">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-emerald-400 text-[20px]">security</span>
+              <h2 class="text-sm font-bold text-text">URL Inspection Protocol</h2>
+            </div>
+            <span class="text-[11px] font-semibold text-muted uppercase tracking-wider">Ready</span>
+          </div>
+          <p class="text-xs text-subtext leading-relaxed mb-4">
+            Enter a URL on the left to run live multi-vector threat analysis across VirusTotal, WHOIS registrar data, redirect chains, and AI heuristic models.
+          </p>
+          <div class="space-y-3">
+            <div class="flex items-start gap-3 p-3 rounded-lg border border-border bg-panel2">
+              <span class="material-symbols-outlined text-emerald-400 text-[18px] mt-0.5">verified</span>
+              <div>
+                <div class="text-xs font-semibold text-text">SSL &amp; HTTPS Verification</div>
+                <p class="text-[11px] text-subtext">Validates certificate authority, encryption strength, and HSTS policy.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-lg border border-border bg-panel2">
+              <span class="material-symbols-outlined text-emerald-400 text-[18px] mt-0.5">alt_route</span>
+              <div>
+                <div class="text-xs font-semibold text-text">Redirect Chain Tracing</div>
+                <p class="text-[11px] text-subtext">Detects hidden URL shorteners, cloaked destinations, and malicious hops.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-lg border border-border bg-panel2">
+              <span class="material-symbols-outlined text-amber-400 text-[18px] mt-0.5">travel_explore</span>
+              <div>
+                <div class="text-xs font-semibold text-text">WHOIS &amp; Domain Age Check</div>
+                <p class="text-[11px] text-subtext">Identifies newly registered domains and typosquatting impersonation.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs text-muted">
+          <span>Engine Status: Operational</span>
+          <span>Baseline Latency: &lt;200ms</span>
+        </div>
+      </div>
+
+      <!-- Post-Scan Multi-Tab Security Workbench (hidden until scan runs) -->
+      <div id="scan-result-card" class="hidden bg-panel border border-border rounded-xl p-4 sm:p-5 shadow-md relative flex-col min-h-[380px]">
+        
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="hidden absolute inset-0 z-30 flex flex-col items-center justify-center bg-panel/90 backdrop-blur-sm rounded-xl transition-all">
+          <div class="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-2 animate-spin">
+            <span class="material-symbols-outlined text-[22px]">sync</span>
+          </div>
+          <p class="text-xs font-bold text-text">Inspecting URL Telemetry...</p>
+        </div>
+
+        <!-- Workbench Header & Risk Badge -->
+        <div class="flex justify-between items-center mb-4 border-b border-border pb-3">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-emerald-400 text-[20px]">analytics</span>
+            <h2 class="text-sm font-bold text-text">Threat Verdict &amp; Analysis</h2>
+          </div>
+          <span id="badge-risk-level" class="px-2.5 py-1 rounded-md text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">High Risk</span>
+        </div>
+
+        <!-- Hero Status Banner -->
+        <div class="flex items-start gap-4 mb-4 p-3.5 rounded-xl bg-panel2 border border-border">
+          <div id="shield-icon-container" class="w-10 h-10 flex items-center justify-center shrink-0">
+            <svg id="shield-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-rose-400">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <path d="M12 8v4"></path>
+              <path d="M12 16h.01"></path>
+            </svg>
+          </div>
+          <div class="min-w-0 flex-1">
+            <h3 id="result-headline" class="text-lg font-extrabold text-rose-400 tracking-tight uppercase leading-none mb-1">HIGH RISK</h3>
+            <p id="result-subtext" class="text-xs text-subtext leading-relaxed">This URL has been flagged as dangerous.</p>
+          </div>
+        </div>
+
+        <!-- Confidence Gauge & Metric Bar -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+          <div class="p-3 bg-panel2 border border-border rounded-lg">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[11px] font-semibold text-subtext uppercase tracking-wider">Confidence Meter</span>
+              <span id="score-text" class="text-xs font-bold text-text">0/100</span>
+            </div>
+            <div id="score-bars" class="flex gap-1 h-1.5 w-full">
+              <div class="flex-1 rounded-full bg-panel3"></div>
+            </div>
+          </div>
+          <div class="p-3 bg-panel2 border border-border rounded-lg flex items-center justify-between">
+            <div>
+              <div class="text-[11px] font-semibold text-subtext uppercase tracking-wider">Threat Signals</div>
+              <div id="threats-count" class="text-base font-bold text-text">0</div>
+            </div>
+            <div>
+              <div class="text-[11px] font-semibold text-subtext uppercase tracking-wider text-right">Reputation</div>
+              <div id="domain-rep-badge" class="text-xs font-bold text-subtext text-right">Good</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3-Tab Workbench Navigation Bar -->
+        <div class="border-b border-border flex items-center gap-2 mb-3 text-xs font-semibold">
+          <button onclick="switchScanTab('indicators')" id="tab-btn-indicators" class="px-3 py-2 border-b-2 border-emerald-500 text-emerald-400 cursor-pointer font-bold">
+            Risk Indicators
+          </button>
+          <button onclick="switchScanTab('behavior')" id="tab-btn-behavior" class="px-3 py-2 border-b-2 border-transparent text-subtext hover:text-text cursor-pointer">
+            Behavior &amp; Links
+          </button>
+          <button onclick="switchScanTab('actions')" id="tab-btn-actions" class="px-3 py-2 border-b-2 border-transparent text-subtext hover:text-text cursor-pointer">
+            SOC Actions
+          </button>
+        </div>
+
+        <!-- Tab 1: Risk Indicators Content -->
+        <div id="tab-content-indicators" class="tab-panel-content">
+          <ul class="space-y-2" id="risk-indicators-list">
+            <!-- Populated by JS -->
+          </ul>
+        </div>
+
+        <!-- Tab 2: URL Behavior Content -->
+        <div id="tab-content-behavior" class="tab-panel-content hidden">
+          <div class="space-y-2 text-xs">
+            <div class="flex items-center justify-between p-2.5 rounded-lg border border-border bg-panel2">
+              <span class="font-medium text-subtext">Redirects Detected</span>
+              <span id="beh-redirects" class="font-bold text-text">—</span>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-lg border border-border bg-panel2">
+              <span class="font-medium text-subtext">Suspicious Parameters</span>
+              <span id="beh-params" class="font-bold text-text">—</span>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-lg border border-border bg-panel2">
+              <span class="font-medium text-subtext">External Links &amp; Signals</span>
+              <span id="beh-links" class="font-bold text-text">—</span>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-lg border border-border bg-panel2">
+              <span class="font-medium text-subtext">File Download Activity</span>
+              <span id="beh-downloads" class="font-bold text-text">—</span>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-lg border border-border bg-panel2">
+              <span class="font-medium text-subtext">Password / Form Fields</span>
+              <span id="beh-forms" class="font-bold text-text">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Recommended Actions Content -->
+        <div id="tab-content-actions" class="tab-panel-content hidden">
+          <div class="space-y-2.5">
+            <div class="flex items-start gap-3 p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg">
+              <span class="material-symbols-outlined text-rose-400 text-[20px] mt-0.5">block</span>
+              <div>
+                <h4 class="text-xs font-bold text-rose-400">Do Not Visit This URL</h4>
+                <p class="text-[11px] text-rose-300 mt-0.5">Avoid accessing this link directly in personal or corporate browsers.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 p-3 bg-panel2 border border-border rounded-lg">
+              <span class="material-symbols-outlined text-emerald-400 text-[20px] mt-0.5">flag</span>
+              <div>
+                <h4 class="text-xs font-bold text-text">Report &amp; Submit Telemetry</h4>
+                <p class="text-[11px] text-subtext mt-0.5">Submit to security operations center blocklist feed.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-border flex items-center justify-between text-[11px] text-muted">
+          <span>Scanned: <span id="scan-time">Just now</span></span>
+          <span class="font-mono">Indicators: <span id="malicious-count">0</span></span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Footer Info -->
+  <div class="flex justify-between items-center mt-2 border-t border-border pt-3 text-xs text-subtext">
+    <div class="flex items-center gap-1.5">
+      <span class="material-symbols-outlined text-[16px] text-muted">info</span>
+      <p>Multi-vector inspection powered by VirusTotal, PhishTank, AbuseIPDB, and machine learning models.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function safeSetHTML(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+
+function safeSetText(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+
+function switchScanTab(tabName) {
+  const tabs = ['indicators', 'behavior', 'actions'];
+  tabs.forEach(t => {
+    const btn = document.getElementById('tab-btn-' + t);
+    const content = document.getElementById('tab-content-' + t);
+    if (t === tabName) {
+      if (btn) btn.className = 'px-3 py-2 border-b-2 border-emerald-500 text-emerald-400 cursor-pointer font-bold';
+      if (content) content.classList.remove('hidden');
+    } else {
+      if (btn) btn.className = 'px-3 py-2 border-b-2 border-transparent text-subtext hover:text-text cursor-pointer';
+      if (content) content.classList.add('hidden');
+    }
+  });
+}
+
+async function scanUrl() {
+  const urlInputEl = document.getElementById('url-input');
+  if (!urlInputEl) return;
+  const rawUrl = urlInputEl.value.trim();
+  if (!rawUrl) { alert('Please enter a URL to scan.'); return; }
+  
+  let submitUrl = rawUrl;
+  if (!submitUrl.startsWith('http://') && !submitUrl.startsWith('https://')) {
+    submitUrl = 'https://' + submitUrl;
+    urlInputEl.value = submitUrl;
+  }
+
+  const loadOverlay = document.getElementById('loading-overlay');
+  if (loadOverlay) loadOverlay.classList.remove('hidden');
+
+  try {
+    const res = await fetch('/api/scan-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: submitUrl })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Scan failed');
+
+    const score = data.final_score ?? 0;
+    const isCritical = score >= 75;
+    const isWarn = score >= 45 && score < 75;
+    const isSafe = score < 45;
+
+    // ── Risk badge ──
+    const badgeRisk = document.getElementById('badge-risk-level');
+    if (badgeRisk) {
+      badgeRisk.textContent = isCritical ? 'High Risk' : isWarn ? 'Suspicious' : 'Safe';
+      badgeRisk.className = `px-2.5 py-1 rounded-md text-xs font-bold ${isCritical ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30' : isWarn ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'}`;
+    }
+
+    // ── Shield icon ──
+    const shieldIcon = document.getElementById('shield-icon-container');
+    if (shieldIcon) {
+      shieldIcon.innerHTML = isCritical
+        ? `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-rose-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>`
+        : isWarn
+        ? `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-amber-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>`
+        : `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-emerald-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M9 12l2 2 4-4"></path></svg>`;
+    }
+
+    // ── Headline + real backend summary ──
+    const headlineEl = document.getElementById('result-headline');
+    if (headlineEl) {
+      headlineEl.textContent = isCritical ? 'High Risk' : isWarn ? 'Suspicious' : 'Safe URL';
+      headlineEl.className = `text-lg font-extrabold tracking-tight uppercase leading-none mb-1 ${isCritical ? 'text-rose-400' : isWarn ? 'text-amber-400' : 'text-emerald-400'}`;
+    }
+    // Use the real summary from the backend (strip emoji prefix)
+    const cleanSummary = (data.summary || '').replace(/^[🚨⚠️✅]\s*/, '');
+    safeSetText('result-subtext', cleanSummary);
+
+    // ── Confidence score bars ──
+    const numBars = Math.min(5, Math.max(1, Math.ceil((score / 100) * 5)));
+    let barsHtml = '';
+    const barColor = isCritical ? 'bg-rose-500' : isWarn ? 'bg-amber-500' : 'bg-emerald-500';
+    for(let i=0; i<5; i++) {
+      if(i < numBars) barsHtml += `<div class="flex-1 h-1.5 rounded-full ${barColor}"></div>`;
+      else barsHtml += `<div class="flex-1 h-1.5 rounded-full bg-panel3"></div>`;
+    }
+    safeSetHTML('score-bars', barsHtml);
+    const scoreColor = isCritical ? 'text-rose-400' : isWarn ? 'text-amber-400' : 'text-emerald-400';
+    safeSetHTML('score-text', `<span class="${scoreColor}">${score}</span><span class="text-muted font-normal"> / 100</span>`);
+
+    // ── Threat signals count ──
+    const signals = data.signals || [];
+    const vtData = data.threat_intel?.virustotal || {};
+    const vtMalicious = vtData.malicious || 0;
+    const threatsDetected = signals.filter(s =>
+      /flagged|phishing|malicious|suspicious|blocklist|brand name|ip address|http\)|tld/i.test(s)
+    ).length;
+    safeSetText('threats-count', threatsDetected);
+    safeSetText('malicious-count', signals.length);
+
+    const dRep = score >= 75 ? 'Very Bad' : score >= 45 ? 'Poor' : 'Good';
+    safeSetText('domain-rep-badge', dRep);
+
+    const now = new Date();
+    safeSetText('scan-time', now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+
+    // ── URL Analysis Details ──
+    const finalUrl = data.resolved_url || data.url || submitUrl;
+    const domainName = data.domain || (() => { try { return new URL(data.url).hostname; } catch(e) { return data.url; }})();
+
+    const finalUrlEl = document.getElementById('info-final-url');
+    if (finalUrlEl) { finalUrlEl.textContent = finalUrl; finalUrlEl.title = finalUrl; }
+    safeSetText('info-domain', domainName);
+
+    // HTTPS — use real is_https field from backend
+    const sslOk = data.is_https === true;
+    safeSetText('info-status', sslOk ? 'Yes (HTTPS)' : 'No (HTTP — Unencrypted)');
+
+    // Redirect Chain — use real has_redirect + resolved_url
+    if (data.has_redirect && data.resolved_url) {
+      const shortDest = data.resolved_url.length > 50 ? data.resolved_url.slice(0, 47) + '…' : data.resolved_url;
+      safeSetText('info-content-type', `Redirected → ${shortDest}`);
+    } else {
+      safeSetText('info-content-type', 'No redirects detected');
+    }
+
+    const resolvedEl = document.getElementById('info-resolved-url');
+    if (resolvedEl) { const rv = data.resolved_url || finalUrl; resolvedEl.textContent = rv; resolvedEl.title = rv; }
+
+    // Domain Age — real WHOIS data
+    const da = data.threat_intel?.domain_age;
+    if (da?.available && typeof da.age_days === 'number') {
+      const ageColor = da.is_suspicious ? 'text-rose-400 font-bold' : 'text-emerald-400 font-bold';
+      safeSetHTML('info-domain-age', `<span class="${ageColor}">${da.age_days} days old</span>${da.created ? ` (registered ${da.created})` : ''}`);
+    } else {
+      safeSetText('info-domain-age', 'Not available');
+    }
+
+    // URL Parameters — real count
+    const hasParams = submitUrl.includes('?');
+    let paramCount = 0;
+    if (hasParams) {
+      try { paramCount = [...new URL(submitUrl).searchParams.keys()].length; }
+      catch(e) { paramCount = (submitUrl.split('?')[1] || '').split('&').filter(Boolean).length; }
+    }
+    safeSetText('info-parameters', hasParams ? `${paramCount} parameter${paramCount !== 1 ? 's' : ''}` : 'None');
+
+    // SSL/TLS — real ssl_info from backend
+    const sslInfo = data.html_analysis?.ssl_info || {};
+    let sslDisplay;
+    if (sslInfo.available && sslInfo.valid) {
+      const issuer = sslInfo.issuer ? ` · ${sslInfo.issuer}` : '';
+      const expiry = sslInfo.expires ? ` (exp. ${sslInfo.expires})` : '';
+      sslDisplay = `<span class="material-symbols-outlined text-[14px] text-emerald-400">lock</span> Valid${issuer}${expiry}`;
+    } else if (sslInfo.available && !sslInfo.valid) {
+      sslDisplay = `<span class="material-symbols-outlined text-[14px] text-rose-400">lock_open</span> Invalid / Expired`;
+    } else if (!sslOk) {
+      sslDisplay = `<span class="material-symbols-outlined text-[14px] text-rose-400">lock_open</span> None (HTTP only — no encryption)`;
+    } else {
+      sslDisplay = `<span class="material-symbols-outlined text-[14px] text-muted">lock</span> Could not verify`;
+    }
+    safeSetHTML('info-ssl', sslDisplay);
+
+    // ── Behavior Tab — real backend fields ──
+    safeSetText('beh-redirects', data.has_redirect && data.resolved_url ? `Yes → ${data.resolved_url}` : 'No redirects detected');
+    safeSetText('beh-params', hasParams ? `${paramCount} query parameter${paramCount !== 1 ? 's' : ''}` : 'No query parameters');
+
+    const suspiciousSignalCount = signals.filter(s => !/not found|0\/|trusted|allowlist|no known|not in/i.test(s)).length;
+    safeSetText('beh-links', suspiciousSignalCount > 0 ? `${suspiciousSignalCount} suspicious signal${suspiciousSignalCount !== 1 ? 's' : ''} detected` : 'No suspicious signals detected');
+
+    const isDownload = /\.(exe|dll|apk|zip|rar|tar|gz|pdf|doc|xls|js|bat|sh)$/i.test(finalUrl);
+    safeSetText('beh-downloads', isDownload ? 'File download detected' : 'No file download activity');
+    safeSetText('beh-forms', data.html_analysis?.has_password_field ? 'Password form field detected' : 'No credential form fields found');
+
+    // ── Risk Indicators — derived from real backend data ──
+    const vtAvailable = vtData.available === true;
+    const isPhishing = data.threat_intel?.phishtank?.is_phishing === true;
+    const isMalware = data.threat_intel?.urlhaus?.is_malicious === true || (vtAvailable && vtMalicious > 0);
+    const hasBrandMismatch = data.html_analysis?.brand_mismatch === true;
+    const hasPasswordField = data.html_analysis?.has_password_field === true;
+    const hasSuspiciousContent = hasBrandMismatch || (hasPasswordField && !sslOk) || (vtAvailable && vtMalicious > 0);
+    const isLowRep = (data.threat_intel?.overall_score ?? 0) >= 60;
+    const isNewDomain = da?.available && da.is_suspicious === true;
+
+    const phishingLevel = isPhishing || (hasBrandMismatch && hasPasswordField) ? 'High' : isWarn ? 'Medium' : 'Low';
+    const contentLevel = hasSuspiciousContent ? 'High' : suspiciousSignalCount > 2 ? 'Medium' : 'Low';
+    const malwareLevel = isMalware ? 'High' : 'Low';
+    const domainRepLevel = isLowRep || isCritical ? 'High' : isWarn ? 'Medium' : 'Low';
+    const ageLevel = isNewDomain ? 'High' : 'Low';
+
+    const indicators = [
+      {
+        icon: 'shield_lock', title: 'Phishing Risk',
+        desc: isPhishing ? 'Confirmed in PhishTank community phishing database.'
+              : hasBrandMismatch ? 'Page impersonates a known brand — possible credential harvest.'
+              : 'No confirmed phishing indicators found.',
+        level: phishingLevel
+      },
+      {
+        icon: 'find_in_page', title: 'Suspicious Content',
+        desc: hasBrandMismatch ? 'Page title/content impersonates a brand on an unrelated domain.'
+              : hasPasswordField && !sslOk ? 'Password field over plain HTTP — credential theft risk.'
+              : vtAvailable && vtMalicious > 0 ? `${vtMalicious} engine(s) flagged malicious content.`
+              : 'No malicious content detected on the page.',
+        level: contentLevel
+      },
+      {
+        icon: 'bug_report', title: 'Malware / Payload',
+        desc: vtAvailable && vtMalicious > 0 ? `${vtMalicious}/${vtData.total_engines} VirusTotal engines flagged.`
+              : isMalware ? 'Listed in URLhaus active malware distribution feed.'
+              : vtAvailable ? `VirusTotal: 0/${vtData.total_engines} engines — no detections.`
+              : 'No malware signatures detected.',
+        level: malwareLevel
+      },
+      {
+        icon: 'language', title: 'Domain Reputation',
+        desc: isLowRep ? 'Low domain reputation across intelligence sources.'
+              : score >= 75 ? 'Multiple high-confidence threat signals triggered.'
+              : vtAvailable ? `VirusTotal: clean across ${vtData.total_engines} engines.`
+              : `Risk score: ${score}/100.`,
+        level: domainRepLevel
+      },
+      {
+        icon: 'schedule', title: 'Domain Age',
+        desc: da?.available
+              ? `Registered ${da.age_days} days ago${da.created ? ` (${da.created})` : ''}. ${da.is_suspicious ? 'Very new domain — elevated risk.' : 'Established domain.'}`
+              : 'WHOIS registration date unavailable (private or lookup failed).',
+        level: ageLevel
+      }
+    ];
+
+    const indicatorsUl = document.getElementById('risk-indicators-list');
+    if (indicatorsUl) {
+      indicatorsUl.innerHTML = indicators.map(ind => {
+        const badgeStyle = ind.level === 'High' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : ind.level === 'Medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+        return `<li class="flex items-center justify-between p-3 rounded-lg border border-border bg-panel2">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-muted text-[18px]">${ind.icon}</span>
+            <div>
+              <div class="text-xs font-semibold text-text">${ind.title}</div>
+              <div class="text-[11px] text-subtext">${ind.desc}</div>
+            </div>
+          </div>
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${badgeStyle} ml-3 flex-shrink-0">${ind.level}</span>
+        </li>`;
+      }).join('');
+
+      // Append the real backend scan log (signals) below indicators
+      if (signals.length > 0) {
+        indicatorsUl.innerHTML += `<li class="mt-3 pt-3 border-t border-border">
+          <div class="text-[11px] font-bold text-subtext uppercase tracking-wider mb-2">Scan Log (${signals.length})</div>
+          <div class="space-y-1">
+            ${signals.map(s => {
+              const isThreat = /flagged|phishing|malicious|suspicious|blocklist|brand name|ip address|http\)|tld/i.test(s);
+              return `<div class="flex items-start gap-2 text-[11px] text-subtext leading-snug">
+                <span class="w-1.5 h-1.5 rounded-full ${isThreat ? 'bg-rose-400' : 'bg-emerald-400'} mt-1 flex-shrink-0"></span>
+                <span>${s}</span>
+              </div>`;
+            }).join('')}
+          </div>
+        </li>`;
+      }
+    }
+
+    // ── SOC Actions — dynamic based on actual risk level ──
+    const actionsContainer = document.getElementById('tab-content-actions');
+    if (actionsContainer) {
+      if (isCritical) {
+        actionsContainer.innerHTML = `<div class="space-y-2.5">
+          <div class="flex items-start gap-3 p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg">
+            <span class="material-symbols-outlined text-rose-400 text-[20px] mt-0.5">block</span>
+            <div><h4 class="text-xs font-bold text-rose-400">Do Not Visit This URL</h4>
+            <p class="text-[11px] text-rose-300 mt-0.5">This URL is flagged high-risk. Avoid opening in any browser — personal or corporate.</p></div>
+          </div>
+          <div class="flex items-start gap-3 p-3 bg-panel2 border border-border rounded-lg">
+            <span class="material-symbols-outlined text-emerald-400 text-[20px] mt-0.5">flag</span>
+            <div><h4 class="text-xs font-bold text-text">Report &amp; Escalate</h4>
+            <p class="text-[11px] text-subtext mt-0.5">Submit URL to your security operations center and incident response team immediately.</p></div>
+          </div>
+          <div class="flex items-start gap-3 p-3 bg-panel2 border border-border rounded-lg">
+            <span class="material-symbols-outlined text-amber-400 text-[20px] mt-0.5">security</span>
+            <div><h4 class="text-xs font-bold text-text">Block Domain: ${domainName}</h4>
+            <p class="text-[11px] text-subtext mt-0.5">Add this domain to your firewall or DNS filter blocklist to protect your network users.</p></div>
+          </div></div>`;
+      } else if (isWarn) {
+        actionsContainer.innerHTML = `<div class="space-y-2.5">
+          <div class="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+            <span class="material-symbols-outlined text-amber-400 text-[20px] mt-0.5">warning</span>
+            <div><h4 class="text-xs font-bold text-amber-400">Proceed With Caution</h4>
+            <p class="text-[11px] text-amber-300 mt-0.5">Suspicious signals detected. Avoid entering credentials or financial information.</p></div>
+          </div>
+          <div class="flex items-start gap-3 p-3 bg-panel2 border border-border rounded-lg">
+            <span class="material-symbols-outlined text-emerald-400 text-[20px] mt-0.5">flag</span>
+            <div><h4 class="text-xs font-bold text-text">Monitor &amp; Report if Escalated</h4>
+            <p class="text-[11px] text-subtext mt-0.5">Report to your security team if further suspicious activity is observed from this domain.</p></div>
+          </div></div>`;
+      } else {
+        actionsContainer.innerHTML = `<div class="space-y-2.5">
+          <div class="flex items-start gap-3 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+            <span class="material-symbols-outlined text-emerald-400 text-[20px] mt-0.5">check_circle</span>
+            <div><h4 class="text-xs font-bold text-emerald-400">URL Appears Safe</h4>
+            <p class="text-[11px] text-emerald-300 mt-0.5">No significant threats detected. This URL passed all active security checks.</p></div>
+          </div>
+          <div class="flex items-start gap-3 p-3 bg-panel2 border border-border rounded-lg">
+            <span class="material-symbols-outlined text-emerald-400 text-[20px] mt-0.5">info</span>
+            <div><h4 class="text-xs font-bold text-text">Stay Vigilant</h4>
+            <p class="text-[11px] text-subtext mt-0.5">Safe URLs can become threats after compromise. Run periodic re-scans on frequently accessed links.</p></div>
+          </div></div>`;
+      }
+    }
+
+    // ── Toggle Prescan → Postscan sections ──
+    const prescanChecklist = document.getElementById('prescan-checklist');
+    if (prescanChecklist) prescanChecklist.classList.add('hidden');
+
+    const prescanFeeds = document.getElementById('threat-feeds-prescan');
+    if (prescanFeeds) prescanFeeds.classList.add('hidden');
+
+    const scanResultCard = document.getElementById('scan-result-card');
+    if (scanResultCard) {
+      scanResultCard.classList.remove('hidden');
+      scanResultCard.classList.add('flex');
+    }
+
+    const detailsSec = document.getElementById('details-section');
+    if (detailsSec) {
+      detailsSec.classList.remove('hidden');
+      detailsSec.classList.add('flex');
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert('An error occurred during scan: ' + err.message);
+  } finally {
+    if (loadOverlay) loadOverlay.classList.add('hidden');
+  }
+}
+
+document.getElementById('url-input').addEventListener('keydown', e => { if (e.key === 'Enter') scanUrl(); });
+</script>
+{% endblock %}

@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+{% block title %}Scan History · PhishGuard{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-4 fade-in">
+    <div>
+        <h1 class="text-[26px] font-bold text-text tracking-tight leading-none mb-1.5">History</h1>
+        <p class="text-[13px] text-subtext">All URL, Domain, and Email scans in one place.</p>
+    </div>
+    <div class="flex items-center gap-3">
+        <a href="/scan" class="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-colors shadow-sm bg-panel border border-border hover:bg-panel2 text-text">
+            <span class="material-symbols-outlined text-[17px]">mail</span> Scan Email
+        </a>
+        <a href="/url-scan" class="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-colors shadow-sm bg-panel border border-border hover:bg-panel2 text-text">
+            <span class="material-symbols-outlined text-[17px]">link</span> Scan URL
+        </a>
+        <a href="/domain-reputation" class="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-colors shadow-sm bg-navy text-white hover:opacity-90">
+            <span class="material-symbols-outlined text-[17px]">add</span> Scan Domain
+        </a>
+    </div>
+</div>
+
+<!-- Stats strip -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    
+    <!-- Total Scans -->
+    <div class="bg-panel rounded-xl border border-border shadow-sm p-4 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-panel2 border border-border flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-[18px] text-brand">manage_search</span>
+        </div>
+        <div>
+            <div class="text-xl font-bold font-mono text-text leading-tight">{{ total }}</div>
+            <div class="text-[10px] text-muted font-bold uppercase tracking-widest mt-0.5">Total Scanned</div>
+        </div>
+    </div>
+    
+    <!-- Clean -->
+    <div class="bg-panel rounded-xl border border-border shadow-sm p-4 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-panel2 border border-border flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-[18px] text-safe">check_circle</span>
+        </div>
+        <div>
+            <div class="text-xl font-bold font-mono text-text leading-tight">{{ clean }}</div>
+            <div class="text-[10px] text-muted font-bold uppercase tracking-widest mt-0.5">Clean</div>
+        </div>
+    </div>
+    
+    <!-- Suspicious -->
+    <div class="bg-panel rounded-xl border border-border shadow-sm p-4 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-panel2 border border-border flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-[18px] text-medium">warning</span>
+        </div>
+        <div>
+            <div class="text-xl font-bold font-mono text-text leading-tight">{{ suspicious }}</div>
+            <div class="text-[10px] text-muted font-bold uppercase tracking-widest mt-0.5">Suspicious</div>
+        </div>
+    </div>
+    
+    <!-- Phishing -->
+    <div class="bg-panel rounded-xl border border-border shadow-sm p-4 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-panel2 border border-border flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-[18px] text-danger" style="font-variation-settings:'FILL' 1;">gpp_bad</span>
+        </div>
+        <div>
+            <div class="text-xl font-bold font-mono text-text leading-tight">{{ phishing }}</div>
+            <div class="text-[10px] text-muted font-bold uppercase tracking-widest mt-0.5">Phishing</div>
+        </div>
+    </div>
+    
+</div>
+
+<!-- Filters bar -->
+<div class="bg-panel rounded-xl border border-border shadow-sm p-4 mb-4 flex items-center gap-3 flex-wrap fade-in">
+    <div class="relative flex-1 min-w-48">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-muted">search</span>
+        <input id="inboxSearch" type="text" placeholder="Search scans... (Press '/')"
+            class="w-full pl-9 pr-3 py-2 text-[12px] border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-brand bg-panel text-text font-medium"
+            oninput="filterInbox()">
+    </div>
+    <select id="typeFilter" onchange="filterInbox()" class="px-3 py-2 text-[12px] border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-brand bg-panel text-text font-medium">
+        <option value="">All Types</option>
+        <option value="email">Email</option>
+        <option value="url">URL</option>
+        <option value="domain">Domain</option>
+    </select>
+    <select id="statusFilter" onchange="filterInbox()" class="px-3 py-2 text-[12px] border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-brand bg-panel text-text font-medium">
+        <option value="">All Statuses</option>
+        <option value="CLEAN">Clean</option>
+        <option value="SUSPICIOUS">Suspicious</option>
+        <option value="PHISHING">Phishing</option>
+    </select>
+    <select id="sortFilter" onchange="filterInbox()" class="px-3 py-2 text-[12px] border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-brand bg-panel text-text font-medium">
+        <option value="newest">Newest First</option>
+        <option value="oldest">Oldest First</option>
+    </select>
+    <span id="rowCount" class="text-[12px] text-subtext font-semibold whitespace-nowrap">{{ scans|length }} scans</span>
+</div>
+
+<!-- Scans Table -->
+<div class="bg-panel rounded-xl border border-border shadow-sm overflow-hidden fade-in">
+    <table id="scansTable" class="w-full text-left border-collapse">
+        <thead class="bg-panel2 border-b border-border">
+            <tr class="text-[11px] font-bold text-subtext uppercase tracking-widest">
+                <th class="py-2 px-3 font-semibold">Type</th>
+                <th class="py-2 px-3 font-semibold">Status</th>
+                <th class="py-2 px-3 font-semibold">Target</th>
+                <th class="py-2 px-3 font-semibold">Subject / URL</th>
+                <th class="py-2 px-3 font-semibold">Risk Score</th>
+                <th class="py-2 px-3 font-semibold">Scanned</th>
+                <th class="py-2 px-3 font-semibold text-right">Action</th>
+            </tr>
+        </thead>
+        <tbody id="inboxBody" class="text-[13px] divide-y divide-border text-subtext">
+            {% for scan in scans %}
+            <tr class="hover:bg-panel2 transition-colors cursor-pointer inbox-row"
+                data-status="{{ scan.status }}"
+                data-type="{{ scan.scan_type }}"
+                data-risk="{{ scan.risk_score }}"
+                data-ts="{{ scan.timestamp }}"
+                {% if scan.scan_type == 'email' %}onclick="window.location.href='/email/{{ scan.scan_id }}'"{% endif %}>
+                
+                <!-- Type -->
+                <td class="py-2 px-3">
+                    {% if scan.scan_type == 'url' %}
+                    <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-border bg-panel shadow-sm text-text text-[11px] font-medium">
+                        <span class="material-symbols-outlined text-[14px] text-brand">link</span> URL
+                    </span>
+                    {% elif scan.scan_type == 'domain' %}
+                    <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-border bg-panel shadow-sm text-text text-[11px] font-medium">
+                        <span class="material-symbols-outlined text-[14px] text-purple-500">language</span> Domain
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-border bg-panel shadow-sm text-text text-[11px] font-medium">
+                        <span class="material-symbols-outlined text-[14px] text-slate-500">mail</span> Email
+                    </span>
+                    {% endif %}
+                </td>
+
+                <!-- Status -->
+                <td class="py-2 px-3">
+                    {% if scan.status == 'PHISHING' %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border bg-panel shadow-sm text-[11px] font-medium text-text">
+                        <span class="w-1.5 h-1.5 rounded-full bg-danger inline-block animate-pulse" style="box-shadow: 0 0 8px var(--danger);"></span>
+                        Phishing
+                    </span>
+                    {% elif scan.status == 'SUSPICIOUS' %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border bg-panel shadow-sm text-[11px] font-medium text-text">
+                        <span class="w-1.5 h-1.5 rounded-full bg-medium inline-block"></span>
+                        Suspicious
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border bg-panel shadow-sm text-[11px] font-medium text-text">
+                        <span class="w-1.5 h-1.5 rounded-full bg-safe inline-block"></span>
+                        Clean
+                    </span>
+                    {% endif %}
+                </td>
+                
+                <!-- Sender / Domain -->
+                <td class="py-2 px-3 font-semibold text-text">
+                    <span class="truncate max-w-[150px] block" title="{{ scan.sender }}">{{ scan.sender or '—' }}</span>
+                </td>
+                
+                <!-- Subject / URL -->
+                <td class="py-2 px-3 text-subtext font-medium max-w-[200px]">
+                    <span class="truncate block" title="{{ scan.subject }}">{{ scan.subject or 'No subject' }}</span>
+                </td>
+                
+                <!-- Risk Score bar -->
+                <td class="py-2 px-3">
+                    <div class="flex items-center gap-2">
+                        <div class="h-1.5 w-16 bg-panel3 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full {% if scan.risk_score >= 75 %}bg-danger{% elif scan.risk_score >= 40 %}bg-medium{% else %}bg-safe{% endif %}"
+                                style="width: {{ scan.risk_score }}%"></div>
+                        </div>
+                        <span class="text-[11px] font-mono font-bold {% if scan.risk_score >= 75 %}text-danger{% elif scan.risk_score >= 40 %}text-medium{% else %}text-safe{% endif %}">{{ scan.risk_score }}</span>
+                    </div>
+                </td>
+                
+                <td class="py-2 px-3 text-[11px] font-mono text-muted whitespace-nowrap">{{ scan.timestamp }}</td>
+                
+                <td class="py-2 px-3 text-right">
+                    {% if scan.scan_type == 'email' %}
+                    <a href="/email/{{ scan.scan_id }}" class="text-[12px] text-brand hover:text-brand-hi font-bold transition-colors" onclick="event.stopPropagation()">View →</a>
+                    {% else %}
+                    <span class="text-[12px] text-muted font-semibold">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="py-16 text-center text-muted">
+                    <span class="material-symbols-outlined text-[40px] block mb-3 text-muted">manage_search</span>
+                    <p class="text-[14px] font-semibold">No scans recorded yet.</p>
+                    <p class="text-[12px] text-muted mt-1">Run a URL, domain, or email scan to populate history.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <!-- Empty search hint -->
+    <div id="searchEmptyHint" class="hidden py-10 text-center text-[12px] text-subtext font-semibold bg-panel2">No scans match your filter.</div>
+</div>
+
+<!-- Pagination Controls -->
+<div id="paginationBar" class="flex items-center justify-between mt-4 text-[12px] text-subtext" style="display:none!important;">
+    <span id="pageInfo"></span>
+    <div class="flex items-center gap-2">
+        <button id="prevBtn" onclick="changePage(-1)" class="px-3 py-1.5 rounded-lg border border-border text-[12px] font-semibold text-subtext hover:bg-panel2 transition-colors shadow-sm bg-panel cursor-pointer">
+            ← Prev
+        </button>
+        <span id="pageNumbers" class="flex items-center gap-1"></span>
+        <button id="nextBtn" onclick="changePage(1)" class="px-3 py-1.5 rounded-lg border border-border text-[12px] font-semibold text-subtext hover:bg-panel2 transition-colors shadow-sm bg-panel cursor-pointer">
+            Next →
+        </button>
+    </div>
+</div>
+
+<script>
+const PAGE_SIZE = 25;
+let _currentPage = 1;
+let _visibleRows = [];
+
+function filterInbox() {
+    const q = document.getElementById('inboxSearch').value.toLowerCase();
+    const status = document.getElementById('statusFilter').value;
+    const type = document.getElementById('typeFilter').value;
+    const rows = document.querySelectorAll('.inbox-row');
+
+    _visibleRows = [];
+    rows.forEach(row => {
+        const matchText = row.textContent.toLowerCase().includes(q);
+        const matchStatus = !status || row.dataset.status === status;
+        const matchType = !type || row.dataset.type === type;
+        row.style.display = 'none';
+        if (matchText && matchStatus && matchType) _visibleRows.push(row);
+    });
+
+    _currentPage = 1;
+    renderPage();
+    document.getElementById('rowCount').textContent = `${_visibleRows.length} scan${_visibleRows.length !== 1 ? 's' : ''}`;
+    document.getElementById('searchEmptyHint').classList.toggle('hidden', _visibleRows.length > 0);
+}
+
+function renderPage() {
+    const start = (_currentPage - 1) * PAGE_SIZE;
+    const end   = start + PAGE_SIZE;
+    const allRows = document.querySelectorAll('.inbox-row');
+
+    allRows.forEach(r => r.style.display = 'none');
+    _visibleRows.slice(start, end).forEach(r => r.style.display = '');
+
+    const totalPages = Math.ceil(_visibleRows.length / PAGE_SIZE);
+    const bar = document.getElementById('paginationBar');
+
+    if (totalPages > 1) {
+        bar.style.cssText = 'display:flex!important;align-items:center;justify-content:space-between;margin-top:16px;';
+        document.getElementById('pageInfo').textContent = `Page ${_currentPage} of ${totalPages}`;
+        document.getElementById('prevBtn').disabled = _currentPage === 1;
+        document.getElementById('nextBtn').disabled = _currentPage === totalPages;
+
+        const nums = document.getElementById('pageNumbers');
+        nums.innerHTML = '';
+        for (let i = 1; i <= Math.min(totalPages, 7); i++) {
+            const btn = document.createElement('button');
+            btn.textContent = i;
+            btn.onclick = () => { _currentPage = i; renderPage(); };
+            btn.style.cssText = `padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;border:1px solid var(--border);cursor:pointer;transition:all .14s;background:${i === _currentPage ? 'var(--brand)' : 'transparent'};color:${i === _currentPage ? '#fff' : 'var(--subtext)'}`;
+            nums.appendChild(btn);
+        }
+    } else {
+        bar.style.cssText = 'display:none!important;';
+    }
+}
+
+function changePage(dir) {
+    const totalPages = Math.ceil(_visibleRows.length / PAGE_SIZE);
+    _currentPage = Math.max(1, Math.min(totalPages, _currentPage + dir));
+    renderPage();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    _visibleRows = Array.from(document.querySelectorAll('.inbox-row'));
+    renderPage();
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        const input = document.getElementById('inboxSearch');
+        if (input) { input.focus(); input.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    }
+});
+</script>
+{% endblock %}

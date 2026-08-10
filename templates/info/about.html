@@ -1,0 +1,64 @@
+{% extends "public_base.html" %}
+
+{% block title %}About &mdash; PhishGuard{% endblock %}
+
+{% block content %}
+<div class="pt-24 pb-20 bg-grid-pattern relative border-b border-gray-100">
+    <div class="absolute inset-0 bg-gradient-to-b from-blue-50/50 to-transparent pointer-events-none"></div>
+    <div class="max-w-3xl mx-auto px-6 relative z-10 text-center">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-info-dim text-[#1e3a8a] border border-blue-100 text-xs font-medium tracking-wide uppercase mb-6">
+            About Us
+        </div>
+        <h1 class="text-4xl md:text-5xl font-semibold tracking-tight text-gray-900 mb-6">Built to stop phishing,<br/>at every scale</h1>
+        <p class="text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">PhishGuard was created by security professionals who got tired of seeing phishing attacks succeed. We built the tool we always wanted &mdash; and made it available to everyone.</p>
+    </div>
+</div>
+
+<div class="max-w-3xl mx-auto px-6 py-16">
+    <a href="/" class="inline-flex items-center gap-2 text-brand-blue font-medium hover:text-info transition mb-12">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        Back to Home
+    </a>
+
+    <div class="max-w-none">
+        <h2 class="text-2xl font-semibold text-gray-900 mb-4">Our Mission</h2>
+        <p class="text-gray-600 mb-6 leading-relaxed">Phishing is the #1 cause of data breaches worldwide. It's simple, effective, and devastatingly underestimated. Our mission is to give every individual and every security team the tools to identify and neutralize phishing threats before they cause damage.</p>
+        <p class="text-gray-600 mb-12 leading-relaxed">PhishGuard combines advanced analysis with real-time global threat intelligence to deliver a verdict in under 3 seconds &mdash; no inbox access required, no setup, no complexity.</p>
+
+        <div class="grid md:grid-cols-3 gap-6 mb-16">
+            <div class="bg-panel border border-gray-100 p-6 rounded-xl shadow-sm">
+                <div class="w-10 h-10 rounded-lg bg-info-dim text-[#1e3a8a] flex items-center justify-center mb-4">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                </div>
+                <h3 class="font-semibold text-gray-900 mb-2">Speed First</h3>
+                <p class="text-sm text-gray-600 leading-relaxed">Full analysis delivered in under 3 seconds. Fast enough for the moment a suspicious email arrives.</p>
+            </div>
+            <div class="bg-panel border border-gray-100 p-6 rounded-xl shadow-sm">
+                <div class="w-10 h-10 rounded-lg bg-safe-dim text-emerald-600 flex items-center justify-center mb-4">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                </div>
+                <h3 class="font-semibold text-gray-900 mb-2">Privacy by Design</h3>
+                <p class="text-sm text-gray-600 leading-relaxed">We never ask for inbox access. You paste what you want analyzed &mdash; nothing more, nothing less.</p>
+            </div>
+            <div class="bg-panel border border-gray-100 p-6 rounded-xl shadow-sm">
+                <div class="w-10 h-10 rounded-lg bg-info-dim text-[#1e3a8a] flex items-center justify-center mb-4">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                </div>
+                <h3 class="font-semibold text-gray-900 mb-2">Deterministic</h3>
+                <p class="text-sm text-gray-600 leading-relaxed">Every verdict includes a plain-language breakdown. Know exactly why something is flagged.</p>
+            </div>
+        </div>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mb-4">What We Analyze</h2>
+        <p class="text-gray-600 mb-8 leading-relaxed">Every scan runs through a multi-stage pipeline: email header authentication (SPF, DKIM, DMARC), sender domain age and reputation, embedded URL cross-checking against VirusTotal, PhishTank, and URLhaus, advanced content analysis for urgency patterns and manipulation language, and a final risk score from 0&ndash;100.</p>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mb-4">Who We're For</h2>
+        <p class="text-gray-600 mb-8 leading-relaxed">PhishGuard serves a broad range of users &mdash; from individuals checking a suspicious email before they click, to SOC teams processing thousands of emails a day. Our Free tier requires no registration. Our Team and Business tiers add bulk processing, shared history, role-based access, and SIEM integrations.</p>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mb-4">Contact</h2>
+        <p class="text-gray-600 leading-relaxed">Have questions, partnership inquiries, or security disclosures? Reach out at <a href="mailto:security@phishguard.io" class="text-brand-blue hover:underline">security@phishguard.io</a>. For enterprise pricing or a demo, visit our <a href="/contact" class="text-brand-blue hover:underline">Contact</a> page.</p>
+    </div>
+</div>
+{% endblock %}
+
+

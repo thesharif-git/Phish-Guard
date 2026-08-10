@@ -1,0 +1,90 @@
+{% extends "public_base.html" %}
+{% block title %}Cookie Policy — PhishGuard{% endblock %}
+
+{% block extra_head %}
+<style>
+        .info-hero { background: linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #020617 100%); padding: 100px 0 64px; text-align: center; }
+        .info-hero-tag { display: inline-block; background: rgba(37,99,235,.15); color: #93c5fd; border: 1px solid rgba(37,99,235,.3); border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 18px; }
+        .info-hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; color: #fff; margin: 0 0 14px; }
+        .info-hero p { color: rgba(255,255,255,.65); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+        .info-body { max-width: 820px; margin: 0 auto; padding: 64px 24px 80px; }
+        .back-link { display: inline-flex; align-items: center; gap: 6px; color: #2563eb; text-decoration: none; font-size: .9rem; font-weight: 500; margin-bottom: 32px; }
+        .back-link:hover { opacity: .8; }
+        .info-body h2 { font-size: 1.25rem; font-weight: 700; color: #18181b; margin: 36px 0 10px; }
+        .info-body p, .info-body li { color: #475569; line-height: 1.8; font-size: .95rem; }
+        .info-body ul { padding-left: 20px; margin: 10px 0 16px; }
+        .info-body ul li { margin-bottom: 6px; }
+        .legal-updated { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 18px; color: #64748b; font-size: .85rem; margin-bottom: 36px; }
+        .cookie-table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: .875rem; }
+        .cookie-table th { background: #f1f5f9; text-align: left; padding: 10px 14px; color: #374151; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
+        .cookie-table td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #475569; vertical-align: top; }
+        .cookie-table tr:last-child td { border-bottom: none; }
+        .badge-necessary { background: #ecfdf5; color: #059669; border-radius: 20px; padding: 2px 8px; font-size: .78rem; font-weight: 600; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-panel">
+<div class="info-hero">
+        <div class="container">
+            <div class="info-hero-tag">Legal</div>
+            <h1>Cookie Policy</h1>
+            <p>A plain-language guide to how PhishGuard uses cookies.</p>
+        </div>
+    </div>
+
+    <div class="info-body">
+        <a href="/" class="back-link">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            Back to Home
+        </a>
+        <div class="legal-updated">Last updated: April 1, 2026 &nbsp;·&nbsp; Effective: April 1, 2026</div>
+
+        <h2>What Are Cookies?</h2>
+        <p>Cookies are small text files stored on your device when you visit a website. They allow the site to remember information about your visit, such as your authentication state or preferences.</p>
+
+        <h2>How PhishGuard Uses Cookies</h2>
+        <p>PhishGuard uses <strong>only strictly necessary cookies</strong>. We do not use advertising cookies, tracking cookies, or third-party analytics cookies. Our cookies exist solely to keep you securely logged in.</p>
+
+        <table class="cookie-table">
+            <thead>
+                <tr>
+                    <th>Cookie Name</th>
+                    <th>Purpose</th>
+                    <th>Duration</th>
+                    <th>Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>phishguard_session</code></td>
+                    <td>Maintains your authenticated session. Without this cookie, you would be logged out on every page.</td>
+                    <td>Session (expires on browser close)</td>
+                    <td><span class="badge-necessary">Necessary</span></td>
+                </tr>
+                <tr>
+                    <td><code>csrf_token</code></td>
+                    <td>Protects against Cross-Site Request Forgery attacks by validating that form submissions originate from PhishGuard.</td>
+                    <td>Session</td>
+                    <td><span class="badge-necessary">Necessary</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Cookies We Do NOT Use</h2>
+        <ul>
+            <li>No advertising or retargeting cookies (Google Ads, Facebook Pixel, etc.)</li>
+            <li>No third-party analytics cookies (Google Analytics, Mixpanel, etc.)</li>
+            <li>No social media tracking cookies</li>
+            <li>No persistent fingerprinting technologies</li>
+        </ul>
+
+        <h2>Managing Cookies</h2>
+        <p>You can control and delete cookies through your browser settings. Please note that disabling cookies will prevent you from logging into PhishGuard, as session cookies are required for authentication. Anonymous (non-logged-in) scanning will continue to work without cookies.</p>
+        <p>Popular browser cookie guides: <a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener" style="color:#2563eb;">Chrome</a> · <a href="https://support.mozilla.org/en-US/kb/cookies-information-websites-store-on-your-computer" target="_blank" rel="noopener" style="color:#2563eb;">Firefox</a> · <a href="https://support.apple.com/guide/safari/manage-cookies-sfri11471" target="_blank" rel="noopener" style="color:#2563eb;">Safari</a></p>
+
+        <h2>Contact</h2>
+        <p>Questions about our cookie practices? Email <a href="mailto:privacy@phishguard.io" style="color:#2563eb;">privacy@phishguard.io</a>.</p>
+    </div>
+</div>
+{% endblock %}

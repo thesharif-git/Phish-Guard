@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+{% block title %}Reports &middot; PhishGuard{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="mb-4 flex items-start justify-between">
+  <div>
+    <h1 class="text-[24px] font-bold text-text tracking-tight leading-none mb-1.5">Security Reports</h1>
+    <p class="text-[13px] font-medium text-subtext">A full audit of all scans, threats, and detection events.</p>
+  </div>
+  <button onclick="exportCSV()" class="flex items-center gap-2 px-4 py-2.5 bg-brand hover:opacity-90 hover:bg-black text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all">
+    <span class="material-symbols-outlined text-[16px]">download</span>
+    Export CSV
+  </button>
+</div>
+
+<!-- Trend Chart + Risk Distribution -->
+<div class="grid grid-cols-1 lg:grid-cols-[1.8fr_1fr] gap-4 mb-4">
+
+  <!-- 7-Day Trend -->
+  <div class="bg-panel rounded-xl border border-border shadow-sm p-5">
+    <div class="flex items-center justify-between mb-6 gap-4">
+      <div>
+        <h2 class="text-[15px] font-bold text-text tracking-tight">7-Day Detection Trend</h2>
+        <p class="text-[12px] text-muted font-medium mt-0.5">Daily breakdown of scan verdicts</p>
+      </div>
+      <div class="flex flex-wrap items-center justify-end gap-3 text-[11px] font-semibold">
+        <span class="flex items-center gap-1.5 text-danger"><span class="w-2.5 h-2.5 rounded-full bg-danger inline-block"></span>Phishing</span>
+        <span class="flex items-center gap-1.5 text-medium"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>Suspicious</span>
+        <span class="flex items-center gap-1.5 text-safe"><span class="w-2.5 h-2.5 rounded-full bg-safe inline-block"></span>Clean</span>
+      </div>
+    </div>
+    <div class="relative h-[200px]">
+      <canvas id="trendChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Status Breakdown Donut -->
+  <div class="bg-panel rounded-xl border border-border shadow-sm p-5 flex flex-col">
+    <div class="mb-6">
+      <h2 class="text-[15px] font-bold text-text tracking-tight">Status Distribution</h2>
+      <p class="text-[12px] text-muted font-medium mt-0.5">Proportion of all scans by verdict</p>
+    </div>
+    <div class="flex-1 flex items-center justify-center">
+      <div class="relative w-[150px] h-[150px]">
+        <canvas id="donutChart"></canvas>
+        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <span class="text-[22px] font-bold text-text leading-none">{{ total }}</span>
+          <span class="text-[10px] font-bold text-muted uppercase tracking-wider mt-1">Total</span>
+        </div>
+      </div>
+    </div>
+    <div class="mt-6 space-y-2.5">
+      <div class="flex items-center justify-between text-[12.5px]">
+        <span class="flex items-center gap-2 font-medium text-subtext"><span class="w-2 h-2 rounded-full bg-danger inline-block"></span>Phishing</span>
+        <span class="font-bold text-text">{{ phishing }}</span>
+      </div>
+      <div class="flex items-center justify-between text-[12.5px]">
+        <span class="flex items-center gap-2 font-medium text-subtext"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>Suspicious</span>
+        <span class="font-bold text-text">{{ suspicious }}</span>
+      </div>
+      <div class="flex items-center justify-between text-[12.5px]">
+        <span class="flex items-center gap-2 font-medium text-subtext"><span class="w-2 h-2 rounded-full bg-safe inline-block"></span>Clean</span>
+        <span class="font-bold text-text">{{ clean }}</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Scan History Table -->
+<div class="bg-panel rounded-xl border border-border shadow-sm overflow-hidden mb-4">
+  <div class="px-6 py-4 border-b border-border flex items-center justify-between">
+    <div>
+      <h2 class="text-[15px] font-bold text-text tracking-tight">Full Scan History</h2>
+      <p class="text-[12px] text-muted font-medium mt-0.5">{{ total }} total records</p>
+    </div>
+    <!-- Filter Tabs -->
+    <div class="flex items-center gap-1 bg-panel2 border border-border rounded-lg p-1">
+      <button onclick="filterTable('all')" id="filter-all" class="filter-btn px-3 py-1.5 text-[12px] font-semibold rounded-md bg-panel text-text shadow-sm transition-all">All</button>
+      <button onclick="filterTable('PHISHING')" id="filter-PHISHING" class="filter-btn px-3 py-1.5 text-[12px] font-medium text-subtext hover:text-[#1e3a8a] rounded-md transition-all">Phishing</button>
+      <button onclick="filterTable('SUSPICIOUS')" id="filter-SUSPICIOUS" class="filter-btn px-3 py-1.5 text-[12px] font-medium text-subtext hover:text-[#1e3a8a] rounded-md transition-all">Suspicious</button>
+      <button onclick="filterTable('CLEAN')" id="filter-CLEAN" class="filter-btn px-3 py-1.5 text-[12px] font-medium text-subtext hover:text-[#1e3a8a] rounded-md transition-all">Clean</button>
+    </div>
+  </div>
+
+  {% if scans %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse" id="scanTable">
+      <thead>
+        <tr class="bg-panel2 border-b border-border">
+          <th class="pl-6 py-2 text-[10px] font-bold text-muted uppercase tracking-wider">Scan ID</th>
+          <th class="py-2 text-[10px] font-bold text-muted uppercase tracking-wider">Type</th>
+          <th class="py-2 text-[10px] font-bold text-muted uppercase tracking-wider">Sender / Source</th>
+          <th class="py-2 text-[10px] font-bold text-muted uppercase tracking-wider">Subject</th>
+          <th class="py-2 text-[10px] font-bold text-muted uppercase tracking-wider">Risk Score</th>
+          <th class="py-2 text-[10px] font-bold text-muted uppercase tracking-wider">Verdict</th>
+          <th class="py-2 text-[10px] font-bold text-muted uppercase tracking-wider">Date</th>
+          <th class="pr-6 py-2"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 text-[13px]" id="scanTableBody">
+        {% for scan in scans %}
+        <tr class="hover:bg-panel2 transition-colors scan-row" data-status="{{ scan.status }}">
+          <td class="pl-6 py-2 font-mono text-[11px] text-subtext font-medium">{{ scan.scan_id }}</td>
+          <td class="py-2">
+            {% if '@' in scan.sender %}
+            <span class="flex items-center gap-1.5 text-subtext font-medium text-[12px]">
+              <span class="material-symbols-outlined text-[15px]">mail</span>
+              Email
+            </span>
+            {% else %}
+            <span class="flex items-center gap-1.5 text-subtext font-medium text-[12px]">
+              <span class="material-symbols-outlined text-[15px]">link</span>
+              URL
+            </span>
+            {% endif %}
+          </td>
+          <td class="py-2 font-semibold text-text max-w-[160px] truncate pr-4">{{ scan.sender }}</td>
+          <td class="py-2 text-subtext font-medium max-w-[200px] truncate pr-4">{{ scan.subject or '—' }}</td>
+          <td class="py-2">
+            <span class="font-bold {% if scan.risk_score >= 70 %}text-danger{% elif scan.risk_score >= 40 %}text-amber-600{% else %}text-emerald-600{% endif %}">
+              {{ scan.risk_score }}<span class="text-muted font-medium text-[11px]">/100</span>
+            </span>
+          </td>
+          <td class="py-2">
+            {% if scan.status == 'PHISHING' %}
+            <span class="inline-flex items-center gap-1 bg-danger-dim text-danger border border-red-100 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
+              <span class="w-1 h-1 bg-danger rounded-full"></span>Phishing
+            </span>
+            {% elif scan.status == 'SUSPICIOUS' %}
+            <span class="inline-flex items-center gap-1 bg-medium-dim text-medium border border-amber-100 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
+              <span class="w-1 h-1 bg-medium rounded-full"></span>Suspicious
+            </span>
+            {% else %}
+            <span class="inline-flex items-center gap-1 bg-safe-dim text-safe border border-emerald-100 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
+              <span class="w-1 h-1 bg-safe rounded-full"></span>Clean
+            </span>
+            {% endif %}
+          </td>
+          <td class="py-2 text-muted font-medium text-[12px]">{{ scan.timestamp }}</td>
+          <td class="pr-6 py-2 text-right">
+            <a href="/email/{{ scan.scan_id }}" class="text-[12px] font-semibold text-subtext hover:text-[#1e3a8a] transition-colors flex items-center gap-1 justify-end">
+              View <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="py-20 text-center">
+    <div class="w-14 h-14 bg-panel2 border border-border rounded-xl flex items-center justify-center mx-auto mb-4">
+      <span class="material-symbols-outlined text-muted text-[28px]">description</span>
+    </div>
+    <p class="text-[14px] font-semibold text-text mb-1">No scan records found</p>
+    <p class="text-[13px] font-medium text-muted">Start scanning emails or URLs to see data here.</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Trend data for Chart.js -->
+<script>
+  const TREND_DATA = {{ trend | tojson }};
+  const COUNTS = { phishing: {{ phishing }}, suspicious: {{ suspicious }}, clean: {{ clean }} };
+  const ALL_SCANS = {{ scans | tojson }};
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// ── Trend Line Chart ─────────────────────────────────────────────────────────
+const trendCtx = document.getElementById('trendChart').getContext('2d');
+new Chart(trendCtx, {
+  type: 'line',
+  data: {
+    labels: TREND_DATA.labels,
+    datasets: [
+      {
+        label: 'Phishing',
+        data: TREND_DATA.phishing,
+        borderColor: '#ef4444',
+        backgroundColor: 'rgba(239,68,68,0.08)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#ef4444',
+        tension: 0.4,
+        fill: true,
+      },
+      {
+        label: 'Suspicious',
+        data: TREND_DATA.suspicious,
+        borderColor: '#f59e0b',
+        backgroundColor: 'rgba(245,158,11,0.06)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#f59e0b',
+        tension: 0.4,
+        fill: true,
+      },
+      {
+        label: 'Clean',
+        data: TREND_DATA.clean,
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16,185,129,0.06)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#10b981',
+        tension: 0.4,
+        fill: true,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#94a3b8' } },
+      y: {
+        beginAtZero: true,
+        ticks: { stepSize: 1, font: { size: 11 }, color: '#94a3b8' },
+        grid: { color: 'rgba(241,245,249,1)', drawBorder: false }
+      }
+    }
+  }
+});
+
+// ── Donut Chart ──────────────────────────────────────────────────────────────
+const donutCtx = document.getElementById('donutChart').getContext('2d');
+const total = COUNTS.phishing + COUNTS.suspicious + COUNTS.clean;
+new Chart(donutCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Phishing', 'Suspicious', 'Clean'],
+    datasets: [{
+      data: total > 0
+        ? [COUNTS.phishing, COUNTS.suspicious, COUNTS.clean]
+        : [1, 1, 1],
+      backgroundColor: total > 0
+        ? ['#ef4444', '#f59e0b', '#10b981']
+        : ['#f1f5f9', '#f1f5f9', '#f1f5f9'],
+      borderWidth: 0,
+      hoverOffset: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: true,
+    cutout: '72%',
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: total > 0 }
+    }
+  }
+});
+
+// ── Table Filter ─────────────────────────────────────────────────────────────
+function filterTable(status) {
+  const rows = document.querySelectorAll('.scan-row');
+  rows.forEach(row => {
+    if (status === 'all' || row.dataset.status === status) {
+      row.classList.remove('hidden');
+    } else {
+      row.classList.add('hidden');
+    }
+  });
+
+  // Update active button
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.remove('bg-panel', 'text-text', 'shadow-sm');
+    btn.classList.add('text-subtext');
+  });
+  const activeBtn = document.getElementById(`filter-${status}`);
+  if (activeBtn) {
+    activeBtn.classList.add('bg-panel', 'text-text', 'shadow-sm');
+    activeBtn.classList.remove('text-subtext');
+  }
+}
+
+// ── CSV Export ───────────────────────────────────────────────────────────────
+function exportCSV() {
+  const headers = ['Scan ID', 'Sender', 'Subject', 'Risk Score', 'Status', 'Date'];
+  const rows = ALL_SCANS.map(s => [
+    s.scan_id,
+    `"${(s.sender || '').replace(/"/g, '""')}"`,
+    `"${(s.subject || '').replace(/"/g, '""')}"`,
+    s.risk_score,
+    s.status,
+    s.timestamp
+  ]);
+
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `phishguard-report-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 · Page Not Found · PhishGuard AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/app.css" />
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { bg: '#0B0F14', panel: '#111827', panel2: '#1F2937', border: '#2A3441', info: '#3B82F6', text: '#E5E7EB', subtext: '#9CA3AF', muted: '#6B7280' }, fontFamily: { sans: ['Inter', 'sans-serif'] } } }
+        }
+    </script>
+</head>
+<body class="bg-bg text-text font-sans min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+    <!-- Background glow effects -->
+    <div class="absolute inset-0 pointer-events-none z-0">
+        <div class="w-[600px] h-[600px] bg-info/5 rounded-full blur-[100px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse"></div>
+    </div>
+
+    <div class="relative z-10 text-center max-w-lg animate-fade-in-up">
+        <!-- Shield Icon -->
+        <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-red-500/20 to-red-700/10 border border-border flex items-center justify-center mb-8">
+            <svg class="w-10 h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+        </div>
+
+        <!-- Error Code -->
+        <div class="text-8xl font-semibold text-white/5 select-none mb-0 leading-none tabular-nums" style="font-variant-numeric: tabular-nums;">404</div>
+
+        <h1 class="text-2xl font-semibold text-white mt-2 mb-3">Access Point Not Found</h1>
+        <p class="text-subtext text-sm leading-relaxed mb-8">
+            The route you are trying to reach does not exist or has been moved.<br/>
+            This incident has been logged by the PhishGuard security system.
+        </p>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-center gap-4">
+            <a href="/dashboard" class="btn-primary px-6 py-2.5 rounded-xl text-sm font-medium">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                Back to Dashboard
+            </a>
+            <a href="/" class="px-6 py-2.5 rounded-xl text-sm font-medium text-subtext border border-border hover:border-info/30 hover:text-white transition-all">
+                Go to Home
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <p class="text-[10px] text-muted font-medium uppercase tracking-widest mt-12 opacity-40">
+            PhishGuard AI · Security Operations Platform
+        </p>
+    </div>
+</body>
+</html>

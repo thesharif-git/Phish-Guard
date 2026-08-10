@@ -1,0 +1,1008 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - PhishGuard{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+  
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-border">
+    <div>
+      <div class="flex items-center gap-2 text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-1">
+        <span class="material-symbols-outlined text-[16px]">settings</span>
+        <span>Settings &amp; Preferences</span>
+        <span class="text-muted">•</span>
+        <span class="text-subtext font-normal">Account &amp; Security Control</span>
+      </div>
+      <h1 class="text-xl sm:text-2xl font-extrabold text-text tracking-tight">System Settings</h1>
+      <p class="text-xs sm:text-sm text-subtext mt-0.5">Manage your profile, inbox integrations, threat blocklists, notifications, and security preferences.</p>
+    </div>
+
+    <!-- Quick Status Badge -->
+    <div class="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-panel2 border border-border text-xs self-start sm:self-auto">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span class="font-medium text-subtext">Account Active</span>
+      <span class="text-muted">|</span>
+      <span class="font-semibold text-text">{{ user.role | title if user else 'User' }}</span>
+    </div>
+  </div>
+
+  <!-- Mobile Tab Bar (Horizontal Scrollable) -->
+  <div class="lg:hidden flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none border-b border-border text-xs">
+    <button onclick="showSection('profile')" id="mtab-profile" class="px-3.5 py-2 rounded-lg font-bold flex items-center gap-1.5 whitespace-nowrap bg-emerald-600 text-white shadow-sm transition-all">
+      <span class="material-symbols-outlined text-[17px]">account_circle</span> Profile
+    </button>
+    <button onclick="showSection('inbox')" id="mtab-inbox" class="px-3.5 py-2 rounded-lg font-medium flex items-center gap-1.5 whitespace-nowrap text-subtext hover:bg-panel2 hover:text-text transition-all">
+      <span class="material-symbols-outlined text-[17px]">inbox</span> Connected Inboxes
+      <span id="minbox-badge" class="hidden w-2 h-2 rounded-full bg-emerald-500"></span>
+    </button>
+    <button onclick="showSection('security')" id="mtab-security" class="px-3.5 py-2 rounded-lg font-medium flex items-center gap-1.5 whitespace-nowrap text-subtext hover:bg-panel2 hover:text-text transition-all">
+      <span class="material-symbols-outlined text-[17px]">security</span> Security &amp; Rules
+    </button>
+    <button onclick="showSection('billing')" id="mtab-billing" class="px-3.5 py-2 rounded-lg font-medium flex items-center gap-1.5 whitespace-nowrap text-subtext hover:bg-panel2 hover:text-text transition-all">
+      <span class="material-symbols-outlined text-[17px]">credit_card</span> Billing &amp; Plan
+    </button>
+    <button onclick="showSection('notifications')" id="mtab-notifications" class="px-3.5 py-2 rounded-lg font-medium flex items-center gap-1.5 whitespace-nowrap text-subtext hover:bg-panel2 hover:text-text transition-all">
+      <span class="material-symbols-outlined text-[17px]">notifications</span> Notifications
+    </button>
+    <button onclick="showSection('appearance')" id="mtab-appearance" class="px-3.5 py-2 rounded-lg font-medium flex items-center gap-1.5 whitespace-nowrap text-subtext hover:bg-panel2 hover:text-text transition-all">
+      <span class="material-symbols-outlined text-[17px]">palette</span> Appearance
+    </button>
+  </div>
+
+  <!-- Main Grid Layout -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    
+    <!-- Sidebar Desktop Navigation (4 Cols) -->
+    <div class="hidden lg:flex lg:col-span-3 flex-col gap-1.5 bg-panel border border-border rounded-xl p-3 shadow-md">
+      <div class="px-3 py-1.5 text-[11px] font-bold text-muted uppercase tracking-wider">Account Settings</div>
+      
+      <button onclick="showSection('profile')" id="tab-profile" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 transition-all">
+        <span class="material-symbols-outlined text-[18px]">account_circle</span>
+        <span class="flex-1 text-left">Profile</span>
+      </button>
+      
+      <button onclick="showSection('inbox')" id="tab-inbox" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-subtext hover:bg-panel2 hover:text-text transition-all">
+        <span class="material-symbols-outlined text-[18px]">inbox</span>
+        <span class="flex-1 text-left">Connected Inboxes</span>
+        <span id="inbox-badge" class="hidden w-2 h-2 rounded-full bg-emerald-500"></span>
+      </button>
+      
+      <button onclick="showSection('security')" id="tab-security" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-subtext hover:bg-panel2 hover:text-text transition-all">
+        <span class="material-symbols-outlined text-[18px]">security</span>
+        <span class="flex-1 text-left">Security &amp; Rules</span>
+      </button>
+      
+      <button onclick="showSection('billing')" id="tab-billing" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-subtext hover:bg-panel2 hover:text-text transition-all">
+        <span class="material-symbols-outlined text-[18px]">credit_card</span>
+        <span class="flex-1 text-left">Billing &amp; Plan</span>
+      </button>
+
+      <div class="px-3 pt-3 pb-1 text-[11px] font-bold text-muted uppercase tracking-wider border-t border-border mt-1">Preferences</div>
+      
+      <button onclick="showSection('notifications')" id="tab-notifications" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-subtext hover:bg-panel2 hover:text-text transition-all">
+        <span class="material-symbols-outlined text-[18px]">notifications</span>
+        <span class="flex-1 text-left">Notifications</span>
+      </button>
+      
+      <button onclick="showSection('appearance')" id="tab-appearance" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-subtext hover:bg-panel2 hover:text-text transition-all">
+        <span class="material-symbols-outlined text-[18px]">palette</span>
+        <span class="flex-1 text-left">Appearance</span>
+      </button>
+    </div>
+
+    <!-- Right Content Area (9 Cols) -->
+    <div class="lg:col-span-9 flex flex-col gap-6">
+
+      <!-- ================= SECTION 1: PROFILE ================= -->
+      <div id="section-profile" class="flex flex-col gap-6">
+        
+        <!-- User Overview Banner Card -->
+        <div class="bg-white border border-slate-200/80 rounded-xl p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-full bg-blue-600 text-white font-extrabold text-xl flex items-center justify-center shadow-md border-2 border-white flex-shrink-0">
+              {{ (user.name[0] if user and user.name else 'U') | upper }}
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-base font-bold text-slate-900">{{ user.name if user else 'User Account' }}</h2>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 uppercase">{{ user.role if user else 'User' }}</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">{{ user.email if user else '' }}</p>
+              <div class="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">calendar_month</span>
+                Member since {{ user.created_at.strftime('%B %d, %Y') if user and user.created_at else 'Recent' }}
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 self-end sm:self-center">
+            <button onclick="saveProfile()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[16px]">save</span> Save Changes
+            </button>
+          </div>
+        </div>
+
+        <!-- Personal Info Form Card -->
+        <div class="bg-white border border-slate-200/80 rounded-xl p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] space-y-5">
+          <div class="border-b border-slate-100 pb-3">
+            <h3 class="text-sm font-bold text-slate-900">Personal Information</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Update your display name and view account details.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1.5">Full Name</label>
+              <input id="profile-name" type="text" value="{{ user.name if user else '' }}" placeholder="Enter your full name" 
+                     class="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-slate-50/50" />
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1.5">Email Address</label>
+              <div class="relative">
+                <input type="email" value="{{ user.email if user else '' }}" disabled 
+                       class="w-full px-3 py-2 pr-8 rounded-lg border border-slate-200 bg-slate-100 text-slate-500 font-medium cursor-not-allowed" />
+                <span class="material-symbols-outlined text-slate-400 text-[16px] absolute right-2.5 top-2.5">lock</span>
+              </div>
+              <span class="text-[10px] text-slate-400 mt-1 block">Email address cannot be changed directly. Contact support if needed.</span>
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1.5">Account Role</label>
+              <div class="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 font-semibold flex items-center justify-between">
+                <span>{{ user.role | title if user else 'Standard User' }}</span>
+                <span class="material-symbols-outlined text-blue-600 text-[18px]">verified_user</span>
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1.5">Account Status</label>
+              <div class="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 font-semibold flex items-center justify-between">
+                <span class="flex items-center gap-1.5 text-emerald-700 font-bold">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Verified &amp; Active
+                </span>
+                <span class="material-symbols-outlined text-emerald-600 text-[18px]">check_circle</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Danger Zone Card -->
+        <div class="bg-rose-50/50 border border-rose-200/80 rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-rose-600 text-[20px]">warning</span>
+              <h3 class="text-sm font-bold text-rose-900">Danger Zone</h3>
+            </div>
+            <p class="text-xs text-rose-700 mt-0.5">Signing out will end your session. Account deletion is permanent and cannot be reversed.</p>
+          </div>
+
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <a href="/auth/logout" class="px-3.5 py-1.5 rounded-lg border border-rose-300 text-rose-700 bg-white hover:bg-rose-100 text-xs font-bold transition-all flex items-center gap-1">
+              <span class="material-symbols-outlined text-[15px]">logout</span> Sign Out
+            </a>
+            <button onclick="deleteAccount()" class="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all flex items-center gap-1 shadow-sm">
+              <span class="material-symbols-outlined text-[15px]">delete_forever</span> Delete Account
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ================= SECTION 2: CONNECTED INBOXES ================= -->
+      <div id="section-inbox" class="hidden flex flex-col gap-6">
+        <div class="bg-white border border-slate-200/80 rounded-xl p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] space-y-5">
+          <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+            <div>
+              <h2 class="text-sm font-bold text-slate-900">Connected Inboxes</h2>
+              <p class="text-xs text-slate-500 mt-0.5">Automate phishing detection by connecting your email accounts for real-time scanning.</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 uppercase">OAuth 2.0 Secure</span>
+          </div>
+
+          <!-- Gmail Integration Card -->
+          <div class="border border-slate-200/80 rounded-xl p-4 sm:p-5 bg-slate-50/50 space-y-4">
+            <div class="flex items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl border border-slate-200 bg-white shadow-sm flex items-center justify-center flex-shrink-0">
+                  <svg viewBox="0 0 24 24" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                </div>
+                <div>
+                  <div class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <span>Google Gmail</span>
+                    <span id="gmail-status-dot" class="w-2 h-2 rounded-full bg-slate-300"></span>
+                  </div>
+                  <div id="gmail-status-text" class="text-xs text-slate-500 font-medium">Checking integration status...</div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <button id="gmail-sync-btn" onclick="syncGmail()" class="hidden px-3.5 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold rounded-lg hover:bg-blue-100 transition-all flex items-center gap-1.5">
+                  <span class="material-symbols-outlined text-[15px]">sync</span> Sync Now
+                </button>
+                <a id="gmail-connect-btn" href="/auth/gmail/connect" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 shadow-sm">
+                  <span class="material-symbols-outlined text-[15px]">link</span> Connect Gmail
+                </a>
+                <form id="gmail-disconnect-form" action="/auth/gmail/disconnect" method="post" class="hidden m-0">
+                  <button type="submit" class="px-3.5 py-1.5 bg-white text-rose-600 border border-rose-200 text-xs font-bold rounded-lg hover:bg-rose-50 transition-all">Disconnect</button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Connected details grid -->
+            <div id="gmail-details" class="hidden pt-3 border-t border-slate-200/80 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div class="p-2.5 rounded-lg bg-white border border-slate-200/80">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Connected Account</span>
+                <span id="gmail-email" class="font-bold text-slate-900 truncate block">—</span>
+              </div>
+              <div class="p-2.5 rounded-lg bg-white border border-slate-200/80">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Last Synced</span>
+                <span id="gmail-last-sync" class="font-semibold text-slate-700 block">Never</span>
+              </div>
+              <div class="p-2.5 rounded-lg bg-white border border-slate-200/80">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Auto-Scan Frequency</span>
+                <span class="font-bold text-emerald-600 block flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Every 5 Minutes
+                </span>
+              </div>
+            </div>
+
+            <div id="sync-result" class="hidden text-xs font-medium rounded-lg px-3.5 py-2.5"></div>
+          </div>
+
+          <!-- Explanatory Info Card -->
+          <div class="p-4 rounded-xl bg-blue-50/60 border border-blue-200/80 flex items-start gap-3 text-xs">
+            <span class="material-symbols-outlined text-blue-600 text-[20px] flex-shrink-0 mt-0.5">security</span>
+            <div>
+              <h4 class="font-bold text-blue-900 mb-0.5">Read-Only Threat Auditing</h4>
+              <p class="text-blue-700 leading-relaxed">
+                PhishGuard connects via official OAuth 2.0 with restricted read-only permissions. 
+                Our AI model automatically scans unread messages for phishing links, header spoofing, and malicious attachments. 
+                We never store full message contents beyond the scan report data.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 3: SECURITY & RULES ================= -->
+      <div id="section-security" class="hidden flex flex-col gap-6">
+        
+        <!-- Password Change Card -->
+        <div class="bg-white border border-slate-200/80 rounded-xl p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] space-y-5">
+          <div class="border-b border-slate-100 pb-3">
+            <h2 class="text-sm font-bold text-slate-900">Password &amp; Security</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Ensure your account is protected with a strong, unique password.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs max-w-2xl">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1.5">Current Password</label>
+              <div class="relative">
+                <input id="current-pwd" type="password" placeholder="••••••••" 
+                       class="w-full px-3 py-2 pr-9 rounded-lg border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
+                <button type="button" onclick="togglePwdVisibility('current-pwd', 'eye-icon-1')" class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600">
+                  <span id="eye-icon-1" class="material-symbols-outlined text-[18px]">visibility</span>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1.5">New Password</label>
+              <div class="relative">
+                <input id="new-pwd" type="password" placeholder="Minimum 8 characters" oninput="checkPwdStrength(this.value)"
+                       class="w-full px-3 py-2 pr-9 rounded-lg border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
+                <button type="button" onclick="togglePwdVisibility('new-pwd', 'eye-icon-2')" class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600">
+                  <span id="eye-icon-2" class="material-symbols-outlined text-[18px]">visibility</span>
+                </button>
+              </div>
+              <div class="mt-2 space-y-1">
+                <div class="flex items-center justify-between text-[10px] font-semibold text-slate-400">
+                  <span>Password Strength</span>
+                  <span id="pwd-strength-label">Too short</span>
+                </div>
+                <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex gap-1">
+                  <div id="pwd-bar-1" class="h-full flex-1 bg-slate-200 transition-all"></div>
+                  <div id="pwd-bar-2" class="h-full flex-1 bg-slate-200 transition-all"></div>
+                  <div id="pwd-bar-3" class="h-full flex-1 bg-slate-200 transition-all"></div>
+                  <div id="pwd-bar-4" class="h-full flex-1 bg-slate-200 transition-all"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-2 flex justify-end">
+            <button onclick="changePassword()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-all shadow-sm flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[16px]">lock_reset</span> Change Password
+            </button>
+          </div>
+        </div>
+
+        <!-- Custom Security Rules Card -->
+        <div class="bg-white border border-slate-200/80 rounded-xl p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] space-y-5">
+          <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+            <div>
+              <h2 class="text-sm font-bold text-slate-900">Custom Security Block Rules</h2>
+              <p class="text-xs text-slate-500 mt-0.5">Explicitly block domains, email senders, or IPs. Any incoming email or scanned link matching these rules is immediately blocked.</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 uppercase">Policy Engine</span>
+          </div>
+
+          <!-- Add Rule Inline Form -->
+          <div class="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/80 space-y-3">
+            <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-blue-600 text-[18px]">add_moderator</span>
+              <span>Create New Block Rule</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 text-xs">
+              <input id="rule-target-input" type="text" placeholder="Enter domain (e.g. phish-site.com) or email (spammer@bad.com)" 
+                     class="sm:col-span-6 px-3 py-2 rounded-lg border border-slate-200 bg-white font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
+              <select id="rule-type-select" class="sm:col-span-3 px-3 py-2 rounded-lg border border-slate-200 bg-white font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+                <option value="domain">Domain Name</option>
+                <option value="sender">Email Sender</option>
+                <option value="ip">IP Address</option>
+              </select>
+              <button onclick="addBlockRule()" class="sm:col-span-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-sm transition-all flex items-center justify-center gap-1">
+                <span class="material-symbols-outlined text-[16px]">add_circle</span> Add Block Rule
+              </button>
+            </div>
+          </div>
+
+          <!-- Rules List Table -->
+          <div id="rules-table-container" class="overflow-hidden border border-slate-200/80 rounded-xl">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 bg-slate-50/80">
+                  <th class="py-2.5 px-4">Blocked Target</th>
+                  <th class="py-2.5 px-4">Rule Type</th>
+                  <th class="py-2.5 px-4">Added On</th>
+                  <th class="py-2.5 px-4 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="rules-tbody" class="text-xs divide-y divide-slate-100">
+                {% if block_rules %}
+                  {% for rule in block_rules %}
+                  <tr id="rule-row-{{ rule.id }}" class="bg-white hover:bg-slate-50/50 transition-colors">
+                    <td class="py-3 px-4 font-bold text-rose-600 flex items-center gap-2">
+                      <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                      <span>{{ rule.target }}</span>
+                    </td>
+                    <td class="py-3 px-4 text-slate-600 font-semibold">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">{{ rule.rule_type|title }}</span>
+                    </td>
+                    <td class="py-3 px-4 text-slate-500">{{ rule.created_at }}</td>
+                    <td class="py-3 px-4 text-right">
+                      <button onclick="deleteRule({{ rule.id }})" class="text-rose-600 hover:text-rose-800 font-bold text-[11px] uppercase tracking-wider px-2.5 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-md transition-all">Remove</button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr id="no-rules-row">
+                    <td colspan="4" class="py-8 text-center text-slate-400">
+                      <span class="material-symbols-outlined text-[32px] text-slate-300 mb-1 block">gpp_bad</span>
+                      <div class="text-xs font-semibold text-slate-700">No active custom block rules</div>
+                      <div class="text-[11px] text-slate-400 mt-0.5">Add domains or senders above to automatically short-circuit scans as high risk.</div>
+                    </td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ================= SECTION 4: BILLING & PLAN ================= -->
+      <div id="section-billing" class="hidden flex flex-col gap-6">
+        <div class="bg-white border border-slate-200/80 rounded-xl p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] space-y-5">
+          <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+            <div>
+              <h2 class="text-sm font-bold text-slate-900">Subscription &amp; Quotas</h2>
+              <p class="text-xs text-slate-500 mt-0.5">Manage your active tier, scan volume limits, and subscription billing.</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">Active Subscription</span>
+          </div>
+
+          <!-- Current Plan Card -->
+          <div class="border border-slate-200/80 rounded-xl p-5 bg-slate-50/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Current Membership</div>
+              <div class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                {% if user and user.plan == 'pro' %}
+                  <span>Team Plan</span> <span class="bg-blue-600 text-white text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full">Pro Active</span>
+                {% elif user and user.plan == 'free_plus' %}
+                  <span>Pro Plan</span> <span class="bg-emerald-600 text-white text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full">Pro Active</span>
+                {% elif user and user.plan == 'enterprise' %}
+                  <span>Enterprise Plan</span> <span class="bg-purple-600 text-white text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full">Enterprise</span>
+                {% else %}
+                  <span>Free Tier</span> <span class="bg-slate-200 text-slate-700 text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full">Active</span>
+                {% endif %}
+              </div>
+              <p class="text-xs text-slate-500 mt-1">Includes threat intelligence APIs (VirusTotal, PhishTank, URLhaus) and live page scans.</p>
+            </div>
+
+            <div class="flex items-center gap-2 flex-shrink-0">
+              {% if user and user.ls_subscription_id %}
+                <a href="/billing/portal" class="px-4 py-2 border border-slate-200 text-slate-700 bg-white text-xs font-bold rounded-lg hover:bg-slate-100 transition-all">Manage Billing</a>
+              {% else %}
+                <a href="/pricing" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center gap-1.5">
+                  <span class="material-symbols-outlined text-[16px]">bolt</span> Upgrade Plan
+                </a>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Feature Breakdown Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div class="p-3.5 rounded-xl border border-slate-200/80 bg-white">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Daily Scan Quota</span>
+              <div class="font-bold text-slate-900 text-sm">100 Scans / Day</div>
+              <div class="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
+                <div class="bg-blue-600 h-full w-1/3 rounded-full"></div>
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-xl border border-slate-200/80 bg-white">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Threat Feeds</span>
+              <div class="font-bold text-emerald-600 text-sm flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px]">check_circle</span> Live Intelligence
+              </div>
+              <span class="text-[11px] text-slate-500 mt-1 block">VirusTotal, PhishTank, URLhaus</span>
+            </div>
+
+            <div class="p-3.5 rounded-xl border border-slate-200/80 bg-white">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">OAuth Gmail Sync</span>
+              <div class="font-bold text-blue-600 text-sm flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px]">sync</span> Every 5 Mins
+              </div>
+              <span class="text-[11px] text-slate-500 mt-1 block">Automatic inbox scanning</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 5: NOTIFICATIONS ================= -->
+      <div id="section-notifications" class="hidden flex flex-col gap-6">
+        <div class="bg-white border border-slate-200/80 rounded-xl p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] space-y-5">
+          <div class="border-b border-slate-100 pb-3">
+            <h2 class="text-sm font-bold text-slate-900">Notification Preferences</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Control which email and browser alerts you receive from PhishGuard.</p>
+          </div>
+
+          <div class="space-y-4 text-xs">
+            
+            <!-- Toggle 1: Phishing Alerts -->
+            <div class="flex items-center justify-between p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/40">
+              <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-rose-600 text-[20px] mt-0.5">notifications_active</span>
+                <div>
+                  <div class="font-bold text-slate-900 text-xs">Critical Phishing Alerts</div>
+                  <div class="text-slate-500 text-[11px] mt-0.5">Send immediate notification when a high-risk phishing email is detected.</div>
+                </div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
+                <input type="checkbox" id="browser-alerts" onchange="saveNotificationSettings()" {{ 'checked' if user and user.browser_alerts else '' }} class="sr-only peer">
+                <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+
+            <!-- Toggle 2: Inbox Sync Summary -->
+            <div class="flex items-center justify-between p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/40">
+              <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-blue-600 text-[20px] mt-0.5">sync</span>
+                <div>
+                  <div class="font-bold text-slate-900 text-xs">Inbox Auto-Sync Summaries</div>
+                  <div class="text-slate-500 text-[11px] mt-0.5">Show summary notification whenever automated Gmail sync runs.</div>
+                </div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
+                <input type="checkbox" id="sync-alerts" onchange="saveNotificationSettings()" class="sr-only peer">
+                <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+
+            <!-- Toggle 3: Weekly Digest -->
+            <div class="flex items-center justify-between p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/40">
+              <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-purple-600 text-[20px] mt-0.5">mail</span>
+                <div>
+                  <div class="font-bold text-slate-900 text-xs">Weekly Security Digest</div>
+                  <div class="text-slate-500 text-[11px] mt-0.5">Receive a weekly summary of total scans, detected threats, and campaign trends.</div>
+                </div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
+                <input type="checkbox" id="weekly-reports" onchange="saveNotificationSettings()" {{ 'checked' if user and user.weekly_reports else '' }} class="sr-only peer">
+                <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 6: APPEARANCE ================= -->
+      <div id="section-appearance" class="hidden flex flex-col gap-6">
+        <div class="bg-white border border-slate-200/80 rounded-xl p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] space-y-5">
+          <div class="border-b border-slate-100 pb-3">
+            <h2 class="text-sm font-bold text-slate-900">Appearance &amp; Theme</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Customize the visual theme of the PhishGuard application interface.</p>
+          </div>
+
+          <!-- Theme Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+            <!-- Light Card -->
+            <button onclick="setTheme('light')" id="theme-card-light"
+                    class="rounded-xl border-2 border-slate-200 overflow-hidden text-left transition-all hover:border-blue-600 focus:outline-none p-3 space-y-2 bg-white">
+              <div class="h-24 rounded-lg bg-slate-100 p-2.5 flex flex-col gap-1.5 border border-slate-200">
+                <div class="w-full h-3 bg-white rounded border border-slate-200"></div>
+                <div class="flex gap-1.5 flex-1">
+                  <div class="w-6 bg-white rounded border border-slate-200"></div>
+                  <div class="flex-1 bg-white rounded border border-slate-200"></div>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-slate-900">Light Theme</div>
+                  <div class="text-[10px] text-slate-500">Clean &amp; high contrast</div>
+                </div>
+                <span id="check-light" class="material-symbols-outlined text-blue-600 text-[20px] hidden">check_circle</span>
+              </div>
+            </button>
+
+            <!-- Dark Card -->
+            <button onclick="setTheme('dark')" id="theme-card-dark"
+                    class="rounded-xl border-2 border-slate-200 overflow-hidden text-left transition-all hover:border-blue-600 focus:outline-none p-3 space-y-2 bg-white">
+              <div class="h-24 rounded-lg bg-slate-900 p-2.5 flex flex-col gap-1.5 border border-slate-800">
+                <div class="w-full h-3 bg-slate-800 rounded border border-slate-700"></div>
+                <div class="flex gap-1.5 flex-1">
+                  <div class="w-6 bg-slate-800 rounded border border-slate-700"></div>
+                  <div class="flex-1 bg-slate-800 rounded border border-slate-700"></div>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-slate-900">Dark Theme</div>
+                  <div class="text-[10px] text-slate-500">Sleek dark mode</div>
+                </div>
+                <span id="check-dark" class="material-symbols-outlined text-blue-600 text-[20px] hidden">check_circle</span>
+              </div>
+            </button>
+
+            <!-- System Card -->
+            <button onclick="setTheme('system')" id="theme-card-system"
+                    class="rounded-xl border-2 border-slate-200 overflow-hidden text-left transition-all hover:border-blue-600 focus:outline-none p-3 space-y-2 bg-white">
+              <div class="h-24 rounded-lg overflow-hidden flex border border-slate-200">
+                <div class="w-1/2 bg-slate-100 p-2 flex flex-col gap-1">
+                  <div class="w-full h-2 bg-white rounded"></div>
+                  <div class="w-full flex-1 bg-white rounded"></div>
+                </div>
+                <div class="w-1/2 bg-slate-900 p-2 flex flex-col gap-1">
+                  <div class="w-full h-2 bg-slate-800 rounded"></div>
+                  <div class="w-full flex-1 bg-slate-800 rounded"></div>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-slate-900">System Default</div>
+                  <div class="text-[10px] text-slate-500">Matches OS settings</div>
+                </div>
+                <span id="check-system" class="material-symbols-outlined text-blue-600 text-[20px] hidden">check_circle</span>
+              </div>
+            </button>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Section Tab Switching ──────────────────────────────────────────────────
+function showSection(name) {
+  const sections = ['profile', 'inbox', 'security', 'billing', 'notifications', 'appearance'];
+  
+  sections.forEach(s => {
+    // Hide content section
+    const secEl = document.getElementById(`section-${s}`);
+    if (secEl) secEl.classList.add('hidden');
+    
+    // Reset desktop sidebar style
+    const dtab = document.getElementById(`tab-${s}`);
+    if (dtab) {
+      dtab.className = 'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-subtext hover:bg-panel2 hover:text-text transition-all';
+    }
+    
+    // Reset mobile tab style
+    const mtab = document.getElementById(`mtab-${s}`);
+    if (mtab) {
+      mtab.className = 'px-3.5 py-2 rounded-lg font-medium flex items-center gap-1.5 whitespace-nowrap text-subtext hover:bg-panel2 hover:text-text transition-all';
+    }
+  });
+
+  // Active section content
+  const activeSec = document.getElementById(`section-${name}`);
+  if (activeSec) activeSec.classList.remove('hidden');
+
+  // Active desktop tab style
+  const activeDtab = document.getElementById(`tab-${name}`);
+  if (activeDtab) {
+    activeDtab.className = 'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 transition-all';
+  }
+
+  // Active mobile tab style
+  const activeMtab = document.getElementById(`mtab-${name}`);
+  if (activeMtab) {
+    activeMtab.className = 'px-3.5 py-2 rounded-lg font-bold flex items-center gap-1.5 whitespace-nowrap bg-emerald-600 text-white shadow-sm transition-all';
+  }
+}
+
+// Auto-open inbox section if URL parameter present
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('inbox')) {
+  showSection('inbox');
+}
+
+// ── Password Visibility & Strength ──────────────────────────────────────────
+function togglePwdVisibility(inputId, iconId) {
+  const input = document.getElementById(inputId);
+  const icon = document.getElementById(iconId);
+  if (!input || !icon) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.textContent = 'visibility_off';
+  } else {
+    input.type = 'password';
+    icon.textContent = 'visibility';
+  }
+}
+
+function checkPwdStrength(pwd) {
+  const label = document.getElementById('pwd-strength-label');
+  const bars = [
+    document.getElementById('pwd-bar-1'),
+    document.getElementById('pwd-bar-2'),
+    document.getElementById('pwd-bar-3'),
+    document.getElementById('pwd-bar-4')
+  ];
+  if (!label) return;
+
+  let score = 0;
+  if (pwd.length >= 8) score++;
+  if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score++;
+  if (/[0-9]/.test(pwd)) score++;
+  if (/[^A-Za-z0-9]/.test(pwd)) score++;
+
+  const colors = ['bg-rose-500', 'bg-amber-500', 'bg-blue-500', 'bg-emerald-500'];
+  const labels = ['Weak', 'Fair', 'Good', 'Strong'];
+
+  bars.forEach((bar, idx) => {
+    if (!bar) return;
+    if (idx < score) {
+      bar.className = `h-full flex-1 transition-all ${colors[score - 1]}`;
+    } else {
+      bar.className = 'h-full flex-1 bg-slate-200 transition-all';
+    }
+  });
+
+  if (pwd.length === 0) {
+    label.textContent = 'Too short';
+    label.className = 'text-[10px] font-semibold text-slate-400';
+  } else {
+    label.textContent = labels[score - 1] || 'Weak';
+    label.className = `text-[10px] font-bold ${score >= 3 ? 'text-emerald-600' : score === 2 ? 'text-amber-600' : 'text-rose-600'}`;
+  }
+}
+
+// ── Custom Security Rules Creation ──────────────────────────────────────────
+async function addBlockRule() {
+  const inputEl = document.getElementById('rule-target-input');
+  const selectEl = document.getElementById('rule-type-select');
+  if (!inputEl || !selectEl) return;
+
+  const target = inputEl.value.trim();
+  const ruleType = selectEl.value;
+
+  if (!target) {
+    alert('Please enter a domain, email address, or IP to block.');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/rules/block', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target: target, rule_type: ruleType })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Failed to add rule');
+
+    inputEl.value = '';
+    
+    // Remove "no rules" row if present
+    const noRulesRow = document.getElementById('no-rules-row');
+    if (noRulesRow) noRulesRow.remove();
+
+    // Dynamically append new rule to tbody
+    const tbody = document.getElementById('rules-tbody');
+    const newRowId = `rule-row-${data.id || Date.now()}`;
+    const newTr = document.createElement('tr');
+    newTr.id = newRowId;
+    newTr.className = 'bg-white hover:bg-slate-50/50 transition-colors';
+    newTr.innerHTML = `
+      <td class="py-3 px-4 font-bold text-rose-600 flex items-center gap-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+        <span>${target}</span>
+      </td>
+      <td class="py-3 px-4 text-slate-600 font-semibold">
+        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">${ruleType.charAt(0).toUpperCase() + ruleType.slice(1)}</span>
+      </td>
+      <td class="py-3 px-4 text-slate-500">Just now</td>
+      <td class="py-3 px-4 text-right">
+        <button onclick="deleteRule(${data.id || 0})" class="text-rose-600 hover:text-rose-800 font-bold text-[11px] uppercase tracking-wider px-2.5 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-md transition-all">Remove</button>
+      </td>
+    `;
+    tbody.prepend(newTr);
+
+    if (typeof showToast === 'function') {
+      showToast('Success', `Block rule for "${target}" added.`, 'success');
+    } else {
+      alert(`Block rule for "${target}" added successfully.`);
+    }
+
+  } catch (err) {
+    alert('Error adding rule: ' + err.message);
+  }
+}
+
+async function deleteRule(id) {
+  if (!confirm('Are you sure you want to remove this block rule?')) return;
+  try {
+    const res = await fetch(`/api/rules/block/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      const row = document.getElementById(`rule-row-${id}`);
+      if (row) row.remove();
+      if (typeof showToast === 'function') {
+        showToast('Success', 'Security rule removed.', 'success');
+      }
+    } else {
+      alert('Failed to remove rule.');
+    }
+  } catch (e) {
+    alert('Network error removing rule.');
+  }
+}
+
+// ── Gmail Status & Sync ─────────────────────────────────────────────────────
+async function loadGmailStatus() {
+  try {
+    const res = await fetch('/api/inbox/status');
+    const data = await res.json();
+
+    const statusText = document.getElementById('gmail-status-text');
+    const statusDot = document.getElementById('gmail-status-dot');
+    const badge = document.getElementById('inbox-badge');
+    const mbadge = document.getElementById('minbox-badge');
+    const connectBtn = document.getElementById('gmail-connect-btn');
+    const syncBtn = document.getElementById('gmail-sync-btn');
+    const disconnectForm = document.getElementById('gmail-disconnect-form');
+    const details = document.getElementById('gmail-details');
+
+    if (data.connected) {
+      if (statusText) {
+        statusText.textContent = `Connected — ${data.email || 'Gmail Account'}`;
+        statusText.className = 'text-xs text-emerald-600 font-bold';
+      }
+      if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+      if (badge) badge.classList.remove('hidden');
+      if (mbadge) mbadge.classList.remove('hidden');
+      if (connectBtn) connectBtn.classList.add('hidden');
+      if (syncBtn) syncBtn.classList.remove('hidden');
+      if (disconnectForm) disconnectForm.classList.remove('hidden');
+      if (details) details.classList.remove('hidden');
+      
+      const emailEl = document.getElementById('gmail-email');
+      if (emailEl) emailEl.textContent = data.email || '—';
+      
+      const lastSyncEl = document.getElementById('gmail-last-sync');
+      if (lastSyncEl) {
+        lastSyncEl.textContent = data.last_synced ? new Date(data.last_synced).toLocaleString() : 'Never';
+      }
+    } else {
+      if (statusText) {
+        statusText.textContent = 'Not connected — Integration inactive';
+        statusText.className = 'text-xs text-slate-500 font-medium';
+      }
+      if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-slate-300';
+      if (badge) badge.classList.add('hidden');
+      if (mbadge) mbadge.classList.add('hidden');
+      if (connectBtn) connectBtn.classList.remove('hidden');
+      if (syncBtn) syncBtn.classList.add('hidden');
+      if (disconnectForm) disconnectForm.classList.add('hidden');
+      if (details) details.classList.add('hidden');
+    }
+  } catch (e) {
+    console.error('Failed to load inbox status', e);
+  }
+}
+
+async function syncGmail() {
+  const btn = document.getElementById('gmail-sync-btn');
+  const result = document.getElementById('sync-result');
+  if (!btn) return;
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined text-[15px] animate-spin">sync</span> Syncing...';
+  if (result) result.classList.add('hidden');
+
+  try {
+    const res = await fetch('/api/inbox/sync', { method: 'POST' });
+    const data = await res.json();
+    if (result) {
+      result.classList.remove('hidden');
+      if (res.ok) {
+        result.className = 'text-xs font-bold rounded-lg px-3.5 py-2.5 bg-emerald-50 text-emerald-800 border border-emerald-200';
+        result.textContent = `✓ Sync complete — ${data.new_scans} new emails scanned, ${data.phishing_found} threats found`;
+        loadGmailStatus();
+      } else {
+        result.className = 'text-xs font-bold rounded-lg px-3.5 py-2.5 bg-rose-50 text-rose-800 border border-rose-200';
+        result.textContent = `✗ ${data.detail || 'Sync failed.'}`;
+      }
+    }
+  } catch (e) {
+    if (result) {
+      result.classList.remove('hidden');
+      result.className = 'text-xs font-bold rounded-lg px-3.5 py-2.5 bg-rose-50 text-rose-800 border border-rose-200';
+      result.textContent = '✗ Network error during sync.';
+    }
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined text-[15px]">sync</span> Sync Now';
+  }
+}
+
+// ── Profile & Security Saves ────────────────────────────────────────────────
+async function saveProfile() {
+  const nameEl = document.getElementById('profile-name');
+  if (!nameEl) return;
+  const name = nameEl.value.trim();
+  if (!name) {
+    alert('Name cannot be empty.');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      if (typeof showToast === 'function') {
+        showToast('Success', 'Profile updated successfully!', 'success');
+      } else {
+        alert('Profile updated successfully!');
+      }
+    } else {
+      alert(data.detail || 'Failed to update profile.');
+    }
+  } catch (e) {
+    alert('Error updating profile.');
+  }
+}
+
+async function changePassword() {
+  const curEl = document.getElementById('current-pwd');
+  const newEl = document.getElementById('new-pwd');
+  if (!curEl || !newEl) return;
+
+  const cur = curEl.value;
+  const newp = newEl.value;
+
+  if (!cur || !newp) {
+    alert('Please fill in both current and new password fields.');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ current_password: cur, new_password: newp })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      curEl.value = '';
+      newEl.value = '';
+      checkPwdStrength('');
+      if (typeof showToast === 'function') {
+        showToast('Success', 'Password changed successfully!', 'success');
+      } else {
+        alert('Password changed successfully!');
+      }
+    } else {
+      alert(data.detail || 'Failed to change password.');
+    }
+  } catch (e) {
+    alert('Error changing password.');
+  }
+}
+
+async function deleteAccount() {
+  if (!confirm('Are you sure? This permanently deletes your account and all scan data.')) return;
+  try {
+    const res = await fetch('/api/profile', { method: 'DELETE' });
+    if (res.ok) {
+      window.location.href = '/';
+    } else {
+      alert('Failed to delete account. Please try again.');
+    }
+  } catch (e) {
+    alert('Error deleting account.');
+  }
+}
+
+async function saveNotificationSettings() {
+  const browserAlerts = document.getElementById('browser-alerts')?.checked;
+  const weeklyReports = document.getElementById('weekly-reports')?.checked;
+
+  try {
+    await fetch('/api/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        browser_alerts: browserAlerts,
+        weekly_reports: weeklyReports
+      })
+    });
+  } catch (e) {
+    console.error('Failed to save notification settings', e);
+  }
+}
+
+// ── Theme / Appearance Logic ────────────────────────────────────────────────
+function setTheme(mode) {
+  if (mode === 'system') {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    localStorage.setItem('pg-theme', 'system');
+    document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+  } else {
+    if (typeof toggleTheme === 'function') {
+      toggleTheme(mode);
+    } else {
+      localStorage.setItem('pg-theme', mode);
+      document.documentElement.setAttribute('data-theme', mode);
+    }
+  }
+  syncAppearanceUI();
+}
+
+function syncAppearanceUI() {
+  const saved = localStorage.getItem('pg-theme') || 'light';
+  ['light', 'dark', 'system'].forEach(t => {
+    const card = document.getElementById(`theme-card-${t}`);
+    const check = document.getElementById(`check-${t}`);
+    if (card) {
+      if (saved === t) {
+        card.className = 'rounded-xl border-2 border-blue-600 overflow-hidden text-left transition-all focus:outline-none p-3 space-y-2 bg-white shadow-md';
+      } else {
+        card.className = 'rounded-xl border-2 border-slate-200 overflow-hidden text-left transition-all hover:border-blue-600 focus:outline-none p-3 space-y-2 bg-white';
+      }
+    }
+    if (check) {
+      if (saved === t) check.classList.remove('hidden');
+      else check.classList.add('hidden');
+    }
+  });
+}
+
+// Initialize on page load
+loadGmailStatus();
+syncAppearanceUI();
+</script>
+{% endblock %}
