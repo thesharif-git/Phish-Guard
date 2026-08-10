@@ -1,134 +1,109 @@
-# 🛡️ PhishGuard — AI Phishing Detection Platform
+# PhishGuard — Phishing & Threat Detection Platform
 
-> A premium AI-powered cybersecurity tool for detecting phishing emails, scanning malicious URLs, and auditing domain reputation in real time.
-
-![PhishGuard Banner](https://img.shields.io/badge/PhishGuard-AI%20Security-10b981?style=for-the-badge&logo=shield&logoColor=white)
-![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
+PhishGuard is a web-based cybersecurity tool designed to detect phishing emails, dangerous links, and malicious domain names. It combines machine learning classification, live threat intelligence APIs, and heuristic HTML inspection to give users clear security verdicts.
 
 ---
 
-## ✨ Features
+## Key Features
 
-- **🔍 Email Scanner** — Paste raw email headers/body and get an instant AI-powered phishing verdict with confidence score, risk breakdown, and key findings.
-- **🔗 URL Scanner** — Analyze URLs for phishing, malware, suspicious redirects, SSL issues, and domain age.
-- **🌐 Domain Reputation Auditor** — Deep-dive WHOIS, VirusTotal, PhishTank, URLhaus, SSL cert, and geolocation data for any domain.
-- **📊 Security Dashboard** — Real-time command center showing threat metrics, scan history, and posture summary.
-- **📁 Scan History** — Filterable, searchable log of all past scans.
-- **⚙️ Settings** — User profile, API key management, notification preferences, and appearance.
-- **🧩 Browser Extension** — Lightweight Chrome/Edge extension for inline URL scanning.
+### 📧 Email Scanner
+- Analyzes raw email headers and body text.
+- Extracts headers like `From`, `Reply-To`, `DKIM`, and `SPF` status.
+- Evaluates risk score (0 to 100) with confidence levels.
+- Highlights suspicious indicators (brand impersonation, urgent language, hidden links).
 
----
+### 🔗 URL Scanner
+- Checks target links against live threat feeds.
+- Inspects redirect chains, HTTPS certificates, and domain age.
+- Detects typosquatting and suspicious parameters.
+- Generates immediate SOC action recommendations (Safe, Caution, Block).
 
-## 🎨 Design
+### 🌐 Domain Reputation Auditor
+- Performs WHOIS lookups for domain creation date and registrar info.
+- Queries VirusTotal, PhishTank, and URLhaus databases.
+- Displays server technology stacks and IP geolocation.
 
-PhishGuard uses a **Premium Obsidian Dark Theme**:
-- Deep Obsidian Charcoal background (`#09090b`)
-- Elevated card surfaces (`#121215`, `#1a1a20`)
-- **Cyber Emerald** accent (`#10b981`) — zero blue, zero navy
-- Smooth glassmorphism, micro-animations, and crisp typography (Plus Jakarta Sans / Inter)
+### 📊 Dashboard & Monitoring
+- Centralized overview of total scans, threat counts, and detection history.
+- Filterable history page to review past email and link analyses.
 
----
-
-## 🏗️ Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Backend | Python · FastAPI · SQLAlchemy · Alembic |
-| Frontend | Jinja2 Templates · Tailwind CSS (CDN) · Vanilla JS |
-| AI/ML | Scikit-learn phishing classifier |
-| Threat Intel | VirusTotal API · PhishTank · URLhaus · WHOIS |
-| Auth | JWT / session-based |
-| Database | SQLite (dev) / PostgreSQL (prod) |
+### 🧩 Browser Extension
+- Lightweight extension for Chrome/Edge to scan links directly from the browser.
 
 ---
 
-## 🚀 Getting Started
+## Technology Stack
 
-### Prerequisites
-- Python 3.10+
-- pip
+- **Backend:** Python 3.10+, FastAPI, SQLAlchemy, Alembic
+- **Frontend:** HTML5, Vanilla JavaScript, Tailwind CSS, Jinja2 Templates
+- **Machine Learning:** Scikit-learn (TF-IDF vectorizer + classifier)
+- **Database:** SQLite (Default / Development), PostgreSQL support
+- **External APIs:** VirusTotal v3 API, IP-API Geolocation, WHOIS lookup service
 
-### 1. Clone the repo
+---
+
+## Setup & Installation
+
+### 1. Prerequisites
+- Python 3.10 or higher installed on your system.
+
+### 2. Clone Repository & Environment Setup
 ```bash
-git clone https://github.com/YOUR_USERNAME/phishguard.git
-cd phishguard
+git clone https://github.com/thesharif-git/Phish-Guard.git
+cd Phish-Guard
 ```
 
-### 2. Create a virtual environment
+### 3. Create Virtual Environment
 ```bash
+# Windows
 python -m venv .venv
-.venv\Scripts\activate   # Windows
-# or
-source .venv/bin/activate  # macOS/Linux
+.venv\Scripts\activate
+
+# macOS / Linux
+python3 -m venv .venv
+source .venv/bin/activate
 ```
 
-### 3. Install dependencies
+### 4. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure environment variables
-```bash
-cp .env.example .env
-# Fill in your API keys in .env
+### 5. Configure Environment Variables
+Copy `.env.example` to `.env` and fill in your API key:
+```env
+SECRET_KEY=your_secret_key_here
+VIRUSTOTAL_API_KEY=your_virustotal_api_key_here
+DATABASE_URL=sqlite:///./phishguard.db
 ```
 
-### 5. Run database migrations
+### 6. Run Migrations & Start Server
 ```bash
 alembic upgrade head
-```
-
-### 6. Start the server
-```bash
 uvicorn main:app --reload
 ```
 
-Visit `http://127.0.0.1:8000` 🚀
+Open your browser and navigate to `http://127.0.0.1:8000`.
 
 ---
 
-## 🔑 Environment Variables
-
-See [`.env.example`](.env.example) for a full list. Key variables:
-
-| Variable | Description |
-|---|---|
-| `SECRET_KEY` | JWT signing secret |
-| `VIRUSTOTAL_API_KEY` | VirusTotal v3 API key |
-| `DATABASE_URL` | SQLite or PostgreSQL URL |
-
----
-
-## 📁 Project Structure
+## Project Layout
 
 ```
-phishguard/
-├── main.py              # FastAPI app entry point
-├── routers/             # API & page route handlers
-├── services/            # Business logic (scanner, threat intel)
-├── models/              # SQLAlchemy ORM models
-├── templates/           # Jinja2 HTML templates
-├── static/              # CSS, JS, images
-├── core/                # Config, security, auth utilities
-├── alembic/             # DB migration scripts
-├── training/            # ML model training scripts
-└── extension/           # Browser extension source
+Phish-Guard/
+├── main.py              # Main application entry point
+├── routers/             # API routes and page controllers
+├── services/            # Core scanner & threat intel modules
+├── models/              # Saved ML models (.pkl files)
+├── templates/           # HTML templates (Jinja2)
+├── static/              # CSS styles and JavaScript assets
+├── data/                # Database models and store layer
+├── utils/               # URL, HTML, and email parser helpers
+└── extension/           # Browser extension source code
 ```
 
 ---
 
-## 📜 License
+## License
 
-MIT License — see [LICENSE](LICENSE) for details.
-
----
-
-## 🤝 Contributing
-
-Pull requests are welcome! For major changes, please open an issue first.
-
----
-
-*Built with ❤️ and Cyber Emerald.*
+Distributed under the [MIT License](LICENSE).
