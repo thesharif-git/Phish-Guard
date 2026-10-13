@@ -1,12 +1,15 @@
 from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlmodel import Session
+from sqlmodel import Session, select
+from datetime import datetime, timedelta, timezone
 
 from data.database import get_session
-from data.models import User
+from data.models import User, ScanRecord
 from services.security import get_current_user
 from data import store
+from core.config import settings as app_settings
+from utils.scan_outcomes import count_scan_outcomes
 
 templates = Jinja2Templates(directory="templates")
 router = APIRouter()
@@ -24,6 +27,14 @@ def require_auth(request: Request, session: Session = Depends(get_session)):
 
 @router.get("/", response_class=HTMLResponse)
 async def landing_page(request: Request, session: Session = Depends(get_session)):
+    # If already logged in, redirect directly to dashboard
+    try:
+        user = get_current_user(request, session)
+        if user:
+            return RedirectResponse(url="/dashboard", status_code=303)
+    except Exception:
+        pass
+
     from data.models import ScanRecord
     from sqlmodel import select
     scans = store.get_recent_scans(session, limit=5)
@@ -39,31 +50,48 @@ async def landing_page(request: Request, session: Session = Depends(get_session)
                 "full_analysis": latest_scan_record.full_analysis
             }
 
+    threat_sources = store.get_top_threat_sources(session)
     return templates.TemplateResponse("landing.html", {
         "request": request,
         "kpi": store.get_kpi(session),
         "active_users": len(store.get_all_users(session)),
         "recent_scans": scans,
-        "latest_scan": latest_scan
+        "latest_scan": latest_scan,
+        "threat_sources": threat_sources
     })
 
 
+
 @router.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request, session: Session = Depends(get_session), user: User = Depends(require_auth)):
-    recent_scans = store.get_recent_scans(session, limit=5)
-    kpi = store.get_kpi(session)
-    trend = store.get_risk_trend(session)
-    threat_sources = store.get_top_threat_sources(session)
+async def dashboard(request: Request, session: Session = Depends(get_session)):
+    user = None
+    try:
+        user = get_current_user(request, session)
+    except Exception:
+        pass
+
+    user_id = user.id if user else None
+    recent_scans = store.get_recent_scans(session, limit=5, user_id=user_id)
+    flagged_scans = [
+        scan for scan in store.get_recent_scans(session, limit=50, user_id=user_id)
+        if scan["status"] in ("PHISHING", "SUSPICIOUS")
+    ][:3]
+    metrics = store.get_dashboard_metrics(session, user_id=user_id)
+    selected_range = request.query_params.get("range", "all")
+    if selected_range not in ("7d", "30d", "all"):
+        selected_range = "all"
+    days = {"7d": 7, "30d": 30, "all": None}[selected_range]
+    map_summary = store.get_threat_infrastructure_countries(session, user_id=user_id, days=days)
     
     return templates.TemplateResponse("dashboard.html", {
         "request": request, 
         "active_page": "dashboard", 
         "user": user,
         "recent_scans": recent_scans,
-        "kpi": kpi,
-        "trend": trend,
-        "threat_map_data": threat_sources["map_data"],
-        "top_threats_list": threat_sources["top_list"]
+        "flagged_scans": flagged_scans,
+        "metrics": metrics,
+        "map_summary": map_summary,
+        "selected_range": selected_range,
     })
 
 @router.get("/login", response_class=HTMLResponse)
@@ -96,7 +124,7 @@ async def url_scan_page(request: Request, session: Session = Depends(get_session
     except Exception:
         pass
     kpi = store.get_kpi(session) if user else None
-    return templates.TemplateResponse("url_scan.html", {"request": request, "user": user, "kpi": kpi})
+    return templates.TemplateResponse("url_scan.html", {"request": request, "user": user, "kpi": kpi, "active_page": "url_scan"})
 
 @router.get("/domain-reputation", response_class=HTMLResponse)
 async def domain_reputation_page(request: Request, session: Session = Depends(get_session)):
@@ -117,7 +145,7 @@ async def domain_reputation_page(request: Request, session: Session = Depends(ge
 
 @router.get("/inbox", response_class=HTMLResponse)
 async def inbox(request: Request, session: Session = Depends(get_session), user: User = Depends(require_auth)):
-    scans, counts = store.get_all_scans(session)
+    scans, counts = store.get_all_scans(session, user.id)
     return templates.TemplateResponse("inbox.html", {
         "request": request,
         "scans": scans,
@@ -125,14 +153,15 @@ async def inbox(request: Request, session: Session = Depends(get_session), user:
         "clean": counts["clean"],
         "suspicious": counts["suspicious"],
         "phishing": counts["phishing"],
+        "unknown": counts["unknown"],
         "active_page": "inbox",
         "user": user,
-        "kpi": store.get_kpi(session),
+        "kpi": {"emails_scanned_today": store.get_dashboard_metrics(session, user_id=user.id)["total"]},
     })
 
 @router.get("/email/{email_id}", response_class=HTMLResponse)
 async def email_detail(request: Request, email_id: str, session: Session = Depends(get_session), user: User = Depends(require_auth)):
-    email = store.get_email_detail(email_id, session)
+    email = store.get_email_detail(email_id, session, user.id)
     if not email:
         raise HTTPException(status_code=404, detail="Email not found")
     return templates.TemplateResponse("email_detail.html", {
@@ -144,46 +173,82 @@ async def email_detail(request: Request, email_id: str, session: Session = Depen
 
 @router.get("/campaigns", response_class=HTMLResponse)
 async def campaigns(request: Request, session: Session = Depends(get_session), user: User = Depends(require_auth)):
-    # Auto-group any new phishing scans into campaigns first
-    store.auto_build_campaigns(session)
-    real_campaigns = store.get_campaigns(session)
+    real_campaigns = store.get_campaigns(session, user.id)
+    recent_flagged = session.exec(
+        select(ScanRecord).where(
+            ScanRecord.user_id == user.id,
+            ScanRecord.scan_type == "email",
+            ScanRecord.status == "PHISHING",
+        ).order_by(ScanRecord.timestamp.desc()).limit(5)
+    ).all()
     return templates.TemplateResponse("campaigns.html", {
         "request": request,
         "campaigns": real_campaigns,
+        "recent_flagged": recent_flagged,
         "active_page": "campaigns",
         "user": user,
         "kpi": store.get_kpi(session),
     })
 
 @router.get("/settings", response_class=HTMLResponse)
-async def settings(request: Request, session: Session = Depends(get_session), user: User = Depends(require_auth)):
+async def settings(request: Request, session: Session = Depends(get_session)):
+    user = None
+    try:
+        user = get_current_user(request, session)
+    except Exception:
+        pass
+    activity = None
+    if user:
+        today = datetime.now(timezone.utc).date()
+        first_day = today - timedelta(days=6)
+        scans = session.exec(select(ScanRecord).where(
+            ScanRecord.user_id == user.id,
+            ScanRecord.timestamp >= datetime.combine(first_day, datetime.min.time()),
+        )).all()
+        counts = {first_day + timedelta(days=offset): 0 for offset in range(7)}
+        for scan in scans:
+            scan_day = scan.timestamp.date()
+            if scan_day in counts:
+                counts[scan_day] += 1
+        peak = max(counts.values(), default=0)
+        outcomes = count_scan_outcomes([
+            {**scan.full_analysis, "status": scan.status} for scan in scans
+        ])
+        activity = {
+            "week_total": len(scans),
+            "week_flagged": sum(outcomes[name] for name in (
+                "phishing", "review_required", "unavailable", "policy_matches")),
+            "week_phishing": outcomes["phishing"],
+            "week_review": outcomes["review_required"],
+            "week_unavailable": outcomes["unavailable"],
+            "week_policy": outcomes["policy_matches"],
+            "days": [{"label": day.strftime("%a"), "count": count,
+                      "height": max(8, round(count / peak * 100)) if peak else 8}
+                     for day, count in counts.items()],
+        }
     return templates.TemplateResponse("settings.html", {
         "request": request,
-        "kpi": store.get_kpi(session),
+        "kpi": store.get_kpi(session) if user else None,
+        "scan_usage": store.get_dashboard_metrics(session, user.id) if user else None,
+        "activity": activity,
         "active_page": "settings",
         "user": user,
         "block_rules": store.get_block_rules(session)
     })
 
 @router.get("/pricing", response_class=HTMLResponse)
-async def pricing_page(request: Request, session: Session = Depends(get_session)):
-    """Pricing page accessible to both logged-in and public users."""
-    user = None
-    try:
-        user = get_current_user(request, session)
-    except Exception:
-        pass
+async def pricing_page(request: Request):
+    """Public pricing page, including for signed-in visitors."""
     return templates.TemplateResponse("pricing.html", {
         "request": request,
-        "user": user,
-        "kpi": store.get_kpi(session) if user else None,
-        "active_page": "pricing"
+        "yearly_pro_available": bool(app_settings.STRIPE_PRICE_FREE_PLUS_YEARLY),
+        "yearly_team_available": bool(app_settings.STRIPE_PRICE_PRO_YEARLY),
     })
 
 @router.get("/reports", response_class=HTMLResponse)
 async def reports_page(request: Request, session: Session = Depends(get_session), user: User = Depends(require_auth)):
-    scans, counts = store.get_all_scans(session)
-    trend = store.get_risk_trend(session)
+    scans, counts = store.get_all_scans(session, user.id)
+    trend = store.get_risk_trend(session, user.id)
     return templates.TemplateResponse("reports.html", {
         "request": request,
         "scans": scans,
@@ -195,6 +260,24 @@ async def reports_page(request: Request, session: Session = Depends(get_session)
         "active_page": "reports",
         "user": user,
         "kpi": store.get_kpi(session),
+    })
+
+
+# ── Help & Documentation ───────────────────────────────────────────────────
+
+@router.get("/docs", response_class=HTMLResponse)
+@router.get("/help", response_class=HTMLResponse)
+async def docs_page(request: Request, session: Session = Depends(get_session)):
+    user = None
+    try:
+        user = get_current_user(request, session)
+    except Exception:
+        pass
+    return templates.TemplateResponse("docs.html", {
+        "request": request,
+        "user": user,
+        "active_page": "docs",
+        "kpi": store.get_kpi(session) if user else None,
     })
 
 
@@ -239,20 +322,6 @@ async def cookies_page(request: Request):
 async def security_page(request: Request):
     return templates.TemplateResponse("info/security.html", {"request": request})
 
-
-@router.get("/pricing", response_class=HTMLResponse)
-async def pricing_page(request: Request, session: Session = Depends(get_session)):
-    from core.config import settings
-    user = None
-    try:
-        user = get_current_user(request, session)
-    except HTTPException:
-        pass
-    return templates.TemplateResponse("pricing.html", {
-        "request": request,
-        "user": user,
-        "stripe_publishable_key": settings.STRIPE_PUBLISHABLE_KEY,
-    })
 
 # Trigger reload
 

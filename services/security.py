@@ -69,3 +69,11 @@ def get_current_user(request: Request, session: Session = Depends(get_session)):
         
     return user
 
+
+def get_optional_current_user(request: Request, session: Session = Depends(get_session)) -> Optional[User]:
+    try:
+        return get_current_user(request, session)
+    except Exception:
+        return None
+
+

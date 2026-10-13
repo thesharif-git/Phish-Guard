@@ -35,17 +35,24 @@ async def create_checkout(request: Request, session: Session = Depends(get_sessi
 
     form = await request.form()
     plan = form.get("plan")
+    cycle = form.get("billing_cycle", "monthly")
 
-    if plan not in ["free_plus", "pro"]:
+    if plan not in ["free_plus", "pro"] or cycle not in ["monthly", "yearly"]:
         return RedirectResponse(url="/pricing", status_code=303)
 
-    price_id = settings.STRIPE_PRICE_FREE_PLUS if plan == "free_plus" else settings.STRIPE_PRICE_PRO
+    price_ids = {
+        ("free_plus", "monthly"): settings.STRIPE_PRICE_FREE_PLUS,
+        ("pro", "monthly"): settings.STRIPE_PRICE_PRO,
+        ("free_plus", "yearly"): settings.STRIPE_PRICE_FREE_PLUS_YEARLY,
+        ("pro", "yearly"): settings.STRIPE_PRICE_PRO_YEARLY,
+    }
+    price_id = price_ids[(plan, cycle)]
 
     if not settings.STRIPE_SECRET_KEY or not price_id:
-        logger.error("Stripe credentials missing. Checkout aborted.")
+        logger.error("Stripe credentials or %s price missing. Checkout aborted.", cycle)
         return templates.TemplateResponse("billing/error.html", {
             "request": request,
-            "error": "Billing is currently unavailable. Please contact support."
+            "error": f"{cycle.capitalize()} billing is currently unavailable. Please contact support."
         })
 
     try:
@@ -58,11 +65,13 @@ async def create_checkout(request: Request, session: Session = Depends(get_sessi
             metadata={
                 "user_id": str(user.id),
                 "plan": plan,
+                "billing_cycle": cycle,
             },
             subscription_data={
                 "metadata": {
                     "user_id": str(user.id),
                     "plan": plan,
+                    "billing_cycle": cycle,
                 }
             }
         )

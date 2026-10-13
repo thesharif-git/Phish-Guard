@@ -22,7 +22,9 @@ class User(SQLModel, table=True):
     # Preferences
     theme: str = Field(default="dark")
     browser_alerts: bool = Field(default=True)
+    sync_alerts: bool = Field(default=False)
     weekly_reports: bool = Field(default=False)
+    weekly_digest_last_sent_week: Optional[str] = Field(default=None)
 
     # Subscription / Billing (Lemon Squeezy)
     plan: str = Field(default="free") # "free", "free_plus", "pro", "enterprise"
@@ -36,10 +38,11 @@ class User(SQLModel, table=True):
 class ScanRecord(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     scan_id: str = Field(index=True, unique=True) # e.g. em-1234abcd
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id", index=True)
     scan_type: str = Field(default="email")  # "email", "url", "domain"
     sender: str = Field(index=True)
     subject: str
-    risk_score: int
+    risk_score: Optional[int] = Field(default=None)
     status: str # CLEAN, SUSPICIOUS, PHISHING
     risk_level: str # safe, medium, critical
     timestamp: datetime = Field(default_factory=utc_now)
@@ -90,6 +93,7 @@ class Campaign(SQLModel, table=True):
 class Notification(SQLModel, table=True):
     """Represents a system notification/alert for the user."""
     id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id", index=True)
     title: str
     message: str
     level: str = Field(default="info")  # info, warning, critical
@@ -152,3 +156,58 @@ class BlockRule(SQLModel, table=True):
     target: str = Field(index=True, unique=True)      # e.g. "evil-domain.com"
     rule_type: str = Field(default="domain")          # e.g. "domain" or "email"
     created_at: datetime = Field(default_factory=utc_now)
+
+
+class ScanFeedback(SQLModel, table=True):
+    """
+    Stores user active learning feedback for misclassifications (false positives / negatives).
+    """
+    id: Optional[int] = Field(default=None, primary_key=True)
+    scan_id: str = Field(index=True)
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id", index=True)
+    feedback_type: str = Field(default="false_positive")  # "false_positive" or "false_negative"
+    notes: Optional[str] = Field(default="")
+    created_at: datetime = Field(default_factory=utc_now)
+
+
+class BrandMonitorRule(SQLModel, table=True):
+    """
+    Brands and keywords monitored 24/7 by the CertStream Live Radar Daemon.
+    """
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id", index=True)
+    brand_name: str = Field(index=True)              # e.g. "paypal", "microsoft", "chase"
+    domain_match: Optional[str] = Field(default=None) # e.g. "paypal.com" (official)
+    is_active: bool = Field(default=True)
+    created_at: datetime = Field(default_factory=utc_now)
+
+
+class LiveThreatAlert(SQLModel, table=True):
+    """
+    Real-time phishing lookalikes caught automatically by CertStream / CT logs.
+    """
+    id: Optional[int] = Field(default=None, primary_key=True)
+    domain: str = Field(index=True, unique=True)     # e.g. "chase-verify-login.xyz"
+    matched_brand: str = Field(index=True)           # e.g. "chase"
+    tld: str                                         # e.g. "xyz"
+    risk_score: int                                  # 0 to 100
+    risk_level: str = Field(default="critical")      # critical, medium, safe
+    status: str = Field(default="PHISHING")          # PHISHING, SUSPICIOUS
+    reasons_json: str = Field(default="[]")
+    origintrace_pillars_json: str = Field(default="{}")
+    cert_issuer: Optional[str] = Field(default=None)
+    detected_at: datetime = Field(default_factory=utc_now)
+
+    @property
+    def reasons(self) -> list:
+        try:
+            return json.loads(self.reasons_json or "[]")
+        except Exception:
+            return []
+
+    @property
+    def origintrace_pillars(self) -> dict:
+        try:
+            return json.loads(self.origintrace_pillars_json or "{}")
+        except Exception:
+            return {}

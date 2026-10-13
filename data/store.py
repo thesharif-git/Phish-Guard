@@ -6,7 +6,7 @@ import json
 import logging
 from datetime import datetime, timedelta, timezone
 import threading
-from typing import Dict, Any, Callable
+from typing import Dict, Any, Callable, Optional
 import uuid
 
 from sqlmodel import Session, select
@@ -123,9 +123,19 @@ def init_db():
     # Importing all models here ensures SQLModel.metadata has all table definitions
     from data.models import (  # noqa: F401
         User, ScanRecord, KPIRecord, Campaign, Notification,
-        InboxConnection, ThreatCacheRecord
+        InboxConnection, ThreatCacheRecord, ScanFeedback
     )
     create_db_and_tables()
+
+    try:
+        from alembic.config import Config
+        from alembic import command
+        alembic_cfg = Config("alembic.ini")
+        # Embedded migrations must preserve FastAPI's logging configuration.
+        alembic_cfg.attributes["configure_logger"] = False
+        command.upgrade(alembic_cfg, "head")
+    except Exception as e:
+        logger.warning(f"Alembic auto-migration skipped or notice: {e}")
 
     
     # Create an initial Admin user if none exists
@@ -173,9 +183,28 @@ def get_kpi(session: Session) -> dict:
     }
 
 
-@cached_metric
-def get_risk_trend(session: Session) -> dict:
-    """Generates a trend for the last 7 days from the DB."""
+def get_dashboard_metrics(session: Session, user_id: Optional[int] = None) -> dict:
+    """Counts from today's scan records, scoped to the displayed workspace."""
+    today = datetime.now(timezone.utc).replace(tzinfo=None).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    query = select(ScanRecord.status, ScanRecord.risk_level).where(
+        ScanRecord.timestamp >= today
+    )
+    if user_id is not None:
+        query = query.where(ScanRecord.user_id == user_id)
+    scans = session.exec(query).all()
+    return {
+        "total": len(scans),
+        "phishing": sum(status == "PHISHING" for status, _ in scans),
+        "suspicious": sum(status == "SUSPICIOUS" for status, _ in scans),
+        "clean": sum(status == "CLEAN" for status, _ in scans),
+        "critical": sum(level == "critical" for _, level in scans),
+    }
+
+
+def get_risk_trend(session: Session, user_id: int) -> dict:
+    """Generate a seven-day trend from one user's saved scans."""
     today = datetime.now(timezone.utc).replace(tzinfo=None)
     labels, phishing, suspicious, clean = [], [], [], []
     
@@ -190,7 +219,8 @@ def get_risk_trend(session: Session) -> dict:
         scans_that_day = session.exec(
             select(ScanRecord.status).where(
                 ScanRecord.timestamp >= start_of_day,
-                ScanRecord.timestamp <= end_of_day
+                ScanRecord.timestamp <= end_of_day,
+                ScanRecord.user_id == user_id,
             )
         ).all()
         
@@ -205,41 +235,55 @@ def get_risk_trend(session: Session) -> dict:
     return {"labels": labels, "phishing": phishing, "suspicious": suspicious, "clean": clean}
 
 
-@cached_metric
-def get_phishing_types(session: Session) -> dict:
-    """Dynamically compile phishing types based on actual scan flags in DB."""
-    scans = session.exec(
-        select(ScanRecord).where(ScanRecord.risk_level.in_(['critical', 'medium']))
-    ).all()
+def get_phishing_types(session: Session, user_id: Optional[int] = None) -> dict:
+    """Observed cues in phishing-classified records, excluding review/policy.
+
+    Cue presence is not confirmation of phishing or a fraud subtype. This
+    account-scoped query cannot use the global function-name metric cache.
+    """
+    from utils.scan_outcomes import scan_outcome
+    query = select(ScanRecord).where(ScanRecord.status == 'PHISHING')
+    if user_id is not None:
+        query = query.where(ScanRecord.user_id == user_id)
+    scans = session.exec(query).all()
     
     if not scans:
-        return {"labels": ["Awaiting Data"], "values": [1]}
+        return {"labels": [], "values": [], "basis": "observed_cues_not_confirmed_attack_types"}
         
     types_count = {}
     for scan in scans:
         full_result = scan.full_analysis
+        if not isinstance(full_result, dict):
+            full_result = {}
+        if scan_outcome({**full_result, 'status': scan.status}) != 'phishing':
+            continue
         flags = []
         
-        # Quick heuristic parsing of the JSON dump
-        dump = str(full_result)
-        if 'Known malicious domain' in dump: flags.append('Malware Link')
-        if 'Suspicious TLD' in dump: flags.append('Suspicious Domain')
-        if 'has_urgency' in dump: flags.append('Urgency Lure')
-        if 'has_impersonation' in dump: flags.append('Brand Impersonation')
-        if 'spf=fail' in dump or 'dkim=fail' in dump: flags.append('Spoofing/BEC')
+        content = full_result.get('content_analysis') or {}
+        if content.get('has_urgency_language') is True:
+            flags.append('Account-action wording')
+        if content.get('has_impersonation') is True:
+            flags.append('Brand/account wording')
+        if (full_result.get('bec_intelligence') or {}).get('is_bec') is True:
+            flags.append('BEC review cue')
+        if (full_result.get('vision_intelligence') or {}).get('has_quishing') is True:
+            flags.append('QR destination present')
+        if (full_result.get('url_intelligence') or {}).get('flagged_urls'):
+            flags.append('Link review cue')
         
         if not flags:
-            flags.append('General Phishing')
+            flags.append('Classification detail unavailable')
             
         for ft in flags:
             types_count[ft] = types_count.get(ft, 0) + 1
                 
     if not types_count:
-        return {"labels": ["Awaiting Data"], "values": [1]}
+        return {"labels": [], "values": [], "basis": "observed_cues_not_confirmed_attack_types"}
 
     return {
         "labels": list(types_count.keys()),
-        "values": list(types_count.values())
+        "values": list(types_count.values()),
+        "basis": "observed_cues_not_confirmed_attack_types",
     }
 
 
@@ -264,22 +308,28 @@ def get_top_targets(session: Session) -> dict:
     }
 
 
-def add_scan(scan_result: dict, session: Session, gmail_id: str = "", scan_type: str = "email"):
+def add_scan(scan_result: dict, session: Optional[Session] = None, gmail_id: str = "", scan_type: str = "email", user_id: Optional[int] = None):
     """
     Called by scan_engine to persist a new scan and update metrics dynamically.
     gmail_id: if provided, uses 'gm-{gmail_id}' as the scan_id (prevents duplicates during inbox sync).
     scan_type: 'email', 'url', or 'domain'
+    user_id: links the scan record to a specific authenticated user
     """
+    if session is None:
+        with Session(engine) as new_sess:
+            return add_scan(scan_result, new_sess, gmail_id=gmail_id, scan_type=scan_type, user_id=user_id)
+
     prefix = "gm" if gmail_id else ("ur" if scan_type == "url" else ("dm" if scan_type == "domain" else "em"))
     scan_id = f"gm-{gmail_id}" if gmail_id else f"{prefix}-{str(uuid.uuid4())[:8]}"
     
     # 1. Create the ScanRecord
     record = ScanRecord(
         scan_id=scan_id,
+        user_id=user_id,
         scan_type=scan_type,
         sender=scan_result.get("sender", "Unknown Sender"),
         subject=scan_result.get("subject", "No Subject"),
-        risk_score=scan_result.get("final_score", 0),
+        risk_score=scan_result.get("final_score", None if scan_type == "email" else 0),
         status=scan_result.get("status", "CLEAN"),
         risk_level=scan_result.get("risk_level", "safe"),
     )
@@ -307,16 +357,20 @@ def add_scan(scan_result: dict, session: Session, gmail_id: str = "", scan_type:
             title="🚨 Phishing Detected",
             message=f"Email from '{record.sender}' - Subject: '{record.subject[:50]}'",
             level="critical",
-            scan_id=scan_id
+            scan_id=scan_id,
+            user_id=user_id
         )
         session.add(notif)
         session.commit()
     
     return scan_id
 
-def get_recent_scans(session: Session, limit: int = 10):
+def get_recent_scans(session: Session, limit: int = 10, user_id: Optional[int] = None):
+    query = select(ScanRecord)
+    if user_id is not None:
+        query = query.where(ScanRecord.user_id == user_id)
     scans = session.exec(
-        select(ScanRecord).order_by(ScanRecord.timestamp.desc()).limit(limit)
+        query.order_by(ScanRecord.timestamp.desc()).limit(limit)
     ).all()
     
     result = []
@@ -333,10 +387,12 @@ def get_recent_scans(session: Session, limit: int = 10):
     return result
 
 
-def get_all_scans(session: Session):
-    """Returns all scans for the history page (all scan types), plus summary counts."""
+def get_all_scans(session: Session, user_id: int):
+    """Return one user's scans across all scan types, plus summary counts."""
     scans = session.exec(
-        select(ScanRecord).order_by(ScanRecord.timestamp.desc())
+        select(ScanRecord)
+        .where(ScanRecord.user_id == user_id)
+        .order_by(ScanRecord.timestamp.desc())
     ).all()
 
     rows = []
@@ -357,11 +413,16 @@ def get_all_scans(session: Session):
         "clean": sum(1 for r in rows if r["status"] == "CLEAN"),
         "suspicious": sum(1 for r in rows if r["status"] == "SUSPICIOUS"),
         "phishing": sum(1 for r in rows if r["status"] == "PHISHING"),
+        "unknown": sum(1 for r in rows if r["status"] not in ("CLEAN", "SUSPICIOUS", "PHISHING")),
     }
     return rows, counts
 
-def get_email_detail(email_id: str, session: Session):
-    scan = session.exec(select(ScanRecord).where(ScanRecord.scan_id == email_id)).first()
+def get_email_detail(email_id: str, session: Session, user_id: int):
+    scan = session.exec(select(ScanRecord).where(
+        ScanRecord.scan_id == email_id,
+        ScanRecord.user_id == user_id,
+        ScanRecord.scan_type == "email",
+    )).first()
     if not scan:
         return None
         
@@ -403,24 +464,41 @@ def get_all_users(session: Session):
     } for u in users]
 
 
-def get_campaigns(session: Session):
-    """Fetch all campaigns, ordered by most recently seen."""
-    campaigns = session.exec(
-        select(Campaign).order_by(Campaign.last_seen.desc())
+def get_campaigns(session: Session, user_id: int):
+    """Group one account's flagged emails by sender domain.
+
+    A single flagged scan is not enough to suggest a recurring source.
+    """
+    scans = session.exec(
+        select(ScanRecord).where(
+            ScanRecord.user_id == user_id,
+            ScanRecord.scan_type == "email",
+            ScanRecord.status == "PHISHING",
+        ).order_by(ScanRecord.timestamp.desc())
     ).all()
+    groups = {}
+    for scan in scans:
+        sender = (scan.sender or "").strip().lower()
+        if "@" not in sender:
+            continue
+        domain = sender.rsplit("@", 1)[1]
+        if not domain or "." not in domain:
+            continue
+        groups.setdefault(domain, []).append(scan)
 
-    if not campaigns:
-        return []
-
-    return [{
-        "name": c.name,
-        "type": c.type,
-        "source": c.source,
-        "severity": c.severity,
-        "targets": c.targets,
-        "first_seen": c.first_seen.strftime("%Y-%m-%d %H:%M"),
-        "last_seen": c.last_seen.strftime("%Y-%m-%d %H:%M"),
-    } for c in campaigns]
+    campaigns = []
+    for domain, matches in groups.items():
+        if len(matches) < 2:
+            continue
+        timestamps = [scan.timestamp for scan in matches]
+        campaigns.append({
+            "source": domain,
+            "count": len(matches),
+            "first_seen": min(timestamps).strftime("%Y-%m-%d %H:%M"),
+            "last_seen": max(timestamps).strftime("%Y-%m-%d %H:%M"),
+        })
+    campaigns.sort(key=lambda campaign: campaign["last_seen"], reverse=True)
+    return campaigns
 
 
 def auto_build_campaigns(session: Session):
@@ -507,12 +585,59 @@ def mark_notifications_read(session: Session):
 from utils.threat_intel import resolve_country
 from collections import Counter
 
-@cached_metric
-def get_top_threat_sources(session: Session, limit: int = 5) -> dict:
+
+def get_threat_infrastructure_countries(
+    session: Session, user_id: Optional[int] = None, days: Optional[int] = 30
+) -> dict:
+    """Count flagged scans by the hosting country of their linked or scanned host."""
+    query = select(ScanRecord).where(
+        ScanRecord.status.in_(["PHISHING", "SUSPICIOUS"]),
+        ScanRecord.scan_type.in_(["url", "domain"]),
+    )
+    if user_id is not None:
+        query = query.where(ScanRecord.user_id == user_id)
+    if days is not None:
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).replace(tzinfo=None)
+        query = query.where(ScanRecord.timestamp >= cutoff)
+    scans = session.exec(query).all()
+
+    counts = Counter()
+    unknown = 0
+    for scan in scans:
+        analysis = scan.full_analysis
+        geo = analysis.get("geo") or {}
+        code = str(geo.get("countryCode") or "").upper() if isinstance(geo, dict) else ""
+        if len(code) == 2 and code.isalpha():
+            counts[code] += 1
+            continue
+
+        unknown += 1
+
+    names = {
+        "US": "United States", "RU": "Russia", "CN": "China", "IN": "India",
+        "BR": "Brazil", "NG": "Nigeria", "UA": "Ukraine", "ZA": "South Africa",
+        "GB": "United Kingdom", "DE": "Germany", "FR": "France", "JP": "Japan",
+        "CA": "Canada", "PK": "Pakistan", "NL": "Netherlands", "SG": "Singapore",
+        "TK": "Tokelau", "AU": "Australia", "SE": "Sweden", "FI": "Finland",
+        "AT": "Austria"
+    }
+    return {
+        "map_data": dict(counts),
+        "top_list": [
+            {"code": code, "name": names.get(code, code), "count": count}
+            for code, count in counts.most_common(5)
+        ],
+        "unknown": unknown,
+        "mapped": sum(counts.values()),
+        "total": len(scans),
+    }
+
+def get_top_threat_sources(session: Session, limit: int = 5, user_id: Optional[int] = None) -> dict:
     """Fetch top threat sources by country for the global map."""
-    scans = session.exec(
-        select(ScanRecord).where(ScanRecord.status != 'CLEAN')
-    ).all()
+    query = select(ScanRecord).where(ScanRecord.status != 'CLEAN')
+    if user_id is not None:
+        query = query.where(ScanRecord.user_id == user_id)
+    scans = session.exec(query).all()
     
     counts = Counter()
     for scan in scans:
@@ -525,11 +650,8 @@ def get_top_threat_sources(session: Session, limit: int = 5) -> dict:
                 domain = domain.split('://')[-1].split('/')[0]
                 
             country = resolve_country(domain)
-            counts[country] += 1
-            
-    # Default data if no threats found so the map isn't completely empty
-    if not counts:
-        counts = Counter({'US': 1})
+            if country:
+                counts[country] += 1
             
     top_list = counts.most_common(limit)
     
@@ -537,7 +659,8 @@ def get_top_threat_sources(session: Session, limit: int = 5) -> dict:
     country_names = {
         'US': 'United States', 'RU': 'Russia', 'CN': 'China', 'IN': 'India',
         'BR': 'Brazil', 'NG': 'Nigeria', 'UA': 'Ukraine', 'ZA': 'South Africa',
-        'GB': 'United Kingdom', 'DE': 'Germany', 'FR': 'France', 'JP': 'Japan'
+        'GB': 'United Kingdom', 'DE': 'Germany', 'FR': 'France', 'JP': 'Japan',
+        'CA': 'Canada', 'TK': 'Tokelau'
     }
     
     return {
@@ -547,7 +670,7 @@ def get_top_threat_sources(session: Session, limit: int = 5) -> dict:
 
 # ── Block Rules ────────────────────────────────────────────────────────────
 
-def add_block_rule(session: Session, target: str, rule_type: str = "domain") -> bool:
+def add_block_rule(session: Session, target: str, rule_type: str = "domain") -> int | None:
     from data.models import BlockRule
     target = target.strip().lower()
     existing = session.exec(select(BlockRule).where(BlockRule.target == target)).first()
@@ -556,7 +679,8 @@ def add_block_rule(session: Session, target: str, rule_type: str = "domain") -> 
     rule = BlockRule(target=target, rule_type=rule_type)
     session.add(rule)
     session.commit()
-    return True
+    session.refresh(rule)
+    return rule.id
 
 def get_block_rules(session: Session):
     from data.models import BlockRule
@@ -572,7 +696,10 @@ def remove_block_rule(session: Session, rule_id: int) -> bool:
         return True
     return False
 
-def is_blocked(session: Session, target: str) -> bool:
+def is_blocked(session: Optional[Session], target: str) -> bool:
+    if session is None:
+        with Session(engine) as new_sess:
+            return is_blocked(new_sess, target)
     from data.models import BlockRule
     target = target.strip().lower()
     # Check exact match

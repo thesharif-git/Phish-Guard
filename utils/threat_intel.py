@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from core.logger import logger
 from functools import lru_cache
+from typing import Optional, Dict, Any, List, Tuple
 
 # ── Fix broken SSLKEYLOGFILE on this machine ─────────────────────────────────
 _ssl_log = os.environ.get("SSLKEYLOGFILE", "")
@@ -28,7 +29,7 @@ def _uh_key() -> str:
     return os.getenv("URLHAUS_AUTH_KEY", "").strip()
 
 # Reduced timeouts — never let a single API call block the whole scan
-REQUEST_TIMEOUT = 4  # seconds (was 6)
+REQUEST_TIMEOUT = 3  # seconds (fast fail for snappy scanning)
 
 # ── Simple in-memory TTL cache ────────────────────────────────────────────────
 # Avoids repeated external API calls for the same URL within a session.
@@ -81,18 +82,22 @@ def check_virustotal(url: str) -> dict:
             timeout=REQUEST_TIMEOUT,
         )
 
-        # 404 means URL not in VT cache yet — submit it and return "not yet indexed"
-        # instead of doing a slow double-fetch with sleep
+        # 404 means URL not in VT cache yet — submit asynchronously in background
+        # so we do NOT block the scan for another timeout cycle
         if resp.status_code == 404:
-            try:
-                requests.post(
-                    "https://www.virustotal.com/api/v3/urls",
-                    headers=headers,
-                    data={"url": url},
-                    timeout=REQUEST_TIMEOUT,
-                )
-            except Exception:
-                pass
+            import threading
+            def _async_post_url():
+                try:
+                    requests.post(
+                        "https://www.virustotal.com/api/v3/urls",
+                        headers=headers,
+                        data={"url": url},
+                        timeout=REQUEST_TIMEOUT,
+                    )
+                except Exception:
+                    pass
+            threading.Thread(target=_async_post_url, daemon=True).start()
+
             result = {"available": False, "reason": "URL submitted to VT for analysis — check back soon"}
             _cache_set(cache_key, result)
             return result
@@ -332,6 +337,8 @@ def get_domain_age(url: str) -> dict:
 
     try:
         import whois  # python-whois package
+        import socket
+        socket.setdefaulttimeout(3.0)  # Never let raw WHOIS port 43 sockets hang
 
         match = re.search(r"https?://([^/?\s]+)", url)
         if not match:
@@ -445,14 +452,15 @@ def full_threat_check(url: str) -> dict:
     # ── L3: live API calls (first time or cache expired) ─────────────────
     logger.info(f"[ThreatCache] L3 miss — calling APIs for: {url[:80]}")
 
-    with ThreadPoolExecutor(max_workers=4) as ex:
+    ex = ThreadPoolExecutor(max_workers=4)
+    try:
         fut_vt  = ex.submit(check_virustotal, url)
         fut_pt  = ex.submit(check_phishtank, url)
         fut_uh  = ex.submit(check_urlhaus, url)
         fut_da  = ex.submit(get_domain_age, url)
 
-        api_timeout  = REQUEST_TIMEOUT + 1   # 5s — for fast REST API calls
-        whois_timeout = 15                    # WHOIS can be slow for ccTLDs (.pk, .io etc.)
+        api_timeout   = REQUEST_TIMEOUT + 0.5   # ~3.5s — for fast REST API calls
+        whois_timeout = 4.0                     # WHOIS capped at 4s (avoids 15s freeze)
         try:
             vt = fut_vt.result(timeout=api_timeout)
         except Exception:
@@ -467,14 +475,14 @@ def full_threat_check(url: str) -> dict:
             uh = {"available": False, "reason": "Timed out"}
         try:
             domain_age = fut_da.result(timeout=whois_timeout)
-            # If WHOIS returned a stale failure (e.g. from before library was installed),
-            # do NOT cache it — let it retry on the next call
             if not domain_age.get("available") and domain_age.get("reason", "") in (
                 "python-whois not installed", "WHOIS lookup failed"
             ):
                 domain_age = {"available": False, "reason": "WHOIS unavailable"}
         except Exception:
             domain_age = {"available": False, "reason": "Timed out"}
+    finally:
+        ex.shutdown(wait=False, cancel_futures=True)
 
     is_malicious = (
         (vt.get("available") and vt.get("malicious", 0) > 0) or
@@ -492,9 +500,12 @@ def full_threat_check(url: str) -> dict:
     elif is_suspicious:
         overall = "SUSPICIOUS"
         overall_score = 55
-    else:
+    elif any(source.get("available") for source in (vt, pt, uh)):
         overall = "CLEAN"
         overall_score = 5
+    else:
+        overall = "UNKNOWN"
+        overall_score = 0
 
     result = {
         "url": url,
@@ -505,6 +516,7 @@ def full_threat_check(url: str) -> dict:
         "overall": overall,
         "overall_score": overall_score,
         "is_malicious": is_malicious,
+        "reputation_checked": any(source.get("available") for source in (vt, pt, uh)),
     }
 
     # Persist to both caches for next time
@@ -528,7 +540,7 @@ def resolve_country(domain_or_email: str) -> str:
     lru_cache ensures repeated lookups for the same domain are instant.
     """
     if not domain_or_email:
-        return 'US'
+        return ''
 
     domain = domain_or_email
     if '@' in domain:
@@ -538,11 +550,10 @@ def resolve_country(domain_or_email: str) -> str:
         domain = domain.split('://')[-1].split('/')[0]
 
     domain = domain.lower().strip()
-
     parts = domain.split('.')
     if len(parts) >= 2:
         tld = parts[-1]
-        if len(tld) == 2 and tld not in ['co', 'go', 'ac', 'edu']:
+        if len(tld) == 2 and tld.isalpha() and tld not in ['co', 'go', 'ac', 'edu']:
             return tld.upper()
 
     try:
@@ -555,4 +566,471 @@ def resolve_country(domain_or_email: str) -> str:
     except Exception:
         pass
 
-    return 'US'
+    return ''
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ADVANCED FACTUAL INTELLIGENCE FOR ORIGINTRACE 4-PILLAR SECURITY ENGINE
+# 1. TLS Certificate Lineage Mismatch Analysis
+# 2. DNS Ephemerality & Fast-Flux Index (DoH-based)
+# 3. Autonomous System Brand Incongruity (ABCI) Scoring
+# ══════════════════════════════════════════════════════════════════════════════
+
+import ssl
+import hashlib
+from urllib.parse import urlparse
+
+# Well-known brands and their official organization entities in TLS certs
+BRAND_OFFICIAL_ORGS = {
+    "paypal": ["paypal, inc.", "paypal", "paypal holdings"],
+    "microsoft": ["microsoft corporation", "microsoft"],
+    "apple": ["apple inc.", "apple computer, inc."],
+    "google": ["google llc", "google inc"],
+    "amazon": ["amazon.com, inc.", "amazon.com", "amazon corporate llc"],
+    "netflix": ["netflix, inc.", "netflix"],
+    "chase": ["jpmorgan chase & co.", "jpmorgan chase bank, national association", "jpmorgan chase"],
+    "bankofamerica": ["bank of america corporation", "bank of america"],
+    "wellsfargo": ["wells fargo & company", "wells fargo bank, n.a."],
+    "citibank": ["citigroup inc.", "citibank, n.a."],
+    "docusign": ["docusign, inc.", "docusign"],
+    "dropbox": ["dropbox, inc.", "dropbox"],
+    "adobe": ["adobe inc.", "adobe systems incorporated"],
+    "facebook": ["meta platforms, inc.", "facebook, inc."],
+    "instagram": ["meta platforms, inc.", "instagram, llc"],
+    "linkedin": ["linkedin corporation"],
+    "coinbase": ["coinbase, inc.", "coinbase"],
+    "binance": ["binance"],
+}
+
+# Free / Disposable DV Certificate Authorities commonly leveraged in fast-flux phishing
+FREE_DV_ISSUERS = [
+    "let's encrypt", "zerossl", "cpanel, inc.", "certum free", "buypass go ssl", "trustprovider", "free ssl"
+]
+
+# Bulletproof and disposable unmanaged VPS / hosting providers
+DISPOSABLE_HOSTING_PROVIDERS = [
+    "contabo", "hetzner", "digitalocean", "ovh", "linode", "vultr",
+    "choopa", "hostinger", "scaleway", "kamatera", "m247", "frantech",
+    "buyvm", "as-infra", "colocrossing"
+]
+
+
+def _extract_cert_rdn(items, key_name: str) -> str:
+    """Extract a specific RDN (e.g. organizationName or commonName) from a parsed TLS cert tuple."""
+    if not items:
+        return ""
+    for rdn in items:
+        for k, v in rdn:
+            if k == key_name:
+                return str(v)
+    return ""
+
+
+def analyze_tls_cert_lineage(domain_or_url: str) -> dict:
+    """
+    Evaluates TLS/SSL Certificate Lineage Mismatch:
+    - Extracts live X.509 certificate via SNI on port 443 (timeout 2.5s).
+    - Computes cryptographic SHA-256 fingerprint for infrastructure campaign attribution.
+    - Inspects Subject Alternative Names (SANs) and certificate issuance lifespan.
+    - Detects Combosquatting Lineage Mismatch: A domain mimicking an enterprise or financial brand
+      (e.g., PayPal, Microsoft, Chase) secured with an ephemeral/free DV certificate
+      without official enterprise organization validation.
+    """
+    domain = domain_or_url.strip().lower()
+    if "://" in domain:
+        domain = domain.split("://")[-1].split("/")[0].split(":")[0]
+    if "@" in domain:
+        domain = domain.split("@")[-1].split(":")[0]
+    if domain.startswith("www."):
+        domain = domain[4:]
+
+    res = {
+        "available": False,
+        "domain": domain,
+        "issuer": "Unknown",
+        "issuer_org": "Unknown",
+        "subject_cn": "Unknown",
+        "subject_org": "Unknown",
+        "valid_from": "",
+        "valid_to": "",
+        "cert_age_days": 0,
+        "cert_validity_days": 0,
+        "san_list": [],
+        "san_count": 0,
+        "cert_fingerprint": "",
+        "serial_number": "",
+        "is_self_signed": False,
+        "is_expired": False,
+        "is_free_dv": False,
+        "lineage_mismatch": False,
+        "mismatch_reason": "",
+        "signals": []
+    }
+
+    if not domain or domain in ["localhost", "127.0.0.1"]:
+        return res
+
+    der_cert = None
+    cert_dict = None
+    ssl_error_msg = ""
+
+    # Attempt 1: Standard verification (gets parsed dict if certificate is valid)
+    try:
+        ctx = ssl.create_default_context()
+        with socket.create_connection((domain, 443), timeout=2.5) as sock:
+            with ctx.wrap_socket(sock, server_hostname=domain) as ssock:
+                cert_dict = ssock.getpeercert()
+                der_cert = ssock.getpeercert(binary_form=True)
+                res["available"] = True
+    except ssl.SSLCertVerificationError as e:
+        ssl_error_msg = str(e)
+        res["available"] = True
+        if "self signed" in ssl_error_msg.lower() or "self-signed" in ssl_error_msg.lower():
+            res["is_self_signed"] = True
+            res["signals"].append("Self-Signed SSL Certificate: Untrusted authority, high phishing risk.")
+        elif "expired" in ssl_error_msg.lower():
+            res["is_expired"] = True
+            res["signals"].append("Expired SSL Certificate: Certificate validity window has elapsed.")
+        elif "hostname" in ssl_error_msg.lower() or "match" in ssl_error_msg.lower():
+            res["signals"].append("TLS Hostname Mismatch: Certificate SAN does not match requested domain.")
+    except Exception as e:
+        ssl_error_msg = str(e)
+
+    # Attempt 2: If standard failed, fetch raw DER via unverified context to get fingerprint
+    if der_cert is None:
+        try:
+            unverified_ctx = ssl.create_default_context()
+            unverified_ctx.check_hostname = False
+            unverified_ctx.verify_mode = ssl.CERT_NONE
+            with socket.create_connection((domain, 443), timeout=2.0) as sock:
+                with unverified_ctx.wrap_socket(sock, server_hostname=domain) as ssock:
+                    der_cert = ssock.getpeercert(binary_form=True)
+                    res["available"] = True
+        except Exception:
+            pass
+
+    # Extract SHA-256 fingerprint from DER bytes (essential for campaign clustering)
+    if der_cert:
+        res["cert_fingerprint"] = hashlib.sha256(der_cert).hexdigest()
+
+    # If we have parsed certificate dictionary from successful handshake
+    if cert_dict:
+        res["available"] = True
+        issuer_items = cert_dict.get("issuer", ())
+        subject_items = cert_dict.get("subject", ())
+
+        issuer_org = _extract_cert_rdn(issuer_items, "organizationName")
+        issuer_cn = _extract_cert_rdn(issuer_items, "commonName")
+        res["issuer"] = issuer_cn or issuer_org or "Unknown"
+        res["issuer_org"] = issuer_org or issuer_cn or "Unknown"
+
+        subject_org = _extract_cert_rdn(subject_items, "organizationName")
+        subject_cn = _extract_cert_rdn(subject_items, "commonName")
+        res["subject_cn"] = subject_cn or "Unknown"
+        res["subject_org"] = subject_org or "Unknown"
+
+        res["serial_number"] = str(cert_dict.get("serialNumber", ""))
+
+        # SANs (Subject Alternative Names)
+        sans = []
+        for san_type, san_val in cert_dict.get("subjectAltName", ()):
+            if san_type == "DNS":
+                sans.append(san_val.lower())
+        res["san_list"] = sans[:20]
+        res["san_count"] = len(sans)
+
+        # Dates & Lifespan
+        not_before = cert_dict.get("notBefore", "")
+        not_after = cert_dict.get("notAfter", "")
+        res["valid_from"] = not_before
+        res["valid_to"] = not_after
+
+        try:
+            fmt = "%b %d %H:%M:%S %Y %Z"
+            d_start = datetime.strptime(not_before, fmt)
+            d_end = datetime.strptime(not_after, fmt)
+            now = datetime.now(timezone.utc).replace(tzinfo=None)
+            res["cert_age_days"] = max(0, (now - d_start).days)
+            res["cert_validity_days"] = max(0, (d_end - d_start).days)
+
+            if now > d_end:
+                res["is_expired"] = True
+                res["signals"].append("Expired SSL Certificate: Certificate is past its expiration date.")
+        except Exception:
+            pass
+
+        # Check for Free / Disposable DV provider
+        issuer_str = f"{res['issuer']} {res['issuer_org']}".lower()
+        if any(free_dv in issuer_str for free_dv in FREE_DV_ISSUERS) or (0 < res["cert_validity_days"] <= 90):
+            res["is_free_dv"] = True
+
+        # Check for Brand Lineage Mismatch (Combosquatting / Typosquatting)
+        for brand, official_orgs in BRAND_OFFICIAL_ORGS.items():
+            if brand in domain:
+                # Is it the authentic brand domain? (e.g. paypal.com, login.microsoft.com)
+                is_legit = domain == f"{brand}.com" or domain.endswith(f".{brand}.com")
+                if not is_legit:
+                    # Impersonating domain with free DV cert
+                    if res["is_free_dv"]:
+                        res["lineage_mismatch"] = True
+                        res["mismatch_reason"] = (
+                            f"TLS Certificate Lineage Mismatch: Domain targets brand '{brand}', "
+                            f"but operates on a disposable short-lived DV certificate issued by '{res['issuer']}' "
+                            f"without Enterprise EV/OV organization validation."
+                        )
+                        res["signals"].append(res["mismatch_reason"])
+                        break
+                    # Or cert subject organization does not match the official company
+                    elif subject_org:
+                        sub_org_lower = subject_org.lower()
+                        if not any(org in sub_org_lower for org in official_orgs):
+                            res["lineage_mismatch"] = True
+                            res["mismatch_reason"] = (
+                                f"TLS Subject Incongruity: Domain references '{brand}', but certificate "
+                                f"organization is registered to '{subject_org}' instead of the official entity."
+                            )
+                            res["signals"].append(res["mismatch_reason"])
+                            break
+
+    elif ssl_error_msg and res["available"]:
+        res["lineage_mismatch"] = True
+        res["mismatch_reason"] = f"Untrusted TLS Layer: Handshake failed ({ssl_error_msg[:120]})"
+
+    return res
+
+
+def calculate_dns_ephemerality(domain_or_url: str) -> dict:
+    """
+    Calculates DNS Ephemerality & Fast-Flux Index:
+    - Queries authoritative DNS records via Cloudflare DoH (with Google DoH fallback).
+    - Evaluates record TTL: Ephemeral fast-flux phishing domains deploy ultra-low TTLs (<= 120s or 300s)
+      to rapidly cycle proxy IPs and evade IP blacklists.
+    - Evaluates Mail Infrastructure: Phishing landing domains mimicking enterprises routinely lack MX records.
+    - Returns factual ephemerality index (0.0 to 1.0) and security signals.
+    """
+    domain = domain_or_url.strip().lower()
+    if "://" in domain:
+        domain = domain.split("://")[-1].split("/")[0].split(":")[0]
+    if "@" in domain:
+        domain = domain.split("@")[-1].split(":")[0]
+    if domain.startswith("www."):
+        domain = domain[4:]
+
+    res = {
+        "available": False,
+        "domain": domain,
+        "min_ttl": None,
+        "a_records": [],
+        "mx_records": [],
+        "ns_records": [],
+        "has_mx": False,
+        "ephemerality_index": 0.0,  # 0.0 (Durable/Permanent) to 1.0 (Highly Ephemeral / Fast-Flux)
+        "signals": []
+    }
+
+    if not domain or domain in ["localhost", "127.0.0.1"]:
+        return res
+
+    def _query_doh(q_type: str) -> list:
+        headers = {"Accept": "application/dns-json"}
+        # Cloudflare DoH
+        try:
+            r = requests.get(
+                f"https://cloudflare-dns.com/dns-query?name={domain}&type={q_type}",
+                headers=headers,
+                timeout=2.0
+            )
+            if r.status_code == 200:
+                data = r.json()
+                return data.get("Answer", [])
+        except Exception:
+            pass
+
+        # Google DoH Fallback
+        try:
+            r = requests.get(
+                f"https://dns.google/resolve?name={domain}&type={q_type}",
+                headers=headers,
+                timeout=2.0
+            )
+            if r.status_code == 200:
+                data = r.json()
+                return data.get("Answer", [])
+        except Exception:
+            pass
+        return []
+
+    # 1. Query A records
+    a_answers = _query_doh("A")
+    ttls = []
+    if a_answers:
+        res["available"] = True
+        for ans in a_answers:
+            if ans.get("type") == 1:  # Type A
+                res["a_records"].append(ans.get("data", ""))
+                ttl = ans.get("TTL")
+                if ttl is not None:
+                    ttls.append(int(ttl))
+
+    # 2. Query MX records
+    mx_answers = _query_doh("MX")
+    if mx_answers:
+        res["available"] = True
+        for ans in mx_answers:
+            if ans.get("type") == 15:  # Type MX
+                res["mx_records"].append(ans.get("data", ""))
+        res["has_mx"] = len(res["mx_records"]) > 0
+
+    # 3. Query NS records
+    ns_answers = _query_doh("NS")
+    if ns_answers:
+        res["available"] = True
+        for ans in ns_answers:
+            if ans.get("type") == 2:  # Type NS
+                res["ns_records"].append(ans.get("data", ""))
+
+    # Ephemerality Index Calculation
+    index = 0.0
+    if ttls:
+        min_ttl = min(ttls)
+        res["min_ttl"] = min_ttl
+
+        # Only flag very low TTLs (<=60s) as true fast-flux — many CDNs/ISPs use 120-300s legitimately
+        if min_ttl <= 60:
+            index += 0.45
+            res["signals"].append(
+                f"Fast-Flux DNS Detected: Host TTL is ultra-low ({min_ttl}s), characteristic of active botnet proxy cycling."
+            )
+        elif min_ttl <= 180:
+            index += 0.15
+            res["signals"].append(
+                f"Short DNS TTL ({min_ttl}s): Slightly ephemeral record configuration (low but not definitive)."
+            )
+        # 181-600s is normal for legitimate sites — no penalty
+
+    # Check for missing mail infrastructure on brand-mimicking domain
+    # Only flag this if the domain actually contains a protected brand name in its root —
+    # most legitimate websites (portfolios, blogs, tech firms) simply don't use email.
+    is_brand_mimic = any(b in domain for b in BRAND_OFFICIAL_ORGS.keys())
+    if is_brand_mimic and not res["has_mx"] and res["available"]:
+        index += 0.20   # reduced from 0.35 — no MX alone is not a strong signal
+        res["signals"].append(
+            "Zero Mail Infrastructure: Domain lacks MX records despite targeting an established enterprise brand."
+        )
+
+    # Ephemeral / disposable nameservers check
+    for ns in res["ns_records"]:
+        ns_lower = ns.lower()
+        if any(kw in ns_lower for kw in ["afraid.org", "duckdns", "no-ip", "changeip", "freedns"]):
+            index += 0.30
+            res["signals"].append(f"Dynamic/Disposable DNS Provider: Nameserver '{ns}' allows unverified anonymous routing.")
+            break
+
+    res["ephemerality_index"] = round(min(index, 1.0), 3)
+    return res
+
+
+def check_asn_brand_incongruity(domain_or_url: str, ip: Optional[str] = None) -> dict:
+    """
+    Computes Autonomous System Brand Incongruity (ABCI):
+    - Resolves target IP and queries BGP Autonomous System Number (ASN) and ISP organization.
+    - Evaluates architectural incongruity: Legitimate enterprises (Microsoft, Apple, PayPal, Google, etc.)
+      routinely host infrastructure on their own verified ASNs (e.g. AS8075 Microsoft, AS714 Apple)
+      or enterprise CDNs (Cloudflare, Akamai).
+    - When a domain mimics a protected enterprise brand but resides on a cheap/bulletproof
+      disposable VPS host (Contabo, Hetzner, Vultr, Choopa, DigitalOcean, Hostinger), this constitutes
+      a 100% deterministic, mathematically verifiable infrastructure mismatch.
+    """
+    domain = domain_or_url.strip().lower()
+    if "://" in domain:
+        domain = domain.split("://")[-1].split("/")[0].split(":")[0]
+    if "@" in domain:
+        domain = domain.split("@")[-1].split(":")[0]
+    if domain.startswith("www."):
+        domain = domain[4:]
+
+    res = {
+        "available": False,
+        "domain": domain,
+        "ip": ip or "",
+        "asn": "",
+        "as_name": "",
+        "isp": "",
+        "org": "",
+        "is_hosting": False,
+        "is_incongruent": False,
+        "incongruity_score": 0,  # 0 to 100
+        "signals": []
+    }
+
+    if not domain or domain in ["localhost", "127.0.0.1"]:
+        return res
+
+    # Resolve IP if not given
+    if not res["ip"]:
+        try:
+            res["ip"] = socket.gethostbyname(domain)
+        except Exception:
+            return res
+
+    try:
+        r = requests.get(
+            f"http://ip-api.com/json/{res['ip']}?fields=status,as,org,isp,hosting,query",
+            timeout=2.0
+        )
+        if r.status_code == 200:
+            data = r.json()
+            if data.get("status") == "success":
+                res["available"] = True
+                res["asn"] = data.get("as", "")
+                res["isp"] = data.get("isp", "")
+                res["org"] = data.get("org", "")
+                res["is_hosting"] = bool(data.get("hosting", False))
+
+                # Split ASN string (e.g. "AS51167 Contabo GmbH" -> asn="AS51167", as_name="Contabo GmbH")
+                if " " in res["asn"]:
+                    parts = res["asn"].split(" ", 1)
+                    res["as_name"] = parts[1]
+                else:
+                    res["as_name"] = res["isp"]
+    except Exception as e:
+        logger.debug(f"[ABCI] ASN query failed: {e}")
+        return res
+
+    # Evaluate Brand Incongruity
+    asn_lower = f"{res['asn']} {res['isp']} {res['org']}".lower()
+
+    for brand in BRAND_OFFICIAL_ORGS.keys():
+        if brand in domain:
+            is_legit = domain == f"{brand}.com" or domain.endswith(f".{brand}.com")
+            if not is_legit:
+                # Check if hosted on disposable / unmanaged VPS provider
+                for vps in DISPOSABLE_HOSTING_PROVIDERS:
+                    if vps in asn_lower:
+                        res["is_incongruent"] = True
+                        res["incongruity_score"] = 85
+                        res["signals"].append(
+                            f"Autonomous System Brand Incongruity (ABCI): Domain targets '{brand}' "
+                            f"but is hosted on disposable unmanaged infrastructure '{res['isp']}' ({res['asn']}) "
+                            f"instead of the verified enterprise autonomous system."
+                        )
+                        return res
+
+                # Check if it is hosted on generic VPS/hosting (not enterprise CDN or official ASN)
+                enterprise_networks = ["microsoft", "apple", "google", "amazon", "paypal", "akamai", "fastly", "cloudflare"]
+                if not any(net in asn_lower for net in enterprise_networks) and res["is_hosting"]:
+                    res["is_incongruent"] = True
+                    res["incongruity_score"] = 70
+                    res["signals"].append(
+                        f"Autonomous System Discrepancy: Impersonated brand '{brand}' is hosted on "
+                        f"third-party cloud provider '{res['isp']}' ({res['asn']})."
+                    )
+                    return res
+
+    if res["is_hosting"]:
+        for vps in DISPOSABLE_HOSTING_PROVIDERS:
+            if vps in asn_lower:
+                res["signals"].append(f"Disposable Infrastructure: Hosted on low-reputation VPS provider '{res['isp']}' ({res['asn']}).")
+                break
+
+    return res

@@ -4,6 +4,7 @@ Handles Gmail (and future Outlook) OAuth token management + email fetching.
 Tokens are encrypted at rest using Fernet symmetric encryption.
 """
 import base64
+from email.message import Message
 import json
 import re
 from datetime import datetime, timedelta, timezone
@@ -13,6 +14,7 @@ from cryptography.fernet import Fernet, InvalidToken
 
 from core.config import settings
 from core.logger import logger
+from utils.email_parser import parse_eml_content, decode_email_text, visible_html_text
 
 
 # ── Token Encryption ──────────────────────────────────────────────────────────
@@ -150,36 +152,42 @@ async def refresh_gmail_access_token(refresh_token: str) -> dict:
 
 def _decode_base64_url(data: str) -> str:
     """Decode base64url-encoded string (Gmail uses this for message bodies)."""
-    data = data.replace("-", "+").replace("_", "/")
-    padding = 4 - len(data) % 4
-    if padding != 4:
-        data += "=" * padding
     try:
-        return base64.b64decode(data).decode("utf-8", errors="replace")
+        return decode_email_text(_decode_gmail_bytes(data))[0]
     except Exception:
         return ""
 
 
+def _decode_gmail_bytes(data: str) -> bytes:
+    return base64.b64decode(data + "=" * (-len(data) % 4), altchars=b"-_", validate=True)
+
+
+def _gmail_inline_text_parts(payload):
+    disposition = _extract_header(payload.get("headers", []), "Content-Disposition")
+    if "attachment" in disposition.lower() or payload.get("filename") or payload.get("mimeType") == "message/rfc822":
+        return
+    if payload.get("mimeType") in ("text/plain", "text/html"):
+        yield payload
+    else:
+        for child in payload.get("parts", []):
+            yield from _gmail_inline_text_parts(child)
+
+
+def _decode_gmail_part(part):
+    header = Message()
+    header['Content-Type'] = _extract_header(part.get('headers', []), 'Content-Type') or part.get('mimeType', 'text/plain')
+    return decode_email_text(_decode_gmail_bytes(part.get('body', {}).get('data', '')), header.get_content_charset())[0]
+
+
 def _extract_body_from_payload(payload: dict) -> str:
-    """Recursively extract text body from a Gmail message payload."""
-    mime_type = payload.get("mimeType", "")
-    body_data = payload.get("body", {}).get("data", "")
-
-    if mime_type == "text/plain" and body_data:
-        return _decode_base64_url(body_data)
-    if mime_type == "text/html" and body_data:
-        # Strip HTML tags for analysis
-        text = _decode_base64_url(body_data)
-        text = re.sub(r"<[^>]+>", " ", text)
-        return re.sub(r"\s+", " ", text).strip()
-
-    # Recurse into multipart
-    for part in payload.get("parts", []):
-        result = _extract_body_from_payload(part)
-        if result:
-            return result
-
-    return ""
+    """Legacy full-payload fallback; raw Gmail ingestion uses the RFC parser."""
+    parts = list(_gmail_inline_text_parts(payload))
+    plain = [_decode_gmail_part(p).strip() for p in parts if p.get('mimeType') == 'text/plain']
+    body = next((p for p in plain if p), '')
+    if body:
+        return body
+    markup = [_decode_gmail_part(p) for p in parts if p.get('mimeType') == 'text/html']
+    return next((text for p in markup if (text := visible_html_text(p))), '')
 
 
 def _extract_header(headers: list, name: str) -> str:
@@ -188,6 +196,11 @@ def _extract_header(headers: list, name: str) -> str:
         if h.get("name", "").lower() == name.lower():
             return h.get("value", "")
     return ""
+
+
+def _extract_html_from_payload(payload: dict) -> str:
+    """Keep HTML alternatives for link evidence, independent of text selection."""
+    return '\n'.join(_decode_gmail_part(p) for p in _gmail_inline_text_parts(payload) if p.get('mimeType') == 'text/html')
 
 
 async def fetch_gmail_emails(access_token: str, max_results: int = 20) -> List[dict]:
@@ -220,7 +233,7 @@ async def fetch_gmail_emails(access_token: str, max_results: int = 20) -> List[d
                 msg_resp = await client.get(
                     GMAIL_MESSAGE_URL.format(msg_id=msg_id),
                     headers=headers,
-                    params={"format": "full"},
+                    params={"format": "raw"},
                 )
                 if msg_resp.status_code != 200:
                     continue
@@ -229,20 +242,30 @@ async def fetch_gmail_emails(access_token: str, max_results: int = 20) -> List[d
                 payload = data.get("payload", {})
                 msg_headers = payload.get("headers", [])
 
-                subject = _extract_header(msg_headers, "Subject") or "(No Subject)"
-                sender = _extract_header(msg_headers, "From") or "unknown@unknown.com"
                 date_str = _extract_header(msg_headers, "Date") or ""
-                body = _extract_body_from_payload(payload)
-
-                # Build raw headers text for SPF/DKIM analysis
-                headers_raw = "\n".join(f"{h['name']}: {h['value']}" for h in msg_headers)
+                if data.get('raw'):
+                    parsed = parse_eml_content(_decode_gmail_bytes(data['raw']))
+                    parsed['parsing']['source_kind'] = 'gmail_raw_rfc_email'
+                else:
+                    # Explicitly partial fallback for older payload providers.
+                    # It cannot hide detached HTML/image parts or claim completeness.
+                    parsed = {'body': _extract_body_from_payload(payload),
+                              'html_body': _extract_html_from_payload(payload), 'attachments': [],
+                              'subject': _extract_header(msg_headers, 'Subject'),
+                              'sender': _extract_header(msg_headers, 'From'),
+                              'headers': '\n'.join(f"{h['name']}: {h['value']}" for h in msg_headers),
+                              'parsing': {'source_kind': 'gmail_full_payload_fallback', 'text_complete': False,
+                                          'errors': ['Original RFC message unavailable'], 'unscanned_parts': []}}
 
                 emails.append({
                     "gmail_id": msg_id,
-                    "subject": subject,
-                    "sender": sender,
-                    "body": body or "(Empty body)",
-                    "headers_raw": headers_raw,
+                    "subject": parsed['subject'],
+                    "sender": parsed['sender'],
+                    "body": parsed['body'],
+                    "html_body": parsed['html_body'],
+                    "attachments": parsed['attachments'],
+                    "parsing": parsed['parsing'],
+                    "headers_raw": parsed['headers'],
                     "date": date_str,
                 })
             except Exception as e:
@@ -266,6 +289,7 @@ async def sync_gmail_inbox(connection, session) -> dict:
     from data.models import InboxConnection, User
     from services.scan_engine import scan_email as run_scan
     from sqlmodel import select
+    from utils.scan_outcomes import count_scan_outcomes, scan_outcome
 
     user = session.get(User, connection.user_id)
 
@@ -303,11 +327,13 @@ async def sync_gmail_inbox(connection, session) -> dict:
         connection.last_synced = now
         session.add(connection)
         session.commit()
-        return {"success": True, "fetched": 0, "new_scans": 0, "phishing_found": 0}
+        return {"success": True, "fetched": 0, "new_scans": 0, "phishing_found": 0,
+                "review_required": 0, "results_unavailable": 0, "policy_matches": 0,
+                "quarantine_recommended": 0}
 
     # 3. Scan each email (skip duplicates by checking gmail_id in existing scan notes)
     new_scans = 0
-    phishing_found = 0
+    outcomes = count_scan_outcomes([])
 
     for email in emails:
         # Build a unique scan_id using the Gmail message ID
@@ -325,20 +351,24 @@ async def sync_gmail_inbox(connection, session) -> dict:
                 sender=email["sender"],
                 subject=email["subject"],
                 headers=email["headers_raw"],
+                html_body=email.get("html_body", ""),
+                attachments=email.get("attachments", []),
+                parsing_info=email.get("parsing"),
                 session=session,
                 gmail_id=email["gmail_id"],  # passed to store for custom scan_id prefix
+                user_id=connection.user_id,
             )
             session.commit()  # Commit each email to avoid bulk rollback on IntegrityError
             
             new_scans += 1
-            if result.get("status") == "PHISHING":
-                phishing_found += 1
+            outcome = scan_outcome(result)
+            outcomes[outcome] += 1
+            if outcome == 'phishing':
+                if result.get('security_action') == 'AUTO_QUARANTINE':
+                    outcomes['quarantine_recommended'] += 1
                 if user and user.browser_alerts:
                     from utils.email_alerts import send_phishing_alert
-                    import asyncio
-                    asyncio.create_task(send_phishing_alert(user.email, user.name, result))
-            elif result.get("status") == "SUSPICIOUS":
-                phishing_found += 1
+                    await send_phishing_alert(user.email, user.name, result)
         except Exception as e:
             session.rollback() # Clear the failed transaction so the loop can continue
             logger.warning(f"Scan failed for Gmail msg {email['gmail_id']}: {e}")
@@ -349,10 +379,21 @@ async def sync_gmail_inbox(connection, session) -> dict:
     session.add(connection)
     session.commit()
 
-    logger.info(f"Gmail sync complete: {new_scans} new scans, {phishing_found} threats found")
+    if user and user.sync_alerts and new_scans:
+        from utils.email_alerts import send_sync_summary
+        await send_sync_summary(user.email, user.name, new_scans, outcomes['phishing'],
+            review_required=outcomes['review_required'], unavailable=outcomes['unavailable'],
+            policy_matches=outcomes['policy_matches'], quarantine_recommended=outcomes['quarantine_recommended'])
+
+    logger.info("Gmail sync complete: %s new scans; %s model phishing classifications, %s review, %s unavailable, %s policy matches",
+                new_scans, outcomes['phishing'], outcomes['review_required'], outcomes['unavailable'], outcomes['policy_matches'])
     return {
         "success": True,
         "fetched": len(emails),
         "new_scans": new_scans,
-        "phishing_found": phishing_found,
+        "phishing_found": outcomes['phishing'],
+        "review_required": outcomes['review_required'],
+        "results_unavailable": outcomes['unavailable'],
+        "policy_matches": outcomes['policy_matches'],
+        "quarantine_recommended": outcomes['quarantine_recommended'],
     }

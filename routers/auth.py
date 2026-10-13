@@ -6,6 +6,7 @@ from datetime import timedelta, datetime, timezone
 import uuid
 import re
 import httpx
+import logging
 from collections import defaultdict
 
 from data.database import get_session
@@ -15,6 +16,7 @@ from core.config import settings
 from pydantic import BaseModel, validator
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+logger = logging.getLogger("phishguard")
 
 # ── In-memory rate limiting ──────────────────────────────────────
 _login_attempts: dict = defaultdict(lambda: {"attempts": 0, "window_start": datetime.now(timezone.utc).replace(tzinfo=None), "locked_until": None})
@@ -229,6 +231,7 @@ async def logout_get(response: Response):
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
+GOOGLE_TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo"
 GOOGLE_SCOPES = "openid email profile"
 
 
@@ -252,39 +255,68 @@ async def google_callback(code: str, session: Session = Depends(get_session)):
     if not code:
         raise HTTPException(status_code=400, detail="Authorization code missing.")
 
-    async with httpx.AsyncClient() as client:
-        token_response = await client.post(
-            GOOGLE_TOKEN_URL,
-            data={
-                "code": code,
-                "client_id": settings.GOOGLE_CLIENT_ID,
-                "client_secret": settings.GOOGLE_CLIENT_SECRET,
-                "redirect_uri": settings.GOOGLE_REDIRECT_URI,
-                "grant_type": "authorization_code",
-            }
-        )
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            token_response = await client.post(
+                GOOGLE_TOKEN_URL,
+                data={
+                    "code": code,
+                    "client_id": settings.GOOGLE_CLIENT_ID,
+                    "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                    "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+                    "grant_type": "authorization_code",
+                }
+            )
+    except httpx.RequestError as exc:
+        logger.error("Google sign-in token request failed: %s: %s", type(exc).__name__, exc)
+        raise HTTPException(status_code=503, detail="Google sign-in could not connect. Please try again shortly.") from exc
 
     if token_response.status_code != 200:
         raise HTTPException(status_code=400, detail="Failed to exchange Google authorization code.")
 
     token_data = token_response.json()
     access_token = token_data.get("access_token")
+    if not access_token:
+        raise HTTPException(status_code=400, detail="Google did not return an access token.")
 
-    async with httpx.AsyncClient() as client:
-        userinfo_response = await client.get(
-            GOOGLE_USERINFO_URL,
-            headers={"Authorization": f"Bearer {access_token}"}
-        )
+    userinfo = None
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            userinfo_response = await client.get(
+                GOOGLE_USERINFO_URL,
+                headers={"Authorization": f"Bearer {access_token}"}
+            )
+    except httpx.RequestError as exc:
+        logger.warning("Google profile endpoint unavailable: %s", type(exc).__name__)
+    else:
+        if userinfo_response.status_code == 200:
+            userinfo = userinfo_response.json()
 
-    if userinfo_response.status_code != 200:
-        raise HTTPException(status_code=400, detail="Failed to fetch user info from Google.")
+    if userinfo is None:
+        # Some networks block www.googleapis.com while Google's OAuth endpoint works.
+        # Tokeninfo validates the signed ID token and returns its identity claims.
+        id_token = token_data.get("id_token")
+        if not id_token:
+            raise HTTPException(status_code=503, detail="Google sign-in could not verify your profile. Please try again shortly.")
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                identity_response = await client.post(GOOGLE_TOKENINFO_URL, data={"id_token": id_token})
+        except httpx.RequestError as exc:
+            logger.warning("Google token validation unavailable: %s", type(exc).__name__)
+            raise HTTPException(status_code=503, detail="Google sign-in could not verify your profile. Please try again shortly.") from exc
+        if identity_response.status_code != 200:
+            raise HTTPException(status_code=400, detail="Google sign-in could not verify your identity.")
+        userinfo = identity_response.json()
+        if userinfo.get("aud") != settings.GOOGLE_CLIENT_ID or userinfo.get("iss") not in ("accounts.google.com", "https://accounts.google.com"):
+            raise HTTPException(status_code=400, detail="Google sign-in returned an invalid identity.")
 
-    userinfo = userinfo_response.json()
-    email = userinfo.get("email")
+    email = (userinfo.get("email") or "").strip().lower()
     name = userinfo.get("name", "Google User")
 
     if not email:
         raise HTTPException(status_code=400, detail="Google did not return an email address.")
+    if userinfo.get("email_verified") not in (True, "true"):
+        raise HTTPException(status_code=400, detail="Google has not verified this email address.")
 
     user = _get_or_create_oauth_user(email=email, name=name, provider="google", session=session)
     return _login_user_and_redirect(user)
@@ -461,4 +493,3 @@ async def gmail_disconnect(request: Request, session: Session = Depends(get_sess
         session.delete(conn)
         session.commit()
     return RedirectResponse(url="/settings?inbox=disconnected", status_code=302)
-

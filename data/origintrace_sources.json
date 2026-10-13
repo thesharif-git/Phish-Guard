@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "sources": [
+    {
+      "id": "phishing_email_legacy",
+      "path": "data/Phishing_Email.csv",
+      "modality": "email",
+      "input_column": "Email Text",
+      "label_column": "Email Type",
+      "label_map": {"Safe Email": 0, "Phishing Email": 1},
+      "role": "development",
+      "label_scope": "email_phishing",
+      "collection_period": null,
+      "provenance": "Local merged corpus; original source identity and collection dates are not recorded.",
+      "limitations": ["Legacy baseline only; not evidence of 2026 coverage.", "Individual source identities and label methodology require verification."]
+    },
+    {
+      "id": "malicious_phish_legacy",
+      "path": "{desktop}/malicious_phish.csv",
+      "modality": "url",
+      "input_column": "url",
+      "label_column": "type",
+      "label_map": {"benign": 0, "phishing": 1},
+      "role": "development",
+      "label_scope": "url_phishing",
+      "collection_period": null,
+      "provenance": "Local malicious_phish aggregation; malware and defacement rows are excluded from the phishing task.",
+      "limitations": ["Labels describe URLs, not ownership or maliciousness of an entire domain.", "Collection timestamps and source independence are unknown."]
+    },
+    {
+      "id": "phiusiil_regression",
+      "path": "{desktop}/PhiUSIIL_Phishing_URL_Dataset.csv",
+      "modality": "url",
+      "input_column": "URL",
+      "label_column": "label",
+      "label_map": {"1": 0, "0": 1},
+      "role": "regression",
+      "label_scope": "url_phishing",
+      "collection_period": null,
+      "provenance": "UCI PhiUSIIL; 1 is legitimate and 0 is phishing. Local file is hashed for reproducibility.",
+      "reference": "https://archive.ics.uci.edu/dataset/967/phiusil-phishing-url-dataset",
+      "limitations": ["Previously inspected benchmark; never call this a fresh final test.", "Rows overlapping any development domain are excluded from exported regression data."]
+    },
+    {
+      "id": "phishing_site_urls_unverified",
+      "path": "{desktop}/phishing_site_urls.csv",
+      "modality": "url",
+      "input_column": "URL",
+      "label_column": "Label",
+      "label_map": {},
+      "role": "review_only",
+      "label_scope": "unverified_good_bad",
+      "collection_period": null,
+      "provenance": "Local good/bad URL corpus. Confirm bad means phishing, source history, and license before admission.",
+      "limitations": ["Cannot assume generic bad URLs are phishing."]
+    },
+    {
+      "id": "enron_fraud_review",
+      "path": "{desktop}/enron_data_fraud_labeled.csv",
+      "modality": "email",
+      "input_column": "Body",
+      "label_column": "Label",
+      "label_map": {},
+      "role": "review_only",
+      "label_scope": "fraud_not_verified_phishing",
+      "collection_period": "historical Enron corpus; derived-file dates unverified",
+      "provenance": "Fraud-labeled Enron derivative. Neither Label=0 nor Label=1 is accepted as phishing ground truth.",
+      "limitations": ["Useful for reviewing corporate hard negatives only after independent annotation.", "Not contemporary business email."]
+    },
+    {
+      "id": "domain_reputation_review",
+      "path": "{desktop}/3_malicious_domains.csv",
+      "modality": "domain",
+      "input_column": "Domain",
+      "role": "review_only",
+      "label_map": {},
+      "label_scope": "unverified_reputation",
+      "collection_period": null,
+      "provenance": "Local reputation metadata; label semantics, evidence snapshots, and originating provider require verification.",
+      "limitations": ["A generic malicious reputation verdict does not establish phishing-specific domain ownership."]
+    },
+    {
+      "id": "popular_domains_review",
+      "path": "{desktop}/top-1m.csv",
+      "modality": "domain",
+      "input_column": "domain",
+      "columns": ["rank", "domain"],
+      "role": "review_only",
+      "label_map": {},
+      "label_scope": "popularity_not_safety",
+      "collection_period": null,
+      "provenance": "Ranking list; provider and snapshot date unverified. Popularity does not certify safety.",
+      "limitations": ["Not used to manufacture legitimate URL or domain labels."]
+    }
+  ]
+}

@@ -25,6 +25,21 @@ async def lifespan(app: FastAPI):
     """
     logger.info("Initializing database and models...")
     init_db()
+
+    import os
+    if os.getenv('PHISHGUARD_PRELOAD_EMAIL', '1') == '1':
+        import threading
+        from services.email_runtime import preload_email_components
+        def _warmup():
+            try:
+                logger.info('[Email startup] Pre-warming heavy AI models in background...')
+                app.state.email_runtime = preload_email_components()
+                logger.info('[Email startup] Model pre-warming complete: %s', app.state.email_runtime.get('components_available'))
+            except Exception as e:
+                logger.warning('[Email startup] Pre-warming deferred: %s', e)
+        threading.Thread(target=_warmup, daemon=True).start()
+    else:
+        app.state.email_runtime = {'preloaded': False, 'components_available': None}
     
     # ── Background Inbox Polling Thread ─────────────────────────────
     import threading
@@ -35,6 +50,7 @@ async def lifespan(app: FastAPI):
         from sqlmodel import Session, select
         from data.models import InboxConnection
         from services.inbox_connector import sync_gmail_inbox
+        from services.notification_scheduler import send_due_weekly_digests
         
         logger.info("[Background] Started Gmail inbox polling worker...")
         while True:
@@ -47,10 +63,21 @@ async def lifespan(app: FastAPI):
                         asyncio.run(sync_gmail_inbox(conn, session))
             except Exception as e:
                 logger.error(f"[Background] Error in inbox polling worker: {e}")
+            try:
+                asyncio.run(send_due_weekly_digests())
+            except Exception as e:
+                logger.error(f"[Background] Error sending weekly digests: {e}")
             time.sleep(120)  # poll every 2 minutes
 
     poll_thread = threading.Thread(target=_inbox_poll_loop, daemon=True)
     poll_thread.start()
+
+    # Autonomous CertStream Brand Radar Daemon
+    try:
+        from services.certstream_daemon import start_certstream_daemon
+        start_certstream_daemon()
+    except Exception as e:
+        logger.error(f"[Startup] Failed to start CertStream daemon: {e}")
     
     yield
     logger.info("Shutting down PhishGuard backend application...")
@@ -60,6 +87,8 @@ app = FastAPI(
     title="PhishGuard Enterprise AI",
     description="Enterprise Phishing & Threat Detection Platform API",
     version="2.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
     lifespan=lifespan
 )
 
@@ -168,7 +197,11 @@ async def _run_inbox_autosync():
                             if result.get("new_scans", 0) > 0:
                                 logger.info(
                                     f"[Inbox] Auto-sync [{conn_fresh.provider}:{conn_fresh.email_address}]: "
-                                    f"{result['new_scans']} new scans, {result['phishing_found']} threats"
+                                    f"{result['new_scans']} new scans, "
+                                    f"{result['phishing_found']} phishing classifications, "
+                                    f"{result.get('review_required', 0)} require review, "
+                                    f"{result.get('results_unavailable', 0)} unavailable, "
+                                    f"{result.get('policy_matches', 0)} sender-policy matches"
                                 )
         except Exception as e:
             logger.error(f"[Inbox] Auto-sync error: {e}")

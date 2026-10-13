@@ -4,13 +4,27 @@ Runs heuristics + real threat intel (VirusTotal, PhishTank, URLhaus, WHOIS).
 """
 import re
 import socket
+from urllib.parse import urlparse
 import requests as _req
 import numpy as np
+import pandas as pd
+import time
 import threading
 from core.logger import logger
-from utils.threat_intel import full_threat_check
+from utils.threat_intel import (
+    full_threat_check,
+    analyze_tls_cert_lineage,
+    calculate_dns_ephemerality,
+    check_asn_brand_incongruity
+)
 from utils.html_scanner import analyze_live_html
-import services.scan_engine as scan_engine
+from services.origintrace_pillars import (
+    ProvenanceMatrix,
+    InfrastructureLineage,
+    SemanticDeception,
+    EvidentialFusion,
+    CampaignAttributor
+)
 
 
 def geolocate_ip(domain: str) -> dict:
@@ -53,18 +67,84 @@ def geolocate_ip(domain: str) -> dict:
 
     return fallback
 
-SUSPICIOUS_TLDS = [".xyz", ".biz", ".info", ".click", ".link", ".top", ".tk", ".pw", ".ru", ".cn", ".cc"]
-BRAND_NAMES = ["paypal", "microsoft", "apple", "amazon", "google", "netflix", "facebook", "instagram",
-               "bankofamerica", "chase", "wellsfargo", "dhl", "fedex", "ups", "irs"]
+# Truly suspicious gTLDs/ccTLDs — almost exclusively used by phishing (not legitimate businesses)
+SUSPICIOUS_TLDS = [".xyz", ".click", ".top", ".tk", ".pw", ".cc", ".link", ".gq", ".ml", ".ga", ".cf", ".work", ".live"]
+
+# Legitimate national ccTLDs — official country domains used by real businesses worldwide
+# These must NEVER be flagged as suspicious by TLD alone
+TRUSTED_CCTLDS = {
+    ".pk", ".in", ".uk", ".au", ".ca", ".de", ".fr", ".jp", ".br", ".mx", ".za", ".ng", ".ke",
+    ".ae", ".sa", ".bd", ".ru", ".cn", ".tr", ".it", ".es", ".nl", ".se", ".no", ".dk", ".fi",
+    ".nz", ".sg", ".my", ".ph", ".id", ".th", ".vn", ".eg", ".ma", ".tn", ".gh", ".tz",
+    ".com.pk", ".net.pk", ".org.pk", ".edu.pk", ".gov.pk",
+    ".co.uk", ".co.in", ".co.au", ".co.nz", ".co.za",
+    ".biz", ".info",  # common gTLDs used by legit businesses too
+}
+
+# Explicit mapping of high-value target brands to their legitimate base domains
+BRAND_LEGIT_DOMAINS = {
+    "paypal": ["paypal.com", "paypal.me"],
+    "microsoft": ["microsoft.com", "office.com", "live.com", "outlook.com", "azure.com", "office365.com", "msn.com"],
+    "apple": ["apple.com", "icloud.com"],
+    "amazon": ["amazon.com", "amazonaws.com", "media-amazon.com"],
+    "google": ["google.com", "gmail.com", "googleapis.com", "gstatic.com", "youtube.com", "youtu.be"],
+    "netflix": ["netflix.com"],
+    "facebook": ["facebook.com", "fb.com", "messenger.com", "meta.com"],
+    "instagram": ["instagram.com"],
+    "bankofamerica": ["bankofamerica.com", "bofa.com"],
+    "chase": ["chase.com", "jpmorgan.com", "jpmorganchase.com"],
+    "wellsfargo": ["wellsfargo.com"],
+    "dhl": ["dhl.com", "dhl.de"],
+    "fedex": ["fedex.com"],
+    "ups": ["ups.com"],
+    "usps": ["usps.com"],
+    "irs": ["irs.gov"],
+    "coinbase": ["coinbase.com"],
+    "binance": ["binance.com"],
+    "metamask": ["metamask.io"],
+    "whatsapp": ["whatsapp.com"],
+    "telegram": ["telegram.org", "t.me"],
+    "dropbox": ["dropbox.com"],
+    "adobe": ["adobe.com"],
+    "roblox": ["roblox.com"],
+    "steam": ["steampowered.com", "steamcommunity.com"],
+    "linkedin": ["linkedin.com"],
+    "twitter": ["twitter.com", "x.com", "t.co"],
+    "yahoo": ["yahoo.com"],
+    "outlook": ["outlook.com", "office.com", "microsoft.com"],
+    "office365": ["office365.com", "office.com", "microsoft.com"],
+}
+
+BRAND_NAMES = list(BRAND_LEGIT_DOMAINS.keys())
+
+# Homoglyph / digit-substitution normalization map
+# Attackers replace letters with look-alike digits to evade string matching:
+#   paypa1.com  → paypal.com,  micr0soft.com → microsoft.com
+#   g00gle.com  → google.com,  4mazon.com    → amazon.com
+_HOMOGLYPH_MAP = str.maketrans({
+    '0': 'o',   # zero → o
+    '1': 'l',   # one  → l  (most common: paypa1, app1e)
+    '3': 'e',   # 3    → e
+    '4': 'a',   # 4    → a
+    '5': 's',   # 5    → s
+    '6': 'g',   # 6    → g  (6oogle)
+    '8': 'b',   # 8    → b
+    '@': 'a',   # @    → a
+    '$': 's',   # $    → s
+})
+
+def _normalize_homoglyphs(text: str) -> str:
+    """Normalize digit/symbol substitutions to letters for brand matching."""
+    return text.translate(_HOMOGLYPH_MAP)
 
 # Well-known safe domains — never flag these regardless of ML score
 SAFE_DOMAINS = {
-    "google.com", "gmail.com", "google.co.uk", "google.com.pk", "googleapis.com",
+    "google.com", "gmail.com", "google.co.uk", "google.com.pk", "googleapis.com", "gstatic.com",
     "github.com", "github.io", "githubusercontent.com",
-    "microsoft.com", "office.com", "live.com", "outlook.com", "azure.com",
+    "microsoft.com", "office.com", "live.com", "outlook.com", "azure.com", "office365.com", "msn.com",
     "apple.com", "icloud.com",
     "amazon.com", "amazonaws.com", "aws.amazon.com",
-    "facebook.com", "instagram.com", "meta.com",
+    "facebook.com", "instagram.com", "meta.com", "whatsapp.com", "messenger.com",
     "twitter.com", "x.com", "t.co",
     "youtube.com", "youtu.be",
     "linkedin.com",
@@ -72,7 +152,7 @@ SAFE_DOMAINS = {
     "stackoverflow.com", "stackexchange.com",
     "cloudflare.com", "cdn.cloudflare.net",
     "npmjs.com", "pypi.org",
-    "stripe.com", "paypal.com",
+    "stripe.com", "paypal.com", "paypal.me",
     "openai.com", "anthropic.com",
     "dropbox.com", "box.com",
     "zoom.us", "slack.com", "discord.com",
@@ -80,41 +160,52 @@ SAFE_DOMAINS = {
     "wordpress.com", "wordpress.org",
     "reddit.com",
     "netflix.com",
+    "bankofamerica.com", "bofa.com", "chase.com", "wellsfargo.com",
+    "dhl.com", "fedex.com", "ups.com", "usps.com", "irs.gov",
+    "coinbase.com", "binance.com", "metamask.io",
+    "telegram.org", "adobe.com", "yahoo.com",
+    "roblox.com", "steampowered.com", "steamcommunity.com"
 }
 
-MALICIOUS_DOMAIN_LIST = [
-    "paypa1-alert.com", "microsoft-365verify.net", "bank0famerica.info",
-    "corp-helpdesk.xyz", "secure-docusign.xyz", "dropbox-shared.net",
-    "paypa1-secure.com", "paypa1-secure.ru",
-]
+def is_safe_authority_domain(domain: str) -> bool:
+    """Return True if domain is in or a subdomain of SAFE_DOMAINS."""
+    if not domain:
+        return False
+    d = domain.lower().strip().rstrip(".")
+    if d.startswith("www."):
+        d = d[4:]
+    return any(d == safe or d.endswith("." + safe) for safe in SAFE_DOMAINS)
 
 
 def extract_domain(url: str) -> str:
-    match = re.search(r"https?://([^/?\s]+)", url)
-    if not match:
+    if not url:
         return ""
-    domain = match.group(1).lower().split(":")[0]
+    raw = url.strip()
+    if not re.match(r"^https?://", raw, re.IGNORECASE):
+        raw = "https://" + raw
+    try:
+        domain = (urlparse(raw).hostname or "").lower()
+    except ValueError:
+        return ""
     if domain.startswith("www."):
         domain = domain[4:]
-    return domain
+    return domain.strip().lower()
 
 
 def run_url_heuristics(url: str) -> dict:
     """Fast local heuristics — no network calls."""
-    url_lower = url.lower()
     domain = extract_domain(url)
     flags = []
     score = 0
 
-    # Check blocklist
-    if any(bad in url_lower for bad in MALICIOUS_DOMAIN_LIST):
-        flags.append("Domain is on the PhishGuard known-malicious blocklist")
-        score += 90
-
-    # Suspicious TLD
-    matching_tld = next((tld for tld in SUSPICIOUS_TLDS if domain.endswith(tld)), None)
+    # Suspicious TLD — only flag genuinely high-risk gTLDs, never legitimate national ccTLDs
+    # First check if domain uses a trusted/national ccTLD — skip TLD penalty entirely
+    uses_trusted_cctld = any(domain.endswith(tld) for tld in TRUSTED_CCTLDS)
+    matching_tld = None
+    if not uses_trusted_cctld:
+        matching_tld = next((tld for tld in SUSPICIOUS_TLDS if domain.endswith(tld)), None)
     if matching_tld:
-        flags.append(f"Suspicious TLD: '{matching_tld}' is commonly used in phishing")
+        flags.append(f"Suspicious TLD: '{matching_tld}' is almost exclusively used by disposable phishing campaigns")
         score += 25
 
     # IP address instead of domain
@@ -122,13 +213,34 @@ def run_url_heuristics(url: str) -> dict:
         flags.append("URL uses a raw IP address instead of a domain name")
         score += 40
 
-    # Brand name in non-brand domain (typosquatting)
-    for brand in BRAND_NAMES:
-        if brand in url_lower:
-            legit_domains = [f"{brand}.com", f"{brand}.net", f"{brand}.org"]
-            if not any(domain == ld or domain.endswith(f".{ld}") for ld in legit_domains):
-                flags.append(f"Brand name '{brand}' used in a non-official domain — possible impersonation")
-                score += 50
+    # Brand impersonation check: protected brand in an official or homoglyph domain
+    # Normalize homoglyphs (paypa1 → paypal, micr0soft → microsoft) before matching
+    domain_normalized = _normalize_homoglyphs(domain)
+    for brand, legit_domains in BRAND_LEGIT_DOMAINS.items():
+        # Check both the raw domain (paypal.com) and the homoglyph-normalized version (paypa1 → paypal)
+        brand_in_raw    = brand in domain
+        brand_in_normed = brand in domain_normalized
+        if brand_in_raw or brand_in_normed:
+            is_legit = any(domain == ld or domain.endswith(f".{ld}") for ld in legit_domains)
+            if not is_legit:
+                if brand_in_normed and not brand_in_raw:
+                    # Homoglyph attack detected (e.g. paypa1, micr0soft)
+                    flags.append(
+                        f"Homoglyph/Typosquatting attack: '{domain}' impersonates '{brand}' "
+                        f"using digit/symbol substitution (normalized: '{domain_normalized}')"
+                    )
+                    score += 70  # Higher penalty — deliberate character obfuscation
+                else:
+                    flags.append(f"Brand impersonation alert: Protected brand '{brand}' appears in an unofficial domain")
+                    score += 55
+                # Check for credential harvesting or security cues anywhere in domain
+                security_cue = re.search(
+                    r"(?:^|[-_.])(secure|security|login|signin|sign-in|verify|verification|account|support|billing|update|auth|portal|recover|alert|banking|service|help|wallet|token)(?:$|[-_.])",
+                    domain,
+                )
+                if security_cue:
+                    flags.append(f"Credential harvesting indicator: Brand '{brand}' is paired with '{security_cue.group(1)}' in domain")
+                    score += 40
                 break
 
     # URL shortener
@@ -159,14 +271,80 @@ def run_url_heuristics(url: str) -> dict:
         "has_flags": len(flags) > 0,
     }
 
-def is_safe_domain(url: str) -> bool:
-    """Returns True if the domain is a known-safe popular site."""
-    domain = extract_domain(url)
-    # Check exact match or subdomain of a known safe domain
-    for safe in SAFE_DOMAINS:
-        if domain == safe or domain.endswith("." + safe):
-            return True
+_TRANCO_DOMAINS = None
+
+def get_authority_domains() -> frozenset:
+    global _TRANCO_DOMAINS
+    if _TRANCO_DOMAINS is None:
+        import os
+        domains = set(SAFE_DOMAINS)
+        tranco_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "tranco_top50k.txt")
+        if os.path.exists(tranco_path):
+            try:
+                with open(tranco_path, "r", encoding="utf-8") as f:
+                    for line in f:
+                        d = line.strip().lower()
+                        if d:
+                            domains.add(d)
+            except Exception as e:
+                logger.warning(f"Failed to load tranco_top50k.txt: {e}")
+        _TRANCO_DOMAINS = frozenset(domains)
+    return _TRANCO_DOMAINS
+
+def is_safe_authority_domain(domain: str) -> bool:
+    """
+    Tier 0 Authority Anchor:
+    Returns True if domain is an established global authority:
+    - In Tranco Top 50,000 global ranking
+    - Belongs to .edu, .gov, or .mil
+    - In curated SAFE_DOMAINS
+    """
+    if not domain:
+        return False
+    d = domain.lower().strip()
+    if d.startswith("www."):
+        d = d[4:]
+    if d.endswith(".edu") or d.endswith(".gov") or d.endswith(".mil"):
+        return True
+    auth = get_authority_domains()
+    if d in auth:
+        return True
+    parts = d.split(".")
+    if len(parts) > 2 and ".".join(parts[-2:]) in auth:
+        return True
+    if len(parts) > 3 and ".".join(parts[-3:]) in auth:
+        return True
     return False
+
+# Shared User-Generated Content (UGC), Cloud Storage, and Form Hosting Providers
+# These domains have legitimate infrastructure, but host public user uploads frequently abused in phishing.
+UGC_HOSTING_PLATFORMS = {
+    "docs.google.com", "sites.google.com", "forms.gle", "drive.google.com", "storage.googleapis.com",
+    "forms.office.com", "sway.office.com", "onedrive.live.com", "1drv.ms",
+    "github.io", "pages.dev", "workers.dev",
+    "firebaseapp.com", "web.app",
+    "s3.amazonaws.com", "blob.core.windows.net",
+    "notion.site", "canva.site", "weebly.com", "wixsite.com", "mystrikingly.com",
+    "formstack.com", "typeform.com", "jotform.com", "surveymonkey.com"
+}
+
+def is_ugc_hosting_platform(domain: str, path: str = "") -> bool:
+    """Detects whether a URL is hosted on a public user-generated content or form platform."""
+    d = (domain or "").lower().strip()
+    if d.startswith("www."):
+        d = d[4:]
+    if d in UGC_HOSTING_PLATFORMS:
+        return True
+    if any(d.endswith("." + p) for p in UGC_HOSTING_PLATFORMS):
+        return True
+    if "google.com" in d and any(seg in path.lower() for seg in ["/forms", "/spreadsheets", "/document"]):
+        return True
+    return False
+
+def is_safe_domain(url: str) -> bool:
+    """Returns True if the domain is a known-safe popular site or established global authority."""
+    domain = extract_domain(url)
+    return is_safe_authority_domain(domain)
 
 
 
@@ -229,11 +407,40 @@ def scan_url(raw_url: str) -> dict:
     """
     logger.info(f"Scanning URL: {raw_url[:100]}")
 
+    import services.scan_engine as scan_engine
+    if not scan_engine.MODEL_LOADED:
+        scan_engine.load_ml_model()
+
+    raw_url = raw_url.strip() if raw_url else ""
+    if not raw_url:
+        return {
+            "url": "",
+            "final_score": 0,
+            "risk_level": "safe",
+            "status": "CLEAN",
+            "summary": "No URL provided.",
+            "signals": [],
+            "heuristics": {"domain": "", "is_https": False},
+            "threat_intel": {},
+            "html_analysis": {},
+            "domain": "",
+            "is_https": False,
+            "has_redirect": False,
+            "has_shortener": False,
+            "geo": {},
+            "server": "Unknown",
+        }
+
+    # Normalize url so resolution and heuristics work smoothly with or without https://
+    normalized_url = raw_url
+    if not normalized_url.startswith(("http://", "https://")):
+        normalized_url = "https://" + normalized_url
+
     if not scan_engine.MODEL_LOADED:
         scan_engine.load_ml_model()
 
     # 1. Unshorten URL
-    url = scan_engine.resolve_short_url(raw_url)
+    url = scan_engine.resolve_short_url(normalized_url)
 
     # 2. Extract domain
     domain_safe = extract_domain(url)
@@ -265,91 +472,63 @@ def scan_url(raw_url: str) -> dict:
                 "server": "Unknown",
             }
 
-    # 4. Short-circuit: known-safe domains always return clean
-    if is_safe_domain(url):
-        geo = geolocate_ip(domain_safe)
-        # Run real WHOIS for accurate domain info even on safe domains
-        try:
-            from utils.threat_intel import get_domain_age
-            real_whois = get_domain_age(url)
-        except Exception:
-            real_whois = {"available": False, "reason": "WHOIS lookup skipped"}
-
-        # Run HTML scan in background — safe domains might block bots, that's OK
-        html_holder = {}
-        def _safe_html():
-            html_holder.update(analyze_live_html(url))
-        ht = threading.Thread(target=_safe_html)
-        ht.start(); ht.join(timeout=12)
-        html_safe = _normalize_html_result(html_holder if html_holder else {})
-
-        return {
-            "url": raw_url,
-            "resolved_url": url if url != raw_url else None,
-            "final_score": 2,
-            "risk_level": "safe",
-            "status": "CLEAN",
-            "summary": "✅ This URL belongs to a well-known, trusted domain. No threats detected.",
-            "signals": ["Domain is on the PhishGuard trusted-site allowlist."],
-            "heuristics": run_url_heuristics(url),
-            "threat_intel": {
-                "overall": "CLEAN",
-                "overall_score": 0,
-                "virustotal":  {"available": False, "reason": "Trusted domain — skipped"},
-                "phishtank":   {"available": False, "reason": "Trusted domain — skipped"},
-                "urlhaus":     {"available": False, "reason": "Trusted domain — skipped"},
-                "domain_age":  real_whois,
-            },
-            "domain": domain_safe,
-            "is_https": url.lower().startswith("https://"),
-            "has_redirect": url != raw_url,
-            "has_shortener": False,
-            "geo": geo,
-            "html_analysis": html_safe,
-            "server": html_safe.get("server", "Unknown"),
-        }
-
     # 3. Run fast local heuristics
     heuristics = run_url_heuristics(url)
 
-    # 4. ML Predictions — capped to avoid overtrained model dominating
+    # 4. ML Predictions — differentiated for domain-only vs full URL with path
     ml_url_score = 0
     ml_domain_score = 0
+    url_model_probability = None
+    domain_model_probability = None
     ai_flags = []
     
+    parsed_for_ml = urlparse(url)
+    has_path_or_query = bool(parsed_for_ml.path.strip('/') or parsed_for_ml.query)
+
+    # Root URLs are included in the URL training corpus and use the URL specialist.
     if scan_engine.URL_MODEL:
         try:
             features = scan_engine.extract_url_features(url)
-            feat_array = np.array(list(features.values()), dtype=np.float32).reshape(1, -1)
-            probs = scan_engine.URL_MODEL.predict_proba(feat_array)
+            feat_df = scan_engine.numeric_url_frame(scan_engine.URL_MODEL, [features])
+            if hasattr(scan_engine.URL_MODEL, "_transform_urls"):
+                probs = scan_engine.URL_MODEL.predict_proba([url])
+            else:
+                probs = scan_engine.URL_MODEL.predict_proba(feat_df)
             if len(probs) > 0 and len(probs[0]) > 1:
-                ml_url_score = int(float(probs[0][1]) * 100)
-                # Only flag if model is very confident (≥70%)
+                url_model_probability = float(probs[0][1])
+                ml_url_score = int(url_model_probability * 100)
                 if ml_url_score >= 70:
-                    ai_flags.append(f"AI URL Analysis: Suspicious structure ({ml_url_score}% risk)")
+                    ai_flags.append(f"AI URL Structure Analysis: {ml_url_score}% phishing confidence")
                 else:
-                    ml_url_score = 0  # ignore low-confidence ML signals
+                    ml_url_score = 0
         except Exception as e:
             logger.error(f"URL ML error: {e}")
 
     if scan_engine.DOMAIN_MODEL:
         try:
-            features = scan_engine.extract_domain_features(url)
-            feat_array = np.array(list(features.values()), dtype=np.float32).reshape(1, -1)
-            probs = scan_engine.DOMAIN_MODEL.predict_proba(feat_array)
+            features = scan_engine.extract_domain_features(scan_engine.domain_model_input(url))
+            feat_df = scan_engine.numeric_url_frame(scan_engine.DOMAIN_MODEL, [features])
+            probs = scan_engine.DOMAIN_MODEL.predict_proba(feat_df)
             if len(probs) > 0 and len(probs[0]) > 1:
-                ml_domain_score = int(float(probs[0][1]) * 100)
-                if ml_domain_score >= 70:
-                    ai_flags.append(f"AI Domain Analysis: Suspicious domain reputation ({ml_domain_score}% risk)")
-                else:
-                    ml_domain_score = 0
+                domain_model_probability = float(probs[0][1])
+                # Diagnostics only: URL-derived training labels do not establish
+                # domain-wide ownership/reputation. Never turn this into a threat flag.
         except Exception as e:
             logger.error(f"Domain ML error: {e}")
 
-    # 5. Run live threat intel, HTML analysis, and GeoIP all in parallel
+    # 5. Parallel Multi-Modal Intelligence Harvesting:
+    #    - Live Threat Intel (VT, PhishTank, URLhaus, WHOIS domain age)
+    #    - Live HTML DOM & Credential Analysis (DOM sinks, forms, SSL)
+    #    - GeoIP (ip-api)
+    #    - TLS Certificate Lineage Mismatch (X.509 SNI, Subject/Issuer org, SHA-256 fingerprint)
+    #    - DNS Ephemerality & Fast-Flux Index (DoH TTL, MX, NS)
+    #    - Autonomous System Brand Incongruity ABCI (BGP ASN vs Enterprise network)
     threat_intel_result = {}
     html_result_holder  = {}
     geo_result_holder   = {}
+    tls_result_holder   = {}
+    dns_result_holder   = {}
+    asn_result_holder   = {}
 
     def _run_threat_intel():
         threat_intel_result.update(full_threat_check(url))
@@ -358,83 +537,215 @@ def scan_url(raw_url: str) -> dict:
         html_result_holder.update(analyze_live_html(url))
 
     def _run_geo():
-        geo_result_holder.update(geolocate_ip(heuristics["domain"]))
+        geo_result_holder.update(geolocate_ip(domain_safe))
 
-    t1 = threading.Thread(target=_run_threat_intel)
-    t2 = threading.Thread(target=_run_html_scan)
-    t3 = threading.Thread(target=_run_geo)
-    t1.start(); t2.start(); t3.start()
-    t1.join(timeout=12)   # threat intel: VT + PhishTank + URLhaus + WHOIS in parallel
-    t2.join(timeout=12)   # HTML scan: SSL cert check (3s) + page fetch (3s) + parsing
-    t3.join(timeout=4)    # GeoIP: fast UDP lookup
+    def _run_tls():
+        tls_result_holder.update(analyze_tls_cert_lineage(domain_safe))
 
-    threat_intel = threat_intel_result if threat_intel_result else {"overall": "CLEAN", "overall_score": 5}
+    def _run_dns():
+        dns_result_holder.update(calculate_dns_ephemerality(domain_safe))
+
+    def _run_asn():
+        asn_result_holder.update(check_asn_brand_incongruity(domain_safe))
+
+    threads = [
+        threading.Thread(target=_run_threat_intel),
+        threading.Thread(target=_run_html_scan),
+        threading.Thread(target=_run_geo),
+        threading.Thread(target=_run_tls),
+        threading.Thread(target=_run_dns),
+        threading.Thread(target=_run_asn),
+    ]
+    for t in threads:
+        t.start()
+    # Strictly bound the total wall-clock join time across all workers to 6.0 seconds
+    deadline = time.time() + 6.0
+    for t in threads:
+        remaining = max(0.0, deadline - time.time())
+        t.join(timeout=remaining)
+
+    # Freeze the completed observations: timed-out workers must not mutate
+    # evidence after the verdict has been computed.
+    threat_intel = dict(threat_intel_result) if threat_intel_result else {"overall": "UNKNOWN", "overall_score": 0}
     html_result  = _normalize_html_result(html_result_holder)
-    geo          = geo_result_holder   if geo_result_holder   else geolocate_ip(heuristics["domain"])
+    _GEO_FALLBACK = {"ip": "Unknown", "city": "Unknown", "region": "", "country": "Unknown", "countryCode": "", "isp": "Unknown", "lat": 37.7749, "lon": -122.4194}
+    geo          = dict(geo_result_holder) if geo_result_holder else _GEO_FALLBACK
+    tls_intel    = dict(tls_result_holder)
+    dns_intel    = dict(dns_result_holder)
+    asn_intel    = dict(asn_result_holder)
 
-    # 6. Combine scores: heuristics 25%, ML 15%, threat intel 40%, HTML live analysis 20%
-    #    Threat intel (VirusTotal/PhishTank/URLhaus) is the most reliable signal.
-    #    HTML analysis catches compromised domains that pass all other checks.
+    # 6. OriginTrace 4-Pillars Web-Mode Execution
+    # Pillar 1: Provenance Matrix (Cryptographic Identity & TLS Lineage Mismatch)
+    p1_result = ProvenanceMatrix.analyze_web(
+        domain=domain_safe,
+        url=url,
+        tls_intel=tls_intel
+    )
+
+    # Pillar 2: Infrastructure Lineage (Autonomous System Brand Incongruity & Fast-Flux DNS)
+    p2_result = InfrastructureLineage.analyze_web(
+        domain=domain_safe,
+        dns_ephemerality=dns_intel,
+        asn_intel=asn_intel,
+        geo=geo
+    )
+
+    # Pillar 3: Semantic Deception (DOM Sinks, Credential Harvesting Forms, Evasion)
+    p3_result = SemanticDeception.analyze_web(
+        html_analysis=html_result,
+        url=url,
+        domain=domain_safe
+    )
+
+    # Pillar 4: Evidential Fusion (Mathematical Dempster-Shafer Synthesis)
+    p4_result = EvidentialFusion.synthesize(
+        provenance=p1_result,
+        infrastructure=p2_result,
+        semantic=p3_result,
+        context="web"
+    )
+
+    # 7. Zero-Day Campaign Attribution Graph
+    target_brand = p1_result.get("target_brand")
+    campaign_attribution = CampaignAttributor.attribute(
+        domain=domain_safe,
+        brand=target_brand,
+        asn=asn_intel.get("asn", ""),
+        isp=asn_intel.get("isp", ""),
+        tls_fingerprint=tls_intel.get("cert_fingerprint", ""),
+        tls_issuer=tls_intel.get("issuer", ""),
+        is_threat=p4_result["final_score"] >= 45
+    )
+
+    # 8. Unified Mathematical Scoring Integration
+    combined_score = p4_result["final_score"]
+
+    # Incorporate heuristic and ML signals
     heuristic_score = heuristics["heuristic_score"]
-    ml_combined = max(ml_url_score, ml_domain_score)
-    intel_score = threat_intel.get("overall_score", 5)
-    html_score = html_result.get("score", 0)
     
-    combined_score = min(round(
-        heuristic_score * 0.25 +
-        ml_combined   * 0.15 +
-        intel_score   * 0.40 +
-        html_score    * 0.20
-    ), 100)
+    # The URL specialist supplies ML risk for every URL, including roots; domain output is separate evidence.
+    ml_combined = ml_url_score
     
-    # Hard overrides — any single definitive signal forces critical
-    if intel_score >= 90:
-        combined_score = max(combined_score, intel_score)
     if heuristic_score >= 75:
-        # Blocklist hit or clear typosquatting — trust our own rules even if VT hasn't indexed it
         combined_score = max(combined_score, heuristic_score)
-    if html_result.get("brand_mismatch"):          # e.g. title says PayPal, domain isn't paypal.com
-        combined_score = max(combined_score, 92)
-    if html_result.get("has_password_field") and not url.startswith("https://"):
-        combined_score = max(combined_score, 88)   # password field over plain HTTP = very dangerous
+    elif heuristic_score >= 45:
+        combined_score = max(combined_score, heuristic_score)
 
-    # If all real threat intel sources return clean AND heuristics are also low,
-    # cap score at 44 so an overtrained ML model cannot push a clean URL into "critical"
-    # But do NOT cap if heuristics or HTML are themselves already flagging something real
-    if intel_score <= 10 and heuristic_score < 45 and html_score < 45:
-        combined_score = min(combined_score, 44)
+    # Corroboration Guard for ML Predictions:
+    # A lexical ML model must NEVER single-handedly condemn an established, clean domain (>180 days old)
+    # when all 4 OriginTrace pillars, heuristics, and threat feeds show ZERO threat indicators.
+    da = threat_intel.get("domain_age", {})
+    is_established_domain = da.get("available") and not da.get("is_suspicious") and da.get("age_days", 0) > 180
+
+    if ml_combined >= 80:
+        if is_established_domain and combined_score < 30 and heuristic_score < 30:
+            logger.info(f"Suppressing uncorroborated ML score ({ml_combined}) on established domain '{domain_safe}' (Age: {da.get('age_days')} days)")
+            ai_flags = [f for f in ai_flags if "phishing confidence" not in f]
+        else:
+            combined_score = max(combined_score, ml_combined)
+    elif ml_combined >= 60:
+        if not is_established_domain and (combined_score >= 25 or heuristic_score >= 25):
+            combined_score = max(combined_score, ml_combined)
+
+    # WHOIS new domain penalty (e.g. registered < 14 days ago)
+    if da.get("available") and da.get("is_suspicious"):
+        if heuristic_score >= 35 or ml_combined >= 50 or combined_score >= 40:
+            combined_score = min(100, combined_score + 15)
+
+    # External Threat Feeds Match (VirusTotal, PhishTank, URLhaus)
+    vt = threat_intel.get("virustotal") or {}
+    pt = threat_intel.get("phishtank") or {}
+    uh = threat_intel.get("urlhaus") or {}
+    if (vt.get("available") and vt.get("malicious", 0) > 0) or \
+       (pt.get("available") and pt.get("is_phishing")) or \
+       (uh.get("available") and uh.get("is_malicious")):
+        combined_score = max(combined_score, 90)
+
+    # Cross-Entity Contradiction Matrix: Evaluate Brand vs Domain vs ASN Mismatch
+    from services.origintrace_pillars import CrossEntityContradictionEngine
+    contra_analysis = CrossEntityContradictionEngine.analyze(
+        urls=[url, raw_url] if url != raw_url else [url],
+        destination_domain=domain_safe,
+        destination_asn=asn_intel.get("asn", ""),
+        destination_isp=asn_intel.get("isp", ""),
+        tls_cert_org=tls_intel.get("subject_org", "")
+    )
+
+    if contra_analysis.get("is_contradictory"):
+        combined_score = max(combined_score, int(contra_analysis["contradiction_score"]))
+
+    # Build comprehensive explanation signals
+    signals = []
+
+    # Tier 0 Authority Domain Policy:
+    # 1. Authority domains have ZERO domain reputation risk (domain is legitimate).
+    # 2. However, user-generated content (UGC) hosting platforms or URLs with suspicious paths/threat intel
+    #    must NEVER have their path, heuristic, ML, or threat intelligence scores wiped out.
+    domain_lower = domain_safe.lower()
+    parsed_path = urlparse(url).path.strip('/')
+    is_auth_dom = is_safe_authority_domain(domain_lower)
+    is_ugc = is_ugc_hosting_platform(domain_lower, parsed_path)
+
+    if is_auth_dom:
+        if is_ugc or parsed_path:
+            # On UGC platforms or deep paths:
+            # Domain penalty is zeroed, but heuristic/ML/threat intelligence scores on the path/payload stand
+            if is_ugc:
+                signals.append("[Cloud Hosting] Hosted on public user-generated content / form infrastructure")
+                if heuristic_score >= 25 or ml_url_score >= 50:
+                    combined_score = max(combined_score, heuristic_score, ml_url_score)
+        else:
+            # Pure root homepage of an established authority (e.g. https://google.com, https://github.com)
+            # Only reset if threat feeds show zero malicious detections
+            if combined_score < 45 and not ((vt.get("available") and vt.get("malicious", 0) > 0) or
+                    (pt.get("available") and pt.get("is_phishing")) or
+                    (uh.get("available") and uh.get("is_malicious")) or contra_analysis.get("is_contradictory")):
+                combined_score = 0
 
     final_score = combined_score
-    risk_level = classify_risk(final_score)
     status = get_status(final_score)
+    risk_level = classify_risk(final_score)
 
-    # Build explanation
-    signals = []
     if url != raw_url:
         signals.append(f"Redirects to: {url}")
-        
+
+    # Prioritize Contradiction Matrix Signals
+    for sig in contra_analysis.get("signals", []):
+        signals.append(f"[Contradiction Matrix] {sig}")
+
+    # Prioritize OriginTrace Pillar Signals
+    for sig in p1_result.get("signals", []):
+        if any(marker in sig for marker in ["Lookalike", "Lineage Mismatch", "Self-Signed", "Expired"]):
+            signals.append(f"[Pillar 1 Provenance] {sig}")
+
+    for sig in p2_result.get("signals", []):
+        if any(marker in sig for marker in ["Autonomous System", "Fast-Flux", "Zero Mail", "Disposable VPS", "Low-Reputation TLD"]):
+            signals.append(f"[Pillar 2 Infrastructure] {sig}")
+
+    for sig in p3_result.get("signals", []):
+        if any(marker in sig for marker in ["DOM Brand", "Credential", "Obfuscated", "Deception"]):
+            signals.append(f"[Pillar 3 Semantic] {sig}")
+
+    # Campaign attribution signal
+    if campaign_attribution.get("is_attributed") and campaign_attribution.get("campaign_id"):
+        signals.append(
+            f"[Campaign Graph] Linked to {campaign_attribution['campaign_name']} ({campaign_attribution['campaign_id']})"
+        )
+
     signals.extend(ai_flags)
     signals.extend(heuristics["flags"])
 
-    vt = threat_intel.get("virustotal", {})
     if vt.get("available") and vt.get("malicious", 0) > 0:
-        signals.append(f"VirusTotal: {vt['malicious']}/{vt['total_engines']} security engines flagged this URL as malicious")
+        signals.append(f"VirusTotal: {vt['malicious']}/{vt.get('total_engines', '?')} security engines flagged this URL as malicious")
     elif vt.get("available"):
         signals.append(f"VirusTotal: 0/{vt.get('total_engines', '?')} engines flagged — no known detections")
 
-    pt = threat_intel.get("phishtank", {})
     if pt.get("available") and pt.get("is_phishing"):
         signals.append("PhishTank: This URL is confirmed as a phishing site in the PhishTank community database")
-    elif pt.get("available"):
-        signals.append("PhishTank: URL not found in the phishing database")
 
-    uh = threat_intel.get("urlhaus", {})
     if uh.get("available") and uh.get("is_malicious"):
         signals.append(f"URLhaus: Listed as malware distribution ({uh.get('threat', 'unknown')})")
-    elif uh.get("available"):
-        signals.append("URLhaus: Not found in the malware URL feed")
 
-    da = threat_intel.get("domain_age", {})
     if da.get("available"):
         if da.get("is_suspicious"):
             signals.append(f"Domain Age: Only {da['age_days']} days old — very new domains are high risk")
@@ -444,32 +755,47 @@ def scan_url(raw_url: str) -> dict:
     if not heuristics["is_https"]:
         signals.append("URL uses HTTP (not HTTPS) — no encryption, increased risk")
 
-    # 7. HTML live analysis signals
     if html_result.get("success"):
-        signals.extend(html_result.get("flags", []))
+        for h_sig in html_result.get("flags", []):
+            if h_sig not in signals:
+                signals.append(h_sig)
     elif html_result.get("error"):
         signals.append(f"Live HTML scan: {html_result['error']} — could not retrieve page content")
 
-    # Verdict summary
-    if final_score >= 75:
-        summary = "🚨 This URL has multiple high-confidence malicious indicators. Do NOT visit it."
-    elif final_score >= 45:
-        summary = "⚠️ This URL has suspicious characteristics. Proceed with caution."
-    else:
-        summary = "✅ This URL appears to be safe. No significant threats detected."
+    from services.web_evidence_policy import web_evidence_decision
+    uncertainty_val = p4_result.get("uncertainty", 1.0)
+    decision = web_evidence_decision(final_score, url_probability=url_model_probability,
+        html=html_result, tls=tls_intel, dns=dns_intel, asn=asn_intel,
+        intel=threat_intel, contradiction=contra_analysis, ignorance=uncertainty_val)
 
     return {
         "url": raw_url,
         "resolved_url": url if url != raw_url else None,
         "final_score": final_score,
-        "risk_level": risk_level,
-        "status": status,
-        "summary": summary,
+        "combined_score": final_score,
+        "ml_probability": url_model_probability,
+        "ml_score": ml_url_score,
+        **decision,
+        "epistemic_uncertainty": None,
+        "evidence_ignorance": uncertainty_val,
+        "uncertainty_kind": "assigned_subjective_logic_ignorance",
+        "contradiction_analysis": contra_analysis,
         "signals": signals if signals else ["No suspicious signals detected."],
         "heuristics": heuristics,
         "threat_intel": threat_intel,
         "html_analysis": html_result,
-        "domain": heuristics["domain"],
+        "origintrace_pillars": {
+            "provenance_matrix": p1_result,
+            "infrastructure_lineage": p2_result,
+            "semantic_deception": p3_result,
+            "evidential_fusion": p4_result,
+            "model_probabilities": {"url": url_model_probability, "domain": domain_model_probability, "domain_scope": scan_engine.domain_model_input(url), "domain_role": "diagnostic_only_unverified_domain_labels"},
+        },
+        "campaign_attribution": campaign_attribution,
+        "tls_intel": tls_intel,
+        "dns_ephemerality": dns_intel,
+        "asn_intel": asn_intel,
+        "domain": domain_safe,
         "is_https": heuristics["is_https"],
         "has_redirect": url != raw_url,
         "has_shortener": url != raw_url,

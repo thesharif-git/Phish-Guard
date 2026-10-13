@@ -335,9 +335,6 @@ def analyze_live_html(url: str) -> dict:
             if not url.startswith("https://"):
                 result["flags"].append("Live HTML: Contains a password input field on an insecure (HTTP) page.")
                 score += 85
-            else:
-                result["flags"].append("Live HTML: Contains a password input field.")
-                score += 30
 
         # 3. Heuristic: Brand Mismatch in Title
         title_tag  = soup.find("title")
