@@ -120,9 +120,13 @@
           <td class="py-2 font-semibold text-text max-w-[160px] truncate pr-4">{{ scan.sender }}</td>
           <td class="py-2 text-subtext font-medium max-w-[200px] truncate pr-4">{{ scan.subject or '—' }}</td>
           <td class="py-2">
+            {% if scan.risk_score is none %}
+            <span class="text-subtext">Unavailable</span>
+            {% else %}
             <span class="font-bold {% if scan.risk_score >= 70 %}text-danger{% elif scan.risk_score >= 40 %}text-amber-600{% else %}text-emerald-600{% endif %}">
               {{ scan.risk_score }}<span class="text-muted font-medium text-[11px]">/100</span>
             </span>
+            {% endif %}
           </td>
           <td class="py-2">
             {% if scan.status == 'PHISHING' %}
@@ -288,7 +292,7 @@ function exportCSV() {
     s.scan_id,
     `"${(s.sender || '').replace(/"/g, '""')}"`,
     `"${(s.subject || '').replace(/"/g, '""')}"`,
-    s.risk_score,
+    s.risk_score ?? '',
     s.status,
     s.timestamp
   ]);

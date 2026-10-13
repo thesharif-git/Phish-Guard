@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>404 — Page Not Found · PhishGuard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root { --brand: #2563eb; --brand-d: #1e40af; }
     body {
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -104,9 +104,10 @@
 </head>
 <body>
   <div class="container">
-    <div class="shield-icon">
-      <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+    <div class="shield-icon" style="background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.3);">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+        <path d="M12 3L4.5 6.5V12.2C4.5 16.9 7.7 21 12 22.2C16.3 21 19.5 16.9 19.5 12.2V6.5L12 3Z" stroke="#34d399" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" fill="#10B981" fill-opacity="0.2"/>
+        <path d="M8.5 12.3L10.8 14.6L15.5 9.9" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
     <div class="error-code">404</div>

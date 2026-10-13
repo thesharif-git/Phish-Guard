@@ -3,30 +3,33 @@
 
 {% block extra_head %}
 <style>
-        .info-hero { background: linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #020617 100%); padding: 100px 0 64px; text-align: center; }
-        .info-hero-tag { display: inline-block; background: rgba(37,99,235,.15); color: #93c5fd; border: 1px solid rgba(37,99,235,.3); border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 18px; }
-        .info-hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; color: #fff; margin: 0 0 14px; }
-        .info-hero p { color: rgba(255,255,255,.65); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
-        .info-body { max-width: 860px; margin: 0 auto; padding: 64px 24px 80px; }
-        .back-link { display: inline-flex; align-items: center; gap: 6px; color: #2563eb; text-decoration: none; font-size: .9rem; font-weight: 500; margin-bottom: 40px; }
+        .info-hero { background: linear-gradient(180deg, #f8fbff 0%, #fff 100%); padding: 48px 0 42px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        .info-hero .container { max-width: 1020px; margin: 0 auto; padding: 0 24px; }
+        .info-hero-tag { display: inline-block; background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe; border-radius: 20px; padding: 4px 12px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 12px; }
+        .info-hero h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); font-weight: 650; color: #0f172a; margin: 0 0 8px; line-height: 1.15; }
+        .info-hero p { color: #64748b; font-size: 1rem; max-width: 660px; margin: 0; line-height: 1.6; }
+        .info-body { max-width: 900px; margin: 0 auto; padding: 32px 24px 56px; }
+        .back-link { display: inline-flex; align-items: center; gap: 6px; color: #2563eb; text-decoration: none; font-size: .9rem; font-weight: 500; margin-bottom: 22px; }
         .back-link:hover { opacity: .8; }
-        .info-body h2 { font-size: 1.3rem; font-weight: 700; color: #18181b; margin: 40px 0 10px; }
+        .info-body h2 { font-size: 1.3rem; font-weight: 700; color: #18181b; margin: 30px 0 10px; }
+        .info-body > h2:first-of-type { margin-top: 0; }
         .info-body p, .info-body li { color: #475569; line-height: 1.8; font-size: .95rem; }
         .info-body ul { padding-left: 20px; margin: 10px 0 16px; }
         .info-body ul li { margin-bottom: 6px; }
-        .sec-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; margin: 28px 0 40px; }
-        .sec-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; }
-        .sec-card .icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+        .sec-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 18px 0 30px; }
+        .sec-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; }
+        .sec-card .icon { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
         .icon-blue { background: rgba(37,99,235,.1); color: #2563eb; }
         .icon-green { background: rgba(5,150,105,.1); color: #059669; }
         .icon-red { background: rgba(220,38,38,.1); color: #dc2626; }
         .icon-purple { background: rgba(37,99,235,.1); color: #2563eb; }
         .sec-card h3 { font-size: .95rem; font-weight: 700; color: #1e293b; margin: 0 0 6px; }
         .sec-card p { font-size: .85rem; color: #64748b; line-height: 1.6; margin: 0; }
-        .disclosure-box { background: linear-gradient(135deg, rgba(37,99,235,.08), #dbeafe); border: 1.5px solid #bfdbfe; border-radius: 16px; padding: 32px; margin: 32px 0; }
+        .disclosure-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 24px; margin: 28px 0; }
         .disclosure-box h3 { font-size: 1.1rem; font-weight: 700; color: #1e3a8a; margin: 0 0 10px; }
         .disclosure-box p { color: #1e40af; line-height: 1.7; margin: 0 0 14px; }
         .disclosure-box a { color: #2563eb; font-weight: 600; }
+        @media (max-width: 680px) { .sec-cards { grid-template-columns: 1fr; } .info-body { padding: 28px 20px 48px; } }
     </style>
 {% endblock %}
 

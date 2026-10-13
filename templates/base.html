@@ -7,7 +7,7 @@
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
   
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   
   <script id="tailwind-config">
@@ -58,7 +58,7 @@
                         }
                     },
                     fontFamily: {
-                        sans: ["Plus Jakarta Sans", "Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+                        sans: ["IBM Plex Sans", "Segoe UI", "Arial", "sans-serif"],
                     }
                 }
             }
@@ -68,8 +68,7 @@
   <style>
       /* Prevent FOUC and flash of wrong theme */
       body { 
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-          font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+          font-family: 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif;
           background-color: var(--bg, #0f172a); 
           color: var(--text, #f8fafc);
           opacity: 0;
@@ -82,20 +81,22 @@
       .nav-icon-active { font-variation-settings: 'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
       .nav-icon-logo { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
       ::-webkit-scrollbar { width: 8px; height: 8px; }
-      ::-webkit-scrollbar-track { background: var(--bg, #f8fafc); }
-      ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-      ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+      ::-webkit-scrollbar-track { background: var(--bg, #000000); }
+      ::-webkit-scrollbar-thumb { background: var(--panel3, #18181f); border: 1px solid var(--border); border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--border-hi); }
   </style>
   
-  <link rel="stylesheet" href="/static/css/tokens.css?v=4" />
-  <link rel="stylesheet" href="/static/css/app.css?v=4" />
+  <link rel="stylesheet" href="/static/css/tokens.css?v=7" />
+  <link rel="stylesheet" href="/static/css/app.css?v=16" />
   <script>
     (function() {
-      const theme = localStorage.getItem('pg-theme');
+      const theme = localStorage.getItem('pg-theme') || 'dark';
       if (theme === 'light') {
         document.documentElement.setAttribute('data-theme', 'light');
+        document.documentElement.classList.remove('dark');
       } else {
         document.documentElement.setAttribute('data-theme', 'dark');
+        document.documentElement.classList.add('dark');
       }
       
       // Reveal body once DOM and Tailwind CDN are ready
@@ -105,88 +106,90 @@
     })();
   </script>
 </head>
-<body class="app-shell flex min-h-screen bg-panel font-sans text-text antialiased overflow-x-hidden transition-colors duration-200">
+<body class="app-shell flex min-h-screen bg-bg font-sans text-text antialiased overflow-x-hidden">
   
   <!-- Sidebar -->
-  <aside class="w-[176px] flex flex-col h-screen sticky top-0 flex-shrink-0 z-40 bg-panel overflow-y-auto overflow-x-hidden border-r border-border" id="sidebar">
+  <aside class="w-[230px] flex flex-col h-screen sticky top-0 flex-shrink-0 z-40 bg-panel overflow-y-auto overflow-x-hidden border-r border-border" id="sidebar">
     <!-- Logo Area -->
-    <div class="px-4 py-4 flex items-center gap-2.5 flex-shrink-0 border-b border-border mb-2">
-      <div class="w-7 h-7 bg-emerald-500/10 border border-emerald-500/30 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-          <path d="M12 3L5 6.5V12c0 4 2.75 7.74 7 8.95C17.25 19.74 20 16 20 12V6.5L12 3z" fill="#10b981" fill-opacity="0.2" stroke="#10b981" stroke-width="1.5" stroke-linejoin="round"/>
-          <path d="M9 12.5l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <span class="text-[17px] font-bold tracking-tight text-text">PhishGuard</span>
+    <div class="px-5 py-5 border-b border-border/60">
+      <a href="/dashboard" class="flex items-center gap-2.5">
+        <div class="w-[34px] h-[34px] rounded-xl bg-gradient-to-tr from-blue-600 to-blue-500 flex items-center justify-center shadow-sm shadow-blue-500/25 flex-shrink-0 border border-blue-400/30">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M12 3L4.5 6.5V12.2C4.5 16.9 7.7 21 12 22.2C16.3 21 19.5 16.9 19.5 12.2V6.5L12 3Z" fill="white" fill-opacity="0.22" stroke="white" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M8.5 12.3L10.8 14.6L15.5 9.9" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="text-[18px] font-extrabold tracking-tight text-text">PhishGuard</span>
+      </a>
     </div>
 
     <!-- Navigation -->
-    <nav class="flex-1 px-2.5 space-y-0.5 min-h-0">
-      <a href="/" class="nav-item {% if active_page == 'dashboard' or active_page == 'home' %}active{% endif %} group">
-        <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="7" height="9"></rect>
-          <rect x="14" y="3" width="7" height="5"></rect>
-          <rect x="14" y="12" width="7" height="9"></rect>
-          <rect x="3" y="16" width="7" height="5"></rect>
+    <nav class="flex-1 px-3 py-3 space-y-1 min-h-0">
+      <a href="/dashboard" class="nav-item {% if active_page == 'dashboard' or active_page == 'home' %}active{% endif %}">
+        <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+          <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+          <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+          <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
         </svg>
-        Dashboard
+        <span>Dashboard</span>
       </a>
-      <a href="/scan" class="nav-item {% if active_page == 'scan' %}active{% endif %} group">
-        <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M22 17a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9.5C2 7 4 5 6.5 5H18c2.2 0 4 1.8 4 4v8Z"></path>
-          <path d="m22 9-8.5 5.5a3 3 0 0 1-3 0L2 9"></path>
+      <a href="/scan" class="nav-item {% if active_page == 'scan' %}active{% endif %}">
+        <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
         </svg>
-        Email Scanner
+        <span>Email Scanner</span>
       </a>
-      <a href="/url-scan" class="nav-item {% if active_page == 'url_scan' %}active{% endif %} group">
-        <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <a href="/url-scan" class="nav-item {% if active_page == 'url_scan' %}active{% endif %}">
+        <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
           <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
           <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
         </svg>
-        URL Scanner
+        <span>URL Scanner</span>
       </a>
-      <a href="/domain-reputation" class="nav-item {% if active_page == 'domain_reputation' %}active{% endif %} group">
-        <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <a href="/domain-reputation" class="nav-item {% if active_page == 'domain_reputation' %}active{% endif %}">
+        <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="2" y1="12" x2="22" y2="12"></line>
           <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
         </svg>
-        Domain Scanner
+        <span>Domain Scanner</span>
       </a>
-      <a href="/inbox" class="nav-item {% if active_page == 'inbox' %}active{% endif %} group">
-        <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <a href="/inbox" class="nav-item {% if active_page == 'inbox' %}active{% endif %}">
+        <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
           <polyline points="12 6 12 12 16 14"></polyline>
         </svg>
-        History
+        <span>History</span>
       </a>
-      <a href="/campaigns" class="nav-item {% if active_page == 'campaigns' %}active{% endif %} group">
-        <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <a href="/campaigns" class="nav-item {% if active_page == 'campaigns' %}active{% endif %}">
+        <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
           <line x1="12" y1="8" x2="12" y2="12"></line>
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
         </svg>
-        Threat Campaigns
+        <span>Threat Campaigns</span>
       </a>
 
-      <div class="pt-3 pb-1 px-2.5">
-        <span class="text-[10px] font-bold uppercase tracking-wider" style="color:var(--muted)">System</span>
+      <!-- System Section -->
+      <div class="pt-4 pb-1 px-3">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-muted">SYSTEM</span>
       </div>
-      <a href="/settings" class="nav-item {% if active_page == 'settings' %}active{% endif %} group">
-        <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <a href="/settings" class="nav-item {% if active_page == 'settings' %}active{% endif %}">
+        <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
           <circle cx="12" cy="12" r="3"></circle>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
         </svg>
-        Settings
+        <span>Settings</span>
       </a>
-
     </nav>
 
-    <!-- Bottom widgets -->
-    <div class="p-2.5 mt-auto flex-shrink-0">
-      <div class="bg-panel2 rounded-lg p-2.5 border border-border">
-        <div class="flex items-center justify-between mb-2">
-          <h4 class="text-[12px] font-bold text-text">
+    <!-- Bottom Plan Card -->
+    <div class="p-3.5 mt-auto flex-shrink-0">
+      <div class="bg-panel rounded-xl p-3.5 border border-border">
+        <div class="flex items-center justify-between mb-1">
+          <h4 class="text-[13px] font-bold text-slate-900 dark:text-text">
             {% if user and user.plan == 'pro' %}
               Team Plan
             {% elif user and user.plan == 'free_plus' %}
@@ -197,7 +200,7 @@
               Free Plan
             {% endif %}
           </h4>
-          <span class="text-[10px] font-bold {% if user and user.plan == 'pro' %}bg-brand/10 text-brand{% elif user and user.plan == 'free_plus' %}bg-safe-dim text-safe{% elif user and user.plan == 'enterprise' %}bg-text text-bg{% else %}bg-panel3 text-subtext{% endif %} px-1.5 py-0.5 rounded uppercase">
+          <span class="text-[10px] font-extrabold {% if user and user.plan == 'pro' %}bg-brand/10 text-brand{% elif user and user.plan == 'free_plus' %}bg-safe-dim text-safe{% elif user and user.plan == 'enterprise' %}bg-text text-bg{% else %}bg-slate-200/80 dark:bg-panel3 text-slate-600 dark:text-subtext{% endif %} px-2 py-0.5 rounded uppercase">
             {% if user and user.plan == 'pro' %}
               Team
             {% elif user and user.plan == 'free_plus' %}
@@ -209,83 +212,95 @@
             {% endif %}
           </span>
         </div>
-        <p class="text-[10.5px] font-medium text-subtext mb-1.5">Scans today</p>
+        <p class="text-[11.5px] font-medium text-slate-500 dark:text-subtext mb-1">{% if user and user.plan == 'free' %}Free allowance{% else %}Plan allowance{% endif %}</p>
         <div class="flex items-baseline gap-1 mb-2">
-          <span class="text-[16px] font-bold text-text">{{ kpi.emails_scanned_today if kpi else 0 }}</span>
-          <span class="text-[11px] font-semibold text-muted">
+          <span class="text-[19px] font-extrabold text-slate-900 dark:text-text leading-none">{% if user and user.plan == 'free' %}25{% else %}∞{% endif %}</span>
+          <span class="text-[11.5px] font-semibold text-slate-400 dark:text-muted">
             {% if user and user.plan in ['free_plus', 'pro', 'enterprise'] %}
-              / Unlimited
+              scans
             {% else %}
-              / 100
+              scans / month
             {% endif %}
           </span>
         </div>
-        <div class="w-full bg-border rounded-full h-1.5 mb-2.5 overflow-hidden">
-          {% if user and user.plan in ['free_plus', 'pro', 'enterprise'] %}
-            <div class="bg-safe h-1.5 rounded-full" style="width: 100%"></div>
-          {% else %}
-            <div class="bg-brand h-1.5 rounded-full" style="width: {{ [((kpi.emails_scanned_today / 100) * 100) | int, 100] | min if kpi else 0 }}%"></div>
-          {% endif %}
+        <div class="w-full bg-slate-200 dark:bg-panel3 rounded-full h-1.5 mb-3 overflow-hidden">
+          <div class="bg-brand h-1.5 rounded-full" style="width: 100%"></div>
         </div>
         {% if not user or user.plan == 'free' %}
-          <a href="/pricing" class="block w-full bg-brand border border-transparent text-white text-[10.5px] font-bold py-1.5 rounded-md hover:opacity-90 transition-all shadow-sm text-center">
+          <a href="/pricing" class="block w-full border border-border bg-panel hover:bg-panel2 text-text text-[12px] font-semibold py-2 rounded-lg transition-colors text-center">
             Upgrade Plan
           </a>
         {% else %}
-          <a href="/billing/portal" class="block w-full bg-white border border-slate-200 text-slate-900 text-[10.5px] font-bold py-1.5 rounded-md hover:bg-slate-50 transition-all shadow-sm text-center">
+          <a href="/billing/portal" class="block w-full bg-white dark:bg-panel3 border border-slate-200 dark:border-border text-slate-800 dark:text-text text-[12px] font-bold py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-panel2 transition-all shadow-sm text-center">
             Manage Subscription
           </a>
         {% endif %}
       </div>
       
-        <a href="https://docs.phishguard.example.com" target="_blank" class="flex items-center gap-2 mt-3 px-1.5 text-[11.5px] font-medium text-slate-500 hover:text-[#1e3a8a] transition-colors">
-        <span class="material-symbols-outlined text-[18px]">help</span>
-        Help & Docs
-        <span class="material-symbols-outlined text-[14px] ml-auto opacity-40">open_in_new</span>
+      <a href="/docs" class="flex items-center gap-2 mt-2 px-3 py-2 text-[12px] font-medium transition-colors rounded-lg {% if active_page == 'docs' %}bg-brand/10 text-brand-light font-semibold{% else %}text-subtext hover:text-text hover:bg-panel2{% endif %}">
+        <svg class="w-4 h-4 text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span>Help &amp; Docs</span>
+        <svg class="w-3.5 h-3.5 ml-auto text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14"></path>
+          <path d="m12 5 7 7-7 7"></path>
+        </svg>
       </a>
     </div>
+
   </aside>
   
   <!-- Main Content -->
   <main class="flex-1 min-h-screen overflow-hidden flex flex-col relative bg-bg" style="transition:background .25s;">
-    <!-- Header -->
     {% block header %}
-    <header class="w-full pl-8 pr-[40px] py-5 flex items-center justify-between flex-shrink-0 z-30 bg-panel" style="border-bottom:1px solid var(--border); transition:background .25s,border-color .25s;">
+    <header class="w-full pl-8 pr-[40px] py-5 flex items-center justify-between flex-shrink-0 z-30 bg-panel border-b border-border" style="transition:background .25s, border-color .25s;">
       
       <!-- Left: Breadcrumb/Title -->
       <div class="flex items-center gap-2 text-sm">
-        <span class="font-medium" style="color:var(--muted);">Workspace</span>
-        <span style="color:var(--border-hi);">/</span>
-        <span class="font-bold capitalize" style="color:var(--text);">{{ active_page | default('Overview') | replace('_', ' ') }}</span>
+        <span class="font-medium text-muted">Workspace</span>
+        <span class="text-border-hi">/</span>
+        <span class="font-bold capitalize text-text">{% if active_page == 'docs' %}Help &amp; Documentation{% else %}{{ active_page | default('Overview') | replace('_', ' ') }}{% endif %}</span>
       </div>
 
-      <div class="flex items-center gap-3">
-        <!-- Theme Toggle -->
-        <button id="themeToggle" onclick="toggleTheme()" class="w-8 h-8 flex items-center justify-center rounded-full transition-all" style="color:var(--subtext);" onmouseover="this.style.background='var(--panel2)'" onmouseout="this.style.background='transparent'" title="Toggle dark/light mode">
-          <span class="material-symbols-outlined text-[20px]">dark_mode</span>
+      <div class="app-header-actions">
+        <button id="themeToggle" onclick="toggleTheme()" class="app-header-icon" type="button" title="Toggle light and dark mode" aria-label="Toggle light and dark mode">
+          <span class="material-symbols-outlined">dark_mode</span>
         </button>
 
-        <!-- Notification Bell -->
-        <button class="w-8 h-8 flex items-center justify-center rounded-full transition-all relative" style="color:var(--subtext);" onmouseover="this.style.background='var(--panel2)'" onmouseout="this.style.background='transparent'">
-          <span class="material-symbols-outlined text-[22px]">notifications</span>
-        </button>
-
-        <div class="h-5 w-px mx-1" style="background:var(--border);"></div>
-
-        <!-- User Avatar + Logout -->
         {% if user %}
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 bg-slate-900 text-white rounded-full flex items-center justify-center font-bold text-[13px] shadow-sm cursor-pointer" title="{{ user.name or user.email }}">
-            {{ (user.name or user.email)[0] | upper }}
+        <div id="notifWrapper" class="app-header-popover-anchor">
+          <button onclick="toggleNotifications()" class="app-header-icon" type="button" title="Notifications" aria-label="Notifications" aria-controls="notifDropdown">
+            <span class="material-symbols-outlined">notifications</span>
+            <span id="notifBadge" class="app-notification-badge hidden"></span>
+          </button>
+          <div id="notifDropdown" class="app-header-dropdown app-notification-dropdown hidden">
+            <div class="app-header-dropdown-heading"><strong>Notifications</strong><button onclick="markAllRead()" type="button">Mark all read</button></div>
+            <div id="notifList" class="max-h-80 overflow-y-auto"><div class="px-4 py-6 text-center text-xs text-muted">Loading notifications…</div></div>
           </div>
-          <form action="/auth/logout" method="post" class="inline">
-            <button type="submit" class="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-danger rounded-full hover:bg-red-50 transition-all" title="Logout">
-              <span class="material-symbols-outlined text-[22px]">logout</span>
-            </button>
-          </form>
         </div>
+        {% endif %}
+
+        {% if user %}
+        <div class="app-header-divider"></div>
+        <details class="app-account-menu">
+          <summary class="app-account-trigger" title="{{ user.name or user.email }}" aria-label="Account menu">
+            <span class="app-account-avatar" aria-hidden="true">
+            {{ (user.name or user.email)[0] | upper }}
+            </span>
+            <span class="app-account-name">{{ user.name or user.email }}</span>
+            <span class="material-symbols-outlined app-account-chevron" aria-hidden="true">expand_more</span>
+          </summary>
+          <div class="app-header-dropdown app-account-dropdown">
+            <div class="app-account-email">{{ user.email }}</div>
+            <a href="/settings">Account settings</a>
+            <form action="/auth/logout" method="post"><button type="submit">Sign out</button></form>
+          </div>
+        </details>
         {% else %}
-        <a href="/login" class="text-[13px] font-semibold text-slate-900 hover:text-slate-600 transition-colors">Sign In</a>
+        <a href="/login" class="app-header-signin">Sign in</a>
         {% endif %}
 
       </div>
@@ -378,8 +393,9 @@
     <!-- Error state -->
     <div id="scan-history-error" class="flex-1 hidden flex items-center justify-center flex-col gap-3 text-danger p-6 text-center">
       <span class="material-symbols-outlined text-[40px]">error</span>
-      <p class="text-[14px] font-semibold text-text">Failed to load history</p>
-      <p class="text-[12px] text-muted">There was an error communicating with the server.</p>
+      <p id="scan-history-error-title" class="text-[14px] font-semibold text-text">Failed to load history</p>
+      <p id="scan-history-error-copy" class="text-[12px] text-muted">Please try again.</p>
+      <a id="scan-history-signin" href="/login?next=%2Finbox" class="hidden text-xs font-semibold text-brand">Sign in →</a>
     </div>
     
     <div class="p-4 border-t border-border bg-panel2 flex-shrink-0 flex items-center justify-between">
@@ -396,34 +412,37 @@
       email:  { icon: 'mail',     label: 'Email',  iconCls: 'text-slate-500' },
     };
     const _statusConfig = {
-      CLEAN:      { color: 'bg-safe',    label: 'Clean' },
-      SUSPICIOUS: { color: 'bg-medium',  label: 'Suspicious' },
-      PHISHING:   { color: 'bg-danger',  label: 'Phishing', pulse: true },
+      CLEAN:      { color: 'text-safe',    label: 'Clean' },
+      SUSPICIOUS: { color: 'text-medium',  label: 'Suspicious' },
+      PHISHING:   { color: 'text-danger',  label: 'Phishing' },
+      UNKNOWN:    { color: 'text-subtext', label: 'Not verified' },
     };
+
+    function _escapeHistoryText(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[char]));
+    }
 
     function _renderHistoryItem(scan) {
       const type = _typeConfig[scan.scan_type] || _typeConfig.email;
-      const status = _statusConfig[scan.status] || _statusConfig.CLEAN;
+      const status = _statusConfig[scan.status] || _statusConfig.UNKNOWN;
       const label = scan.scan_type === 'email' ? (scan.subject || scan.sender || '—') : (scan.subject || scan.sender || '—');
       const sub = scan.scan_type === 'email' ? scan.sender : scan.timestamp;
       
-      const clickAttr = scan.scan_type === 'email' ? `onclick="closeScanHistory(); window.location='/email/${scan.scan_id}'"` : '';
+      const actionUrl = scan.scan_type === 'email' ? `/email/${encodeURIComponent(scan.scan_id)}` : scan.scan_type === 'url' ? `/url-scan?url=${encodeURIComponent(scan.subject || '')}` : `/domain-reputation?domain=${encodeURIComponent(scan.sender || '')}`;
       
       return `
-        <div class="border border-border rounded-lg p-3.5 bg-panel flex flex-col gap-2.5 hover:border-brand/30 hover:shadow-sm transition-all ${scan.scan_type === 'email' ? 'cursor-pointer' : ''}" ${clickAttr}>
+        <div class="border-b border-border py-3 flex flex-col gap-2">
           <div class="flex items-center justify-between gap-2">
-            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-border bg-panel shadow-sm text-text text-[11px] font-medium">
+            <span class="inline-flex items-center gap-1.5 text-subtext text-[11px] font-medium">
               <span class="material-symbols-outlined text-[13px] ${type.iconCls}">${type.icon}</span>${type.label}
             </span>
-            <span class="text-[11px] text-muted font-medium flex-shrink-0">${scan.timestamp}</span>
+            <span class="text-[11px] text-muted font-medium flex-shrink-0">${_escapeHistoryText(scan.timestamp)}</span>
           </div>
           <div class="flex items-center justify-between gap-2">
-            <span class="text-[13px] font-semibold text-text truncate">${label}</span>
-            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-border bg-panel shadow-sm text-[11px] font-medium text-text">
-              <span class="w-1.5 h-1.5 rounded-full ${status.color} inline-block ${status.pulse ? 'animate-pulse' : ''}" ${status.pulse ? 'style="box-shadow: 0 0 8px var(--danger);"' : ''}></span>
-              ${status.label}
-            </span>
+            <span class="text-[13px] font-semibold text-text truncate">${_escapeHistoryText(label)}</span>
+            <span class="text-[11px] font-semibold ${status.color}">${status.label}</span>
           </div>
+          <div class="flex items-center justify-between gap-2 text-[11px] text-subtext"><span class="truncate">${_escapeHistoryText(sub)}</span><a class="font-semibold text-brand whitespace-nowrap" href="${actionUrl}">${scan.scan_type === 'email' ? 'View result' : 'Scan again'} →</a></div>
         </div>`;
     }
 
@@ -462,6 +481,11 @@
           }
         } else {
           document.getElementById('scan-history-loading').classList.add('hidden');
+          if (res.status === 401) {
+            document.getElementById('scan-history-error-title').textContent = 'Sign in to view history';
+            document.getElementById('scan-history-error-copy').textContent = 'Saved scans belong to your account.';
+            document.getElementById('scan-history-signin').classList.remove('hidden');
+          }
           document.getElementById('scan-history-error').classList.remove('hidden');
           document.getElementById('scan-history-error').style.display = 'flex';
         }

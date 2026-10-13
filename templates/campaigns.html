@@ -1,253 +1,83 @@
 {% extends "base.html" %}
-{% block title %}Campaigns · PhishGuard{% endblock %}
+{% block title %}Threat Campaigns · PhishGuard{% endblock %}
 {% block content %}
-<div class="flex justify-between items-center mb-4">
-    <div>
-        <h1 class="text-2xl font-bold text-text tracking-tight">Active Campaigns</h1>
-        <p class="text-sm text-subtext mt-0.5">Grouped intelligence on multi-recipient phishing attacks.</p>
-    </div>
-    <div class="flex gap-2">
-        <button class="px-3.5 py-1.5 bg-panel border border-border rounded-lg text-xs font-semibold text-subtext hover:bg-panel2 hover:text-text transition-all shadow-sm">Filter by Date</button>
-        <button onclick="openRuleModal()" class="bg-brand hover:opacity-90 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            Create Rule
-        </button>
-    </div>
-</div>
+<div class="campaign-page">
+    <header class="campaign-page-heading">
+        <div><h1>Threat campaigns</h1><p>Find recurring sources in your flagged email scans.</p></div>
+        <a class="campaign-secondary-link" href="/inbox?status=PHISHING&type=email">View scan history <span aria-hidden="true">↗</span></a>
+    </header>
 
-<!-- Refined Grid Metics Cards -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-5">
-    
-    <!-- Critical Card -->
-    <div class="bg-panel rounded-xl border border-border shadow-[0_2px_8px_-3px_rgba(0,0,0,0.02)] p-4 transition-all duration-200 hover:shadow-sm">
-        <div class="flex items-center justify-between mb-1">
-            <span class="text-[11px] font-semibold text-muted uppercase tracking-wider">Critical Campaigns</span>
-            <span class="w-2 h-2 rounded-full bg-danger animate-pulse"></span>
-        </div>
-        <div class="text-2xl font-bold text-text tracking-tight mt-1">
-            {{ campaigns|selectattr('severity', 'equalto', 'critical')|list|length }}
-        </div>
-    </div>
-    
-    <!-- Medium Card -->
-    <div class="bg-panel rounded-xl border border-border shadow-[0_2px_8px_-3px_rgba(0,0,0,0.02)] p-4 transition-all duration-200 hover:shadow-sm">
-        <div class="flex items-center justify-between mb-1">
-            <span class="text-[11px] font-semibold text-muted uppercase tracking-wider">Medium Campaigns</span>
-            <span class="w-2 h-2 rounded-full bg-medium"></span>
-        </div>
-        <div class="text-2xl font-bold text-text tracking-tight mt-1">
-            {{ campaigns|selectattr('severity', 'equalto', 'medium')|list|length }}
-        </div>
-    </div>
-    
-    <!-- Targeted Users -->
-    <div class="bg-panel rounded-xl border border-border shadow-[0_2px_8px_-3px_rgba(0,0,0,0.02)] p-4 transition-all duration-200 hover:shadow-sm">
-        <div class="flex items-center justify-between mb-1">
-            <span class="text-[11px] font-semibold text-muted uppercase tracking-wider">Targeted Users</span>
-            <span class="w-2 h-2 rounded-full bg-info"></span>
-        </div>
-        <div class="text-2xl font-bold text-text tracking-tight mt-1">
-            {{ campaigns|sum(attribute='targets') }}
-        </div>
-    </div>
-    
-    <!-- Status -->
-    <div class="bg-panel rounded-xl border border-border shadow-[0_2px_8px_-3px_rgba(0,0,0,0.02)] p-4 transition-all duration-200 hover:shadow-sm">
-        <div class="flex items-center justify-between mb-1">
-            <span class="text-[11px] font-semibold text-muted uppercase tracking-wider">Status</span>
-            <span class="w-2 h-2 rounded-full bg-safe"></span>
-        </div>
-        <div class="text-2xl font-bold text-text tracking-tight mt-1">
-            Monitoring
-        </div>
-    </div>
-    
-</div>
-
-<!-- Table Section -->
-<div class="bg-panel rounded-xl border border-border shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] overflow-hidden">
-    <div class="p-4 border-b border-border bg-panel2 flex justify-between items-center">
-        <div class="relative w-64">
-            <input type="text" placeholder="Search campaigns..."
-                class="w-full pl-9 pr-3 py-1.5 text-xs border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#2563eb] bg-panel text-text"
-                oninput="filterTable(this, 'scansTable')">
-            <svg class="w-4 h-4 text-muted absolute left-3 top-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-        </div>
-        <div>
-            <span class="text-xs text-subtext font-medium">Showing {{ campaigns|length }} campaigns</span>
-        </div>
+    <div class="campaign-overview" aria-label="Campaign summary">
+        <div><span>Repeated sources</span><strong>{{ campaigns|length }}</strong></div>
+        <div><span>Emails in groups</span><strong>{{ campaigns|sum(attribute='count') }}</strong></div>
+        <p>Based on phishing results saved to your account.</p>
     </div>
 
-    {% if campaigns %}
-    <table class="w-full text-left border-collapse" id="scansTable">
-        <thead>
-            <tr class="text-[11px] font-bold text-subtext border-b border-border bg-panel2 uppercase tracking-wider">
-                <th class="py-2 px-4 font-semibold">Campaign Name & Type</th>
-                <th class="py-2 px-4 font-semibold">Severity</th>
-                <th class="py-2 px-4 font-semibold">First Seen</th>
-                <th class="py-2 px-4 font-semibold text-right">Targets</th>
-                <th class="py-2 px-4 font-semibold text-right">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="text-[13px] divide-y divide-slate-100/60">
-            {% for c in campaigns %}
-            <tr class="hover:bg-panel2 transition-colors cursor-pointer" onclick="window.location.href='/inbox?campaign={{ c.id }}'">
-                <td class="py-2 px-4">
-                    <div class="font-semibold text-text text-sm mb-1">{{ c.name }}</div>
-                    <div class="text-xs text-muted flex gap-2 items-center">
-                        <span class="px-2 py-0.5 rounded-md bg-panel3 text-subtext text-[10px] uppercase font-semibold tracking-wide">
-                            {{ c.type }}
-                        </span>
-                        <span>Source: <span class="font-medium text-subtext">{{ c.source }}</span></span>
-                    </div>
-                </td>
-                <td class="py-2 px-4">
-                    {% if c.severity == 'critical' %}
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-danger-dim text-danger">
-                        <span class="w-1.5 h-1.5 rounded-full bg-danger"></span>
-                        CRITICAL
-                    </span>
-                    {% elif c.severity == 'medium' %}
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-medium-dim text-medium">
-                        <span class="w-1.5 h-1.5 rounded-full bg-medium"></span>
-                        MEDIUM
-                    </span>
-                    {% else %}
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-safe-dim text-safe">
-                        <span class="w-1.5 h-1.5 rounded-full bg-safe"></span>
-                        LOW
-                    </span>
-                    {% endif %}
-                </td>
-                <td class="py-2 px-4 text-xs text-subtext whitespace-nowrap">{{ c.first_seen }}</td>
-                <td class="py-2 px-4 text-right">
-                    <div class="flex items-center justify-end gap-1.5">
-                        <svg class="w-3.5 h-3.5 text-muted" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                        <span class="font-semibold text-text">{{ c.targets }}</span>
-                    </div>
-                </td>
-                <td class="py-2 px-4 text-right">
-                    <a href="/inbox?campaign={{ c.id }}" class="text-[#2563eb] hover:text-[#1d4ed8] transition-colors text-xs font-semibold">View Intel →</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="p-12 text-center text-muted flex flex-col items-center">
-        <div class="w-12 h-12 rounded-full bg-panel2 flex items-center justify-center mb-3">
-            <span class="material-symbols-outlined text-muted text-[28px]">shield</span>
-        </div>
-        <div class="text-text font-bold mb-1 text-sm">No Active Campaigns</div>
-        <div class="text-xs text-subtext">No coordinated phishing campaigns have been detected targeting your organization.</div>
-    </div>
-    {% endif %}
-</div>
-
-<!-- Create Rule Modal -->
-<div id="ruleModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
-    <div class="bg-panel rounded-xl shadow-lg border border-border w-full max-w-md p-6">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-bold text-text">Create Security Rule</h3>
-            <button onclick="document.getElementById('ruleModal').classList.add('hidden')" class="text-muted hover:text-text">
-                <span class="material-symbols-outlined text-xl">close</span>
-            </button>
-        </div>
-        
-        <p class="text-xs text-subtext mb-4">Automatically block future scans originating from a specific domain. They will instantly be flagged as critical phishing attempts.</p>
-        
-        <div class="space-y-4">
-            <div>
-                <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Target Domain to Block</label>
-                <div class="relative">
-                    <select id="ruleTarget" class="w-full pl-3 pr-8 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#2563eb] bg-panel text-text appearance-none">
-                        <option value="" disabled selected>Select a known threat domain...</option>
-                        {% for c in campaigns %}
-                            <option value="{{ c.source }}">{{ c.source }} ({{ c.name }})</option>
-                        {% endfor %}
-                    </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted">
-                        <span class="material-symbols-outlined text-sm">expand_more</span>
-                    </div>
-                </div>
-                <div class="mt-2 flex items-center">
-                    <div class="flex-grow border-t border-border"></div>
-                    <span class="flex-shrink-0 mx-2 text-xs text-muted font-medium">OR</span>
-                    <div class="flex-grow border-t border-border"></div>
-                </div>
-                <input type="text" id="ruleTargetManual" placeholder="Type custom domain manually..." class="mt-2 w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#2563eb] bg-panel text-text">
+    <div class="campaign-workspace">
+        <section class="campaign-source-panel" aria-labelledby="campaign-groups-heading">
+            <div class="campaign-section-heading">
+                <div><h2 id="campaign-groups-heading">Repeated sources</h2><p>Sender domains seen in more than one flagged email.</p></div>
             </div>
-            
-            <button onclick="submitRule()" id="submitRuleBtn" class="w-full bg-danger hover:bg-danger/90 text-white font-semibold py-2 rounded-lg text-sm transition-all shadow-sm">
-                Block Domain
-            </button>
-            <div id="ruleMsg" class="text-xs text-center font-semibold mt-2 hidden"></div>
-        </div>
+            {% if campaigns %}
+            <div class="campaign-search-wrap"><input id="campaignSearch" type="search" placeholder="Search sender domains" aria-label="Search sender domains" oninput="filterCampaigns()"></div>
+            <div class="campaign-table-scroll">
+                <table id="campaignTable" class="campaign-table">
+                    <thead><tr><th>Sender domain</th><th>Emails</th><th>Latest scan</th><th><span class="sr-only">Action</span></th></tr></thead>
+                    <tbody>
+                    {% for c in campaigns %}
+                        <tr class="campaign-row">
+                            <td><strong>{{ c.source }}</strong><small>First seen {{ c.first_seen[:10] }}</small></td>
+                            <td class="campaign-count">{{ c.count }}</td>
+                            <td class="campaign-date">{{ c.last_seen[:10] }}<small>{{ c.last_seen[11:] }}</small></td>
+                            <td><a href="/inbox?search={{ c.source|urlencode }}&status=PHISHING&type=email" aria-label="View scans from {{ c.source }}">View <span aria-hidden="true">→</span></a></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                <p id="campaignSearchEmpty" class="hidden campaign-search-empty">No domains match your search.</p>
+            </div>
+            {% else %}
+            <div class="campaign-empty">
+                <svg viewBox="0 0 64 48" fill="none" aria-hidden="true"><path d="M15 24h14m6 0h14M32 11v26" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="18" width="12" height="12" rx="3"/><rect x="26" y="2" width="12" height="12" rx="3"/><rect x="26" y="34" width="12" height="12" rx="3"/><rect x="49" y="18" width="12" height="12" rx="3"/><circle cx="32" cy="24" r="4"/></svg>
+                <h3>No recurring source yet</h3>
+                <p>A group appears when at least two flagged emails share a sender domain.</p>
+                <a href="/scan">Scan an email <span aria-hidden="true">→</span></a>
+            </div>
+            {% endif %}
+            <footer class="campaign-source-note">A shared sender domain suggests a pattern. It does not confirm a coordinated attack.</footer>
+        </section>
+
+        <aside class="campaign-recent" aria-labelledby="recent-flagged-heading">
+            <div class="campaign-section-heading"><div><h2 id="recent-flagged-heading">Recent findings</h2><p>Your latest flagged emails</p></div></div>
+            {% if recent_flagged %}
+            <div class="campaign-findings">
+                {% for scan in recent_flagged %}
+                <a href="/email/{{ scan.scan_id }}" class="campaign-finding">
+                    <div class="campaign-finding-meta"><span>Phishing</span><time>{{ scan.timestamp.strftime('%b %d') }}</time></div>
+                    <strong title="{{ scan.subject or 'No subject' }}">{{ scan.subject or 'No subject' }}</strong>
+                    <span class="campaign-finding-sender" title="{{ scan.sender }}">{{ scan.sender }}</span>
+                    <span class="campaign-finding-action">Review result <span aria-hidden="true">→</span></span>
+                </a>
+                {% endfor %}
+            </div>
+            <a class="campaign-view-all" href="/inbox?status=PHISHING&type=email">View all flagged emails <span aria-hidden="true">→</span></a>
+            {% else %}
+            <p class="campaign-recent-empty">No flagged emails saved yet. Your latest phishing results will appear here.</p>
+            {% endif %}
+        </aside>
     </div>
 </div>
-
 <script>
-    function openRuleModal() {
-        document.getElementById('ruleModal').classList.remove('hidden');
-        document.getElementById('ruleMsg').classList.add('hidden');
-        document.getElementById('ruleTarget').value = '';
-        document.getElementById('ruleTargetManual').value = '';
-    }
-
-    async function submitRule() {
-        const selectVal = document.getElementById('ruleTarget').value;
-        const manualVal = document.getElementById('ruleTargetManual').value;
-        const target = manualVal.trim() || selectVal;
-        const msgBox = document.getElementById('ruleMsg');
-        const btn = document.getElementById('submitRuleBtn');
-        
-        if (!target) {
-            msgBox.textContent = "Please select or enter a domain.";
-            msgBox.className = "text-xs text-center font-semibold mt-2 text-danger block";
-            return;
-        }
-        
-        btn.disabled = true;
-        btn.classList.add('opacity-50');
-        btn.textContent = "Blocking...";
-        
-        try {
-            const res = await fetch('/api/rules/block', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ target: target, rule_type: "domain" })
-            });
-            const data = await res.json();
-            
-            if (res.ok) {
-                msgBox.textContent = "Rule created! Domain is now blocked.";
-                msgBox.className = "text-xs text-center font-semibold mt-2 text-safe block";
-                setTimeout(() => {
-                    document.getElementById('ruleModal').classList.add('hidden');
-                    btn.disabled = false;
-                    btn.classList.remove('opacity-50');
-                    btn.textContent = "Block Domain";
-                }, 1500);
-            } else {
-                msgBox.textContent = data.detail || "Failed to create rule.";
-                msgBox.className = "text-xs text-center font-semibold mt-2 text-danger block";
-                btn.disabled = false;
-                btn.classList.remove('opacity-50');
-                btn.textContent = "Block Domain";
-            }
-        } catch (e) {
-            msgBox.textContent = "Network error.";
-            msgBox.className = "text-xs text-center font-semibold mt-2 text-danger block";
-            btn.disabled = false;
-            btn.classList.remove('opacity-50');
-            btn.textContent = "Block Domain";
-        }
-    }
+function filterCampaigns() {
+    const query = document.getElementById('campaignSearch').value.trim().toLowerCase();
+    const rows = document.querySelectorAll('.campaign-row');
+    let visible = 0;
+    rows.forEach(row => {
+        const match = row.cells[0].textContent.toLowerCase().includes(query);
+        row.hidden = !match;
+        if (match) visible++;
+    });
+    document.getElementById('campaignSearchEmpty').classList.toggle('hidden', visible !== 0);
+}
 </script>
 {% endblock %}

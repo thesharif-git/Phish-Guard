@@ -3,190 +3,92 @@
 {% block title %}Security Overview - PhishGuard{% endblock %}
 
 {% block content %}
-{% set total = kpi.emails_scanned_today %}
-{% set threats = kpi.phishing_detected %}
-{% set safe = total - threats %}
-{% set accuracy = ((safe / total * 100) | round(1)) if total > 0 else 100.0 %}
-{% set high_risk = kpi.high_risk_domains %}
-{% set posture = 'Elevated' if threats > 0 or high_risk > 0 else 'Stable' %}
+{% set total = metrics.total %}
+{% set threats = metrics.phishing %}
+{% set suspicious = metrics.suspicious %}
+{% set clean = metrics.clean %}
 
 <div class="dashboard-page space-y-5">
-    <!-- Top Header Bar -->
-    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border pb-5">
+    <header class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-            <div class="flex items-center gap-2">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-panel2 text-subtext border border-border">
-                    <span class="w-1.5 h-1.5 rounded-full {% if posture == 'Stable' %}bg-emerald-400 animate-pulse{% else %}bg-rose-500 animate-ping{% endif %}"></span>
-                    Security Command Center
-                </span>
-                <span class="text-[11px] font-medium text-muted">• Workspace Active</span>
-            </div>
-            <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-text mt-2">Threat Overview</h1>
-            <p class="text-sm text-subtext mt-1">Live scan telemetry, critical threat detections, and intelligence signals for this workspace.</p>
+            <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-text">Threat Overview</h1>
+            <p class="text-sm text-subtext mt-1">Scans and findings from your workspace.</p>
         </div>
-        <div class="flex flex-wrap items-center gap-2.5">
-            <a href="/reports" class="inline-flex items-center gap-2 px-4 py-2 bg-panel2 hover:bg-panel3 border border-border text-text text-xs font-semibold rounded-lg shadow-sm transition-all duration-150">
-                <span class="material-symbols-outlined text-[16px] text-muted">file_download</span>
-                Export Report
+        <a href="/scan" class="dash-link">Run a scan <span aria-hidden="true">&rarr;</span></a>
+    </header>
+
+    <section class="dash-metrics bg-panel border border-border rounded-xl" aria-label="Today's scan totals">
+        <div class="dash-metric-cell dash-metric-cell--scans">
+            <div class="dash-metric-heading">
+                <div class="dash-metric-label">Scans today</div>
+                <span class="dash-metric-icon-wrap"><svg class="dash-metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="M8 8h8M8 12h8M8 16h5"/><circle cx="17" cy="16" r="1" fill="currentColor" stroke="none"/></svg></span>
+            </div>
+            <div class="dash-metric-value">{{ total }}</div>
+            <p class="dash-small-copy">All scan types</p>
+        </div>
+        <div class="dash-metric-cell dash-metric-cell--phishing">
+            <div class="dash-metric-heading">
+                <div class="dash-metric-label">Phishing</div>
+                <span class="dash-metric-icon-wrap"><svg class="dash-metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6.2v5.4c0 4.2 2.5 7.5 8 9.4 5.5-1.9 8-5.2 8-9.4V6.2L12 3Z"/><path d="M12 8v5.2M12 16.7h.01"/></svg></span>
+            </div>
+            <div class="dash-metric-value">{{ threats }}</div>
+            <p class="dash-small-copy">Detected today</p>
+        </div>
+        <div class="dash-metric-cell dash-metric-cell--suspicious">
+            <div class="dash-metric-heading">
+                <div class="dash-metric-label">Suspicious</div>
+                <span class="dash-metric-icon-wrap"><svg class="dash-metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.7" cy="10.7" r="6.2"/><path d="m15.3 15.3 5 5M10.7 7.8v3.5M10.7 13.5h.01"/></svg></span>
+            </div>
+            <div class="dash-metric-value">{{ suspicious }}</div>
+            <p class="dash-small-copy">Needs a closer look</p>
+        </div>
+        <div class="dash-metric-cell dash-metric-cell--clean">
+            <div class="dash-metric-heading">
+                <div class="dash-metric-label">Clean</div>
+                <span class="dash-metric-icon-wrap"><svg class="dash-metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6.2v5.4c0 4.2 2.5 7.5 8 9.4 5.5-1.9 8-5.2 8-9.4V6.2L12 3Z"/><path d="m8.8 12.1 2.2 2.2 4.4-4.5"/></svg></span>
+            </div>
+            <div class="dash-metric-value">{{ clean }}</div>
+            <p class="dash-small-copy">No risk detected</p>
+        </div>
+    </section>
+
+    <section class="dash-panel bg-panel border border-border rounded-xl p-4 sm:p-5">
+        <div class="flex items-center justify-between gap-4">
+            <div>
+                <h2 class="dash-card-title">Findings to review</h2>
+                <p class="dash-small-copy mt-1">Recent scans marked phishing or suspicious.</p>
+            </div>
+            <a href="/reports" class="dash-link whitespace-nowrap">All reports <span aria-hidden="true">&rarr;</span></a>
+        </div>
+        {% if flagged_scans %}
+        <div class="mt-4 divide-y divide-border border-t border-border">
+            {% for scan in flagged_scans %}
+            <a href="/email/{{ scan.id }}" class="dash-finding">
+                <span class="dash-finding-status {% if scan.status == 'PHISHING' %}dash-finding-danger{% else %}dash-finding-warning{% endif %}">{{ 'Phishing' if scan.status == 'PHISHING' else 'Suspicious' }}</span>
+                <span class="min-w-0 flex-1">
+                    <span class="block truncate dash-item-title">{{ scan.subject or scan.sender }}</span>
+                    <span class="block truncate dash-small-copy">{{ scan.sender }}</span>
+                </span>
+                <span class="dash-time whitespace-nowrap">{{ scan.time }}</span>
+                <span class="material-symbols-outlined text-[18px] text-muted" aria-hidden="true">chevron_right</span>
             </a>
-            <a href="/scan" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow-md shadow-emerald-900/20 transition-all duration-150">
-                <span class="material-symbols-outlined text-[16px]">forward_to_inbox</span>
-                Scan Email
-            </a>
+            {% endfor %}
         </div>
-    </div>
+        {% else %}
+        <p class="dash-small-copy mt-4 border-t border-border pt-4">No flagged scans in recent activity.</p>
+        {% endif %}
+    </section>
 
-    <!-- 4 Independent Spacious Metric Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Total Scans Card -->
-        <div class="bg-panel border border-border rounded-xl p-4 shadow-md hover:shadow-lg transition-all">
-            <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold uppercase tracking-wider text-muted">Total Scans Today</span>
-                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
-                    <span class="material-symbols-outlined text-[18px]">analytics</span>
-                </div>
-            </div>
-            <div class="mt-3 flex items-baseline justify-between">
-                <span class="text-3xl font-extrabold text-text tracking-tight">{{ total }}</span>
-                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                    <span class="material-symbols-outlined text-[12px]">trending_up</span> +24.5%
-                </span>
-            </div>
-            <p class="text-[12px] text-muted mt-2">Active telemetry baseline</p>
-        </div>
-
-        <!-- Threats Detected Card -->
-        <div class="bg-panel border border-border rounded-xl p-4 shadow-md hover:shadow-lg transition-all">
-            <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold uppercase tracking-wider text-muted">Threats Detected</span>
-                <div class="w-8 h-8 rounded-lg {% if threats > 0 %}bg-rose-500/10 text-rose-400 border border-rose-500/20{% else %}bg-panel2 text-muted border border-border{% endif %} flex items-center justify-center">
-                    <span class="material-symbols-outlined text-[18px]">gpp_maybe</span>
-                </div>
-            </div>
-            <div class="mt-3 flex items-baseline justify-between">
-                <span class="text-3xl font-extrabold {% if threats > 0 %}text-rose-400{% else %}text-text{% endif %} tracking-tight">{{ threats }}</span>
-                <span class="inline-flex items-center gap-1 text-[11px] font-semibold {% if threats > 0 %}text-rose-400 bg-rose-500/10 border border-rose-500/20{% else %}text-subtext bg-panel2 border border-border{% endif %} px-2 py-0.5 rounded-full">
-                    {% if threats > 0 %}Critical Action Required{% else %}0 Threats Active{% endif %}
-                </span>
-            </div>
-            <p class="text-[12px] text-muted mt-2">Phishing &amp; malicious vectors</p>
-        </div>
-
-        <!-- Posture / Accuracy Score Card -->
-        <div class="bg-panel border border-border rounded-xl p-4 shadow-md hover:shadow-lg transition-all">
-            <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold uppercase tracking-wider text-muted">Posture Score</span>
-                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
-                    <span class="material-symbols-outlined text-[18px]">verified_user</span>
-                </div>
-            </div>
-            <div class="mt-3 flex items-baseline justify-between">
-                <span class="text-3xl font-extrabold text-text tracking-tight">{{ accuracy }}%</span>
-                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Healthy
-                </span>
-            </div>
-            <p class="text-[12px] text-muted mt-2">{{ safe }} clean scan{{ '' if safe == 1 else 's' }} completed</p>
-        </div>
-
-        <!-- High Risk Domains Card -->
-        <div class="bg-panel border border-border rounded-xl p-4 shadow-md hover:shadow-lg transition-all">
-            <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold uppercase tracking-wider text-muted">High-Risk Domains</span>
-                <div class="w-8 h-8 rounded-lg {% if high_risk > 0 %}bg-amber-500/10 text-amber-400 border border-amber-500/20{% else %}bg-panel2 text-muted border border-border{% endif %} flex items-center justify-center">
-                    <span class="material-symbols-outlined text-[18px]">domain_disabled</span>
-                </div>
-            </div>
-            <div class="mt-3 flex items-baseline justify-between">
-                <span class="text-3xl font-extrabold {% if high_risk > 0 %}text-amber-400{% else %}text-text{% endif %} tracking-tight">{{ high_risk }}</span>
-                <span class="inline-flex items-center gap-1 text-[11px] font-semibold {% if high_risk > 0 %}text-amber-400 bg-amber-500/10 border border-amber-500/20{% else %}text-subtext bg-panel2 border border-border{% endif %} px-2 py-0.5 rounded-full">
-                    {% if high_risk > 0 %}Blocked{% else %}Clean Baseline{% endif %}
-                </span>
-            </div>
-            <p class="text-[12px] text-muted mt-2">WHOIS &amp; IP threat signals</p>
-        </div>
-    </div>
-
-    <!-- Status Overview & Response Queue -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <!-- Posture Summary Card -->
-        <div class="lg:col-span-2 bg-panel border border-border rounded-xl p-5 shadow-md flex flex-col justify-between">
-            <div class="flex items-center justify-between border-b border-border pb-3">
-                <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-emerald-400 text-[20px]">security</span>
-                    <h2 class="text-sm font-bold text-text">Security Posture Status</h2>
-                </div>
-                <span class="text-xs text-muted font-medium">Real-time Telemetry</span>
-            </div>
-            <div class="mt-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-panel2 border border-border rounded-lg p-4">
-                <div>
-                    <h3 class="text-sm font-semibold text-text">
-                        {% if posture == 'Stable' %}
-                            No Active Critical Threat Pattern Detected
-                        {% else %}
-                            Elevated Risk Detected — Review Pending Events
-                        {% endif %}
-                    </h3>
-                    <p class="text-xs text-subtext mt-1 leading-relaxed">
-                        {% if posture == 'Stable' %}
-                            Scans are completing normally and all analyzed vectors remain within expected baseline parameters.
-                        {% else %}
-                            {{ threats }} threat event(s) and {{ high_risk }} high-risk domain(s) require immediate SOC investigation.
-                        {% endif %}
-                    </p>
-                </div>
-                <a href="/scan" class="flex-shrink-0 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition-colors shadow-md">
-                    Run Scan Now
-                </a>
-            </div>
-        </div>
-
-        <!-- Response Queue Panel -->
-        <div class="bg-panel border border-border rounded-xl p-5 shadow-md flex flex-col justify-between">
-            <div class="flex items-center justify-between border-b border-border pb-3">
-                <h2 class="text-sm font-bold text-text">Response Queue</h2>
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-muted">Priority View</span>
-            </div>
-            <div class="mt-3 space-y-2.5">
-                <div class="flex items-center justify-between p-3 rounded-lg border border-border hover:border-emerald-500/30 hover:bg-panel2 transition-all">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center flex-shrink-0">
-                            <span class="material-symbols-outlined text-[18px]">priority_high</span>
-                        </div>
-                        <div>
-                            <div class="text-xs font-semibold text-text">Investigate Risky Detections</div>
-                            <div class="text-[11px] text-subtext">{{ threats }} threat event{{ '' if threats == 1 else 's' }} pending</div>
-                        </div>
-                    </div>
-                    <a href="/reports" class="text-xs font-semibold text-emerald-400 hover:text-emerald-300">Open &rarr;</a>
-                </div>
-
-                <div class="flex items-center justify-between p-3 rounded-lg border border-border hover:border-emerald-500/30 hover:bg-panel2 transition-all">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                            <span class="material-symbols-outlined text-[18px]">mark_email_read</span>
-                        </div>
-                        <div>
-                            <div class="text-xs font-semibold text-text">Inbox Monitoring Daemon</div>
-                            <div class="text-[11px] text-subtext">Auto-sync Gmail &amp; Outlook</div>
-                        </div>
-                    </div>
-                    <a href="/settings" class="text-xs font-semibold text-emerald-400 hover:text-emerald-300">Setup &rarr;</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-4">
+    <div class="grid grid-cols-1 gap-4">
         <section class="dash-panel bg-panel border border-border rounded-xl p-4">
             <div class="flex items-center justify-between gap-3">
                 <div>
                     <h2 class="dash-card-title">Recent detections</h2>
-                    <p class="dash-small-copy">Latest analyzed emails, URLs, and domains.</p>
+                    <p class="dash-small-copy">Latest email, URL, and domain scans.</p>
                 </div>
                 <a href="/reports" class="dash-link">View all</a>
             </div>
-            <div class="mt-4 overflow-x-auto">
+            <div class="mt-4 hidden overflow-x-auto md:block">
                 <table class="w-full min-w-[680px] text-left border-collapse">
                     <thead class="border-b border-border">
                         <tr class="dash-table-head">
@@ -213,20 +115,18 @@
                                 </td>
                                 <td class="py-3 px-3">
                                     <div class="flex items-center gap-2">
+                                        {% if scan.risk_score is not none %}
                                         <div class="h-1.5 w-16 overflow-hidden rounded-full bg-panel3">
                                             <div class="h-full rounded-full {% if scan.risk_score >= 70 %}bg-danger{% elif scan.risk_score >= 40 %}bg-orange-500{% else %}bg-safe{% endif %}" style="width: {{ scan.risk_score }}%"></div>
                                         </div>
                                         <span class="dash-risk">{{ scan.risk_score }}</span>
+                                        {% else %}
+                                        <span class="dash-risk text-subtext">Unavailable</span>
+                                        {% endif %}
                                     </div>
                                 </td>
                                 <td class="py-3 px-3">
-                                    {% if scan.status == 'PHISHING' %}
-                                        <span class="badge badge-critical">Phishing</span>
-                                    {% elif scan.status == 'SUSPICIOUS' %}
-                                        <span class="badge badge-medium">Suspicious</span>
-                                    {% else %}
-                                        <span class="badge badge-safe">Clean</span>
-                                    {% endif %}
+                                    <span class="dash-status {% if scan.status == 'PHISHING' %}dash-status--phishing{% elif scan.status == 'SUSPICIOUS' %}dash-status--suspicious{% elif scan.status == 'CLEAN' %}dash-status--clean{% else %}dash-status--unknown{% endif %}">{{ 'Not verified' if scan.status == 'UNKNOWN' else scan.status | title }}</span>
                                 </td>
                                 <td class="py-3 px-3 dash-time">{{ scan.time }}</td>
                                 <td class="py-3 pl-3 text-right">
@@ -244,7 +144,7 @@
                                             <span class="material-symbols-outlined text-[22px] text-muted">radar</span>
                                         </div>
                                         <div class="dash-item-title">No scan activity yet</div>
-                                        <p class="dash-small-copy mt-1">Run an email, URL, or domain scan to populate this queue.</p>
+                                        <p class="dash-small-copy mt-1">Run a scan to see it here.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -252,61 +152,217 @@
                     </tbody>
                 </table>
             </div>
+            <div class="mt-4 divide-y divide-border border-t border-border md:hidden">
+                {% for scan in recent_scans %}
+                <a href="/email/{{ scan.id }}" class="block py-3.5">
+                    <div class="flex items-start justify-between gap-3">
+                        <span class="min-w-0 truncate dash-item-title">{{ scan.subject or scan.sender }}</span>
+                        <span class="dash-status shrink-0 {% if scan.status == 'PHISHING' %}dash-status--phishing{% elif scan.status == 'SUSPICIOUS' %}dash-status--suspicious{% elif scan.status == 'CLEAN' %}dash-status--clean{% else %}dash-status--unknown{% endif %}">{{ 'Not verified' if scan.status == 'UNKNOWN' else scan.status | title }}</span>
+                    </div>
+                    <div class="mt-1 flex items-center justify-between gap-3 dash-small-copy">
+                        <span class="min-w-0 truncate">{{ scan.sender }}</span>
+                        <span class="shrink-0 dash-risk">{% if scan.risk_score is none %}Unavailable{% else %}{{ scan.risk_score }}/100{% endif %}</span>
+                    </div>
+                </a>
+                {% else %}
+                <p class="py-6 dash-small-copy">No scan activity yet. Run a scan to see it here.</p>
+                {% endfor %}
+            </div>
         </section>
 
-        <section class="grid grid-cols-1 gap-4">
-            <div class="dash-panel bg-panel border border-border rounded-xl p-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h2 class="dash-card-title">Threat origin intelligence</h2>
-                        <p class="dash-small-copy">Geographic patterns from enriched scan data.</p>
-                    </div>
-                    <select class="bg-panel border border-border text-[11px] font-semibold text-text rounded-md pl-2 pr-5 py-1 outline-none focus:border-brand shadow-sm">
-                        <option>7 days</option>
-                        <option>30 days</option>
-                    </select>
+        <section class="dash-panel bg-panel border border-border rounded-xl p-4 sm:p-5" aria-labelledby="map-heading">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <h2 id="map-heading" class="dash-card-title">Threat infrastructure by country</h2>
+                    <p class="dash-small-copy mt-1">Hosting countries from flagged URL and domain scans{% if user %} saved to your account{% endif %}.</p>
                 </div>
-                <div class="relative mt-3 h-[210px] overflow-hidden rounded-lg border border-border bg-panel2/50">
-                    <div id="world-map" class="h-full w-full scale-[1.04]"></div>
-                    <div class="absolute bottom-2 left-2 rounded-md border border-border bg-panel/95 p-2 shadow-sm">
-                        <div class="flex items-center gap-2 text-[10.5px] font-bold text-subtext"><span class="h-2 w-2 rounded-full bg-danger"></span>High</div>
-                        <div class="mt-1 flex items-center gap-2 text-[10.5px] font-bold text-subtext"><span class="h-2 w-2 rounded-full bg-orange-500"></span>Medium</div>
-                        <div class="mt-1 flex items-center gap-2 text-[10.5px] font-bold text-subtext"><span class="h-2 w-2 rounded-full bg-safe"></span>Low</div>
-                    </div>
-                </div>
+                <nav class="dash-map-range" aria-label="Map date range">
+                    <a href="/dashboard?range=7d" {% if selected_range == '7d' %}aria-current="page"{% endif %}>7 days</a>
+                    <a href="/dashboard?range=30d" {% if selected_range == '30d' %}aria-current="page"{% endif %}>30 days</a>
+                    <a href="/dashboard?range=all" {% if selected_range == 'all' %}aria-current="page"{% endif %}>All time</a>
+                </nav>
             </div>
-
-            <div class="dash-panel bg-panel border border-border rounded-xl p-4">
-                <div class="flex items-center justify-between">
-                    <h2 class="dash-card-title">Top sources</h2>
-                    <span class="dash-muted">By volume</span>
+            <div class="mt-4 grid grid-cols-1 gap-5 lg:grid-cols-[1.5fr_0.75fr]">
+                <div class="relative min-h-[180px] overflow-hidden rounded-lg border border-border bg-panel2/40 sm:min-h-[260px]">
+                    <div id="world-map" class="h-[180px] w-full sm:h-[260px]" aria-label="Countries hosting infrastructure found in flagged scans"></div>
+                    {% if not map_summary.mapped %}
+                    <p class="absolute inset-0 flex items-center justify-center bg-panel2/80 px-6 text-center text-sm text-subtext">{% if user %}No flagged URL or domain scans with a verified hosting country for this period. Email findings without a verified country do not appear on the map.{% else %}No saved country data for this period.{% endif %}</p>
+                    {% endif %}
                 </div>
-                <div class="mt-3 divide-y divide-border">
-                    {% for source in (top_threats_list or [])[:5] %}
-                    <div class="flex items-center justify-between py-2.5">
-                        <div class="flex min-w-0 items-center gap-3">
-                            <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-panel2 text-[10px] font-bold text-subtext">{{ source.code }}</div>
-                            <span class="truncate dash-source">{{ source.name }}</span>
-                        </div>
+                <div>
+                    <div class="flex items-baseline justify-between border-b border-border pb-2">
+                        <h3 class="dash-metric-label">Most flagged scans</h3>
+                        <span class="dash-muted">{{ map_summary.mapped }} located</span>
+                    </div>
+                    {% for source in map_summary.top_list %}
+                    <div class="dash-map-source">
+                        <span class="min-w-0 truncate">{{ source.name }}</span>
                         <span class="dash-risk">{{ source.count }}</span>
                     </div>
+                    {% else %}
+                    <p class="dash-small-copy py-4">Country totals will appear after a flagged URL or domain scan has a verified hosting location.</p>
                     {% endfor %}
-                    {% if not (top_threats_list or []) %}
-                    <div class="py-6 text-center text-[12px] text-muted">No threat source data available.</div>
+                    {% if map_summary.unknown %}
+                    <div class="dash-map-source border-t border-border text-subtext">
+                        <span>Location unavailable</span>
+                        <span class="dash-risk">{{ map_summary.unknown }}</span>
+                    </div>
                     {% endif %}
                 </div>
             </div>
+            <p class="dash-small-copy mt-3">This is the hosting location of flagged infrastructure, not the physical location of an attacker. Each scan is counted once.</p>
         </section>
     </div>
 </div>
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap/dist/css/jsvectormap.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/jsvectormap"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsvectormap/dist/maps/world.js"></script>
+<link rel="stylesheet" href="/static/vendor/jsvectormap.min.css" />
+<script src="/static/vendor/jsvectormap.min.js"></script>
+<script src="/static/vendor/world.js"></script>
 
 <style>
 .dashboard-page {
     letter-spacing: 0;
+}
+.dash-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    overflow: hidden;
+}
+.dash-metric-cell {
+    min-width: 0;
+    padding: 20px 22px;
+}
+.dash-metric-cell + .dash-metric-cell {
+    border-left: 1px solid var(--border);
+}
+.dash-metric-label {
+    color: var(--subtext);
+    font-size: 12px;
+    font-weight: 600;
+}
+.dash-metric-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.dash-metric-icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex: none;
+    border: 1px solid currentColor;
+    border-radius: 9px;
+    background: var(--metric-tint);
+    color: var(--metric-color);
+    border-color: var(--metric-border);
+}
+.dash-metric-icon {
+    width: 20px;
+    height: 20px;
+    flex: none;
+}
+.dash-metric-value {
+    color: var(--text);
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.2;
+    margin: 9px 0 3px;
+}
+.dash-metric-cell--scans { --metric-color: #2563eb; --metric-tint: rgba(37, 99, 235, .07); --metric-border: rgba(37, 99, 235, .17); }
+.dash-metric-cell--phishing { --metric-color: #be2440; --metric-tint: rgba(190, 36, 64, .07); --metric-border: rgba(190, 36, 64, .18); }
+.dash-metric-cell--suspicious { --metric-color: #a55b00; --metric-tint: rgba(165, 91, 0, .07); --metric-border: rgba(165, 91, 0, .19); }
+.dash-metric-cell--clean { --metric-color: #087a55; --metric-tint: rgba(8, 122, 85, .07); --metric-border: rgba(8, 122, 85, .18); }
+.dash-metric-cell .dash-metric-value { color: var(--metric-color); }
+.dash-status {
+    display: inline-flex;
+    align-items: center;
+    color: var(--status-color);
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.dash-status--phishing { --status-color: #be2440; }
+.dash-status--suspicious { --status-color: #a55b00; }
+.dash-status--clean { --status-color: #087a55; }
+.dash-status--unknown { --status-color: var(--subtext); }
+html[data-theme="dark"] .dash-metric-cell--scans { --metric-color: #7da8ff; }
+html[data-theme="dark"] .dash-metric-cell--phishing { --metric-color: #ff7890; }
+html[data-theme="dark"] .dash-metric-cell--suspicious { --metric-color: #ffb75b; }
+html[data-theme="dark"] .dash-metric-cell--clean { --metric-color: #4cdaa6; }
+html[data-theme="dark"] .dash-status--phishing { --status-color: #ff7890; }
+html[data-theme="dark"] .dash-status--suspicious { --status-color: #ffb75b; }
+html[data-theme="dark"] .dash-status--clean { --status-color: #4cdaa6; }
+.dash-finding {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 58px;
+    padding: 9px 2px;
+    text-decoration: none;
+}
+.dash-finding:hover .dash-item-title {
+    color: var(--brand);
+}
+.dash-finding-status {
+    width: 80px;
+    flex: none;
+    font-size: 11px;
+    font-weight: 650;
+}
+.dash-finding-danger { color: #ef4444; }
+.dash-finding-warning { color: #d97706; }
+.dash-map-range {
+    display: inline-flex;
+    align-self: flex-start;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--panel2);
+}
+.dash-map-range a {
+    padding: 5px 9px;
+    border-radius: 5px;
+    color: var(--subtext);
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+}
+.dash-map-range a[aria-current="page"] {
+    background: var(--panel);
+    color: var(--text);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .1);
+}
+.dash-map-source {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    min-height: 41px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 550;
+}
+.dash-map-source:last-child { border-bottom: 0; }
+.jvm-zoom-btn { display: none !important; }
+.jvm-tooltip {
+    background: var(--navy);
+    color: #fff;
+    border-radius: 5px;
+    font-size: 11px;
+    padding: 7px 9px;
+}
+@media (max-width: 700px) {
+    .dash-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dash-metric-cell:nth-child(3) { border-left: 0; border-top: 1px solid var(--border); }
+    .dash-metric-cell:nth-child(4) { border-top: 1px solid var(--border); }
+    .dash-finding { gap: 10px; }
+    .dash-finding .dash-time { display: none; }
 }
 .dash-eyebrow,
 .dash-label,
@@ -444,122 +500,34 @@
 html[data-theme="dark"] .dash-panel {
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 10px 24px rgba(0, 0, 0, 0.18);
 }
-.jvm-tooltip {
-    background-color: var(--navy);
-    color: white;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    border-radius: 6px;
-    padding: 8px 10px;
-    font-size: 11px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    border: 1px solid rgba(255,255,255,0.1);
-}
-.jvm-zoom-btn {
-    display: none !important;
-}
-.jvm-marker {
-    paint-order: stroke fill;
-    stroke-opacity: 0.35;
-    transition: all 0.3s ease;
-}
-@keyframes markerPulse {
-    0% { stroke-width: 0; stroke-opacity: 0.5; }
-    100% { stroke-width: 10px; stroke-opacity: 0; }
-}
-.jvm-marker {
-    animation: markerPulse 2.4s infinite ease-out;
-}
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const countryData = {{ (threat_map_data or {}) | tojson | safe }};
-
-    const countryColors = {};
-    for (const [code, count] of Object.entries(countryData)) {
-        if (count >= 50) {
-            countryColors[code] = '#dc2626';
-        } else if (count >= 20) {
-            countryColors[code] = '#ef4444';
-        } else if (count >= 5) {
-            countryColors[code] = '#f87171';
-        } else {
-            countryColors[code] = '#fca5a5';
-        }
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof jsVectorMap === 'undefined') return;
+    const counts = {{ map_summary.map_data | tojson | safe }};
+    const maximum = Math.max(1, ...Object.values(counts));
+    const fills = {};
+    for (const [country, count] of Object.entries(counts)) {
+        const share = count / maximum;
+        fills[country] = share >= 0.7 ? '#1d4ed8' : share >= 0.35 ? '#3b82f6' : '#93c5fd';
     }
-
-    const capitalCoords = {
-        'RU': { name: 'Moscow', coords: [55.7558, 37.6173] },
-        'CN': { name: 'Beijing', coords: [39.9042, 116.4074] },
-        'US': { name: 'Washington D.C.', coords: [38.9072, -77.0369] },
-        'IN': { name: 'New Delhi', coords: [28.6139, 77.2090] },
-        'BR': { name: 'Brasilia', coords: [-15.7938, -47.8827] },
-        'NG': { name: 'Abuja', coords: [9.0765, 7.3986] },
-        'UA': { name: 'Kyiv', coords: [50.4501, 30.5234] },
-        'ZA': { name: 'Pretoria', coords: [-25.7479, 28.2293] },
-        'GB': { name: 'London', coords: [51.5074, -0.1278] },
-        'DE': { name: 'Berlin', coords: [52.5200, 13.4050] },
-        'FR': { name: 'Paris', coords: [48.8566, 2.3522] },
-        'JP': { name: 'Tokyo', coords: [35.6762, 139.6503] }
-    };
-
-    const dynamicMarkers = [];
-    for (const code of Object.keys(countryData)) {
-        if (capitalCoords[code]) {
-            dynamicMarkers.push(capitalCoords[code]);
-        }
-    }
-
     new jsVectorMap({
         selector: '#world-map',
         map: 'world',
-        zoomOnScroll: false,
-        zoomButtons: false,
         backgroundColor: 'transparent',
+        zoomButtons: false,
+        zoomOnScroll: false,
         regionStyle: {
-            initial: {
-                fill: isDark ? '#334155' : '#d7dde7',
-                fillOpacity: 1,
-                stroke: 'none',
-                strokeWidth: 0,
-                strokeOpacity: 1
-            },
-            hover: {
-                fillOpacity: 0.82,
-                cursor: 'pointer'
-            }
+            initial: { fill: document.documentElement.dataset.theme === 'dark' ? '#334155' : '#dbe3ee', stroke: 'none' },
+            hover: { fillOpacity: 0.8, cursor: 'pointer' }
         },
-        series: {
-            regions: [{
-                attribute: 'fill',
-                values: countryColors
-            }]
-        },
-        markers: dynamicMarkers,
-        markerStyle: {
-            initial: {
-                fill: '#ef4444',
-                stroke: '#ef4444',
-                strokeWidth: 3,
-                r: 4
-            },
-            hover: {
-                strokeWidth: 5,
-                cursor: 'pointer',
-                strokeOpacity: 0.6
-            }
-        },
-        onRegionTooltipShow: function(event, tooltip, code) {
-            if (countryData[code]) {
-                const count = countryData[code];
-                tooltip.text(
-                    `<div style="font-weight: bold; margin-bottom: 2px;">${tooltip.text()}</div>
-                     <div style="opacity: 0.8;">${count} threats</div>
-                     <div style="opacity: 0.8; margin-top: 2px;">Primary signal: <span style="color:#ef4444">Phishing</span></div>`,
-                    true
-                );
-            }
+        series: { regions: [{ attribute: 'fill', attributes: fills }] },
+        onRegionTooltipShow: function (event, tooltip, code) {
+            if (!counts[code]) return;
+            const name = tooltip.text();
+            const count = counts[code];
+            tooltip.text(name + '<br>' + count + ' flagged scan' + (count === 1 ? '' : 's'), true);
         }
     });
 });

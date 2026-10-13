@@ -1,133 +1,48 @@
 {% extends "public_base.html" %}
 
-{% block title %}Blog &mdash; PhishGuard{% endblock %}
+{% block title %}Resources — PhishGuard{% endblock %}
 
 {% block content %}
-<div class="pt-24 pb-20 bg-grid-pattern relative border-b border-gray-100">
-    <div class="absolute inset-0 bg-gradient-to-b from-blue-50/50 to-transparent pointer-events-none"></div>
-    <div class="max-w-4xl mx-auto px-6 relative z-10 text-center">
-        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-info-dim text-[#1e3a8a] border border-blue-100 text-xs font-medium tracking-wide uppercase mb-6">
-            Blog
-        </div>
-        <h1 class="text-4xl md:text-5xl font-semibold tracking-tight text-gray-900 mb-6">Threat Intelligence &amp; Security Insights</h1>
-        <p class="text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">Phishing trends, platform updates, and security best practices from the PhishGuard research team.</p>
+<section class="border-b border-gray-100 bg-white pt-12 pb-10 sm:pt-14 sm:pb-12">
+    <div class="max-w-5xl mx-auto px-6">
+        <span class="inline-flex px-3 py-1.5 rounded-full bg-info-dim text-[#1e3a8a] border border-blue-100 text-xs font-medium tracking-wide uppercase mb-4">Resources</span>
+        <h1 class="text-3xl md:text-4xl font-semibold tracking-tight text-gray-900 mb-3">Security resources</h1>
+        <p class="text-base text-gray-600 leading-relaxed max-w-2xl">Practical guidance for reviewing suspicious messages and understanding the evidence behind a scan.</p>
     </div>
-</div>
+</section>
 
-<div class="max-w-6xl mx-auto px-6 py-16">
-    <a href="/" class="inline-flex items-center gap-2 text-brand-blue font-medium hover:text-info transition mb-12">
+<main class="max-w-5xl mx-auto px-6 pt-8 pb-14">
+    <a href="/" class="inline-flex items-center gap-2 text-sm text-brand-blue font-medium hover:text-info transition mb-8">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
         Back to Home
     </a>
 
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <!-- Card 1 -->
-        <a href="#" class="group bg-panel border border-gray-200 rounded-2xl overflow-hidden hover:shadow-floating hover:border-blue-200 transition-all flex flex-col">
-            <div class="h-40 bg-danger-dim flex items-center justify-center text-danger group-hover:scale-105 transition-transform duration-500">
-                <svg class="w-12 h-12" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.008v.008H12v-.008z"/></svg>
-            </div>
-            <div class="p-6 flex flex-col flex-1">
-                <div class="inline-block px-3 py-1 rounded-full bg-info-dim text-[#1e3a8a] text-xs font-medium tracking-wide uppercase mb-3 self-start">Threat Report</div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-2 group-hover:text-brand-blue transition-colors">Q1 2026: AI-Generated Phishing Emails Up 340%</h3>
-                <p class="text-sm text-gray-600 mb-6 flex-1">Large language models have dramatically lowered the barrier for crafting convincing phishing emails. Here&rsquo;s what to watch for.</p>
-                <div class="flex items-center gap-3 text-xs text-gray-500 mt-auto pt-4 border-t border-gray-100">
-                    <div class="w-6 h-6 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center font-semibold">JR</div>
-                    <span>James R. &middot; Apr 3, 2026</span>
-                </div>
-            </div>
-        </a>
-
-        <!-- Card 2 -->
-        <a href="#" class="group bg-panel border border-gray-200 rounded-2xl overflow-hidden hover:shadow-floating hover:border-blue-200 transition-all flex flex-col">
-            <div class="h-40 bg-indigo-50 flex items-center justify-center text-indigo-500 group-hover:scale-105 transition-transform duration-500">
-                <svg class="w-12 h-12" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
-            </div>
-            <div class="p-6 flex flex-col flex-1">
-                <div class="inline-block px-3 py-1 rounded-full bg-indigo-50 text-[#1e3a8a] text-xs font-medium tracking-wide uppercase mb-3 self-start">Best Practice</div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-2 group-hover:text-brand-blue transition-colors">SPF, DKIM and DMARC Explained</h3>
-                <p class="text-sm text-gray-600 mb-6 flex-1">Email authentication is your first line of defense. A plain-English breakdown of the three standards every org should configure.</p>
-                <div class="flex items-center gap-3 text-xs text-gray-500 mt-auto pt-4 border-t border-gray-100">
-                    <div class="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-semibold">SK</div>
-                    <span>Sarah K. &middot; Mar 28, 2026</span>
-                </div>
-            </div>
-        </a>
-
-        <!-- Card 3 -->
-        <a href="#" class="group bg-panel border border-gray-200 rounded-2xl overflow-hidden hover:shadow-floating hover:border-blue-200 transition-all flex flex-col">
-            <div class="h-40 bg-medium-dim flex items-center justify-center text-medium group-hover:scale-105 transition-transform duration-500">
-                <svg class="w-12 h-12" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/></svg>
-            </div>
-            <div class="p-6 flex flex-col flex-1">
-                <div class="inline-block px-3 py-1 rounded-full bg-medium-dim text-amber-600 text-xs font-medium tracking-wide uppercase mb-3 self-start">Research</div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-2 group-hover:text-brand-blue transition-colors">How Attackers Abuse Cloud Storage</h3>
-                <p class="text-sm text-gray-600 mb-6 flex-1">Google Drive and OneDrive links bypass blocklists. We analyzed 4,000 campaigns using this technique.</p>
-                <div class="flex items-center gap-3 text-xs text-gray-500 mt-auto pt-4 border-t border-gray-100">
-                    <div class="w-6 h-6 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 text-white flex items-center justify-center font-semibold">AM</div>
-                    <span>Alex M. &middot; Mar 15, 2026</span>
-                </div>
-            </div>
-        </a>
-
-        <!-- Card 4 -->
-        <a href="#" class="group bg-panel border border-gray-200 rounded-2xl overflow-hidden hover:shadow-floating hover:border-blue-200 transition-all flex flex-col">
-            <div class="h-40 bg-safe-dim flex items-center justify-center text-safe group-hover:scale-105 transition-transform duration-500">
-                <svg class="w-12 h-12" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6"/></svg>
-            </div>
-            <div class="p-6 flex flex-col flex-1">
-                <div class="inline-block px-3 py-1 rounded-full bg-safe-dim text-emerald-600 text-xs font-medium tracking-wide uppercase mb-3 self-start">Product Update</div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-2 group-hover:text-brand-blue transition-colors">PhishGuard Now Integrates with Splunk</h3>
-                <p class="text-sm text-gray-600 mb-6 flex-1">Send verdicts, risk scores, and indicator data directly to your Splunk index with zero custom coding required.</p>
-                <div class="flex items-center gap-3 text-xs text-gray-500 mt-auto pt-4 border-t border-gray-100">
-                    <div class="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 text-white flex items-center justify-center font-semibold">PG</div>
-                    <span>PhishGuard Team &middot; Mar 8, 2026</span>
-                </div>
-            </div>
-        </a>
-
-        <!-- Card 5 -->
-        <a href="#" class="group bg-panel border border-gray-200 rounded-2xl overflow-hidden hover:shadow-floating hover:border-blue-200 transition-all flex flex-col">
-            <div class="h-40 bg-info-dim flex items-center justify-center text-info group-hover:scale-105 transition-transform duration-500">
-                <svg class="w-12 h-12" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
-            </div>
-            <div class="p-6 flex flex-col flex-1">
-                <div class="inline-block px-3 py-1 rounded-full bg-info-dim text-[#1e3a8a] text-xs font-medium tracking-wide uppercase mb-3 self-start">Security Culture</div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-2 group-hover:text-brand-blue transition-colors">Building a Phishing-Resistant Team</h3>
-                <p class="text-sm text-gray-600 mb-6 flex-1">Technical tools help, but human behavior is the last line of defense. Actionable steps any security team can take today.</p>
-                <div class="flex items-center gap-3 text-xs text-gray-500 mt-auto pt-4 border-t border-gray-100">
-                    <div class="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center font-semibold">LT</div>
-                    <span>Lisa T. &middot; Feb 22, 2026</span>
-                </div>
-            </div>
-        </a>
-
-        <!-- Card 6 -->
-        <a href="#" class="group bg-panel border border-gray-200 rounded-2xl overflow-hidden hover:shadow-floating hover:border-blue-200 transition-all flex flex-col">
-            <div class="h-40 bg-gray-50 flex items-center justify-center text-gray-500 group-hover:scale-105 transition-transform duration-500">
-                <svg class="w-12 h-12" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>
-            </div>
-            <div class="p-6 flex flex-col flex-1">
-                <div class="inline-block px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-medium tracking-wide uppercase mb-3 self-start">Case Study</div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-2 group-hover:text-brand-blue transition-colors">How a 50-Person SaaS Stopped a BEC</h3>
-                <p class="text-sm text-gray-600 mb-6 flex-1">A business email compromise attempt almost cost this company $240K. PhishGuard caught it at the gate.</p>
-                <div class="flex items-center gap-3 text-xs text-gray-500 mt-auto pt-4 border-t border-gray-100">
-                    <div class="w-6 h-6 rounded-full bg-gradient-to-br from-gray-500 to-gray-700 text-white flex items-center justify-center font-semibold">MN</div>
-                    <span>Mike N. &middot; Feb 10, 2026</span>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <div class="mt-16 bg-info-dim border border-blue-100 rounded-2xl p-8 text-center flex flex-col items-center">
-        <div class="w-12 h-12 bg-panel rounded-full flex items-center justify-center text-brand-blue mb-4 shadow-sm">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z"/>
-            </svg>
+    <div class="border-b border-gray-200 pb-4 mb-5">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-brand-blue mb-1">Explore</p>
+            <h2 class="text-xl font-semibold text-gray-900">Start with the essentials</h2>
         </div>
-        <h3 class="text-xl font-semibold text-gray-900 mb-2">More articles publishing weekly</h3>
-        <p class="text-gray-600 mb-6 max-w-md mx-auto">Get the latest threat intelligence and product updates delivered to your inbox.</p>
-        <a href="/contact" class="bg-brand-blue text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition">Subscribe for updates</a>
     </div>
-</div>
-{% endblock %}
 
+    <div class="grid md:grid-cols-3 gap-4">
+        <a href="/docs" class="group rounded-xl border border-gray-200 bg-panel p-5 hover:border-blue-300 hover:shadow-sm transition">
+            <span class="text-xs font-semibold uppercase tracking-wide text-brand-blue">Guide</span>
+            <h3 class="mt-3 text-base font-semibold text-gray-900 group-hover:text-brand-blue">How a threat score works</h3>
+            <p class="mt-2 text-sm leading-relaxed text-gray-600">Understand the signals behind a verdict and what each risk level means.</p>
+            <span class="inline-block mt-5 text-sm font-medium text-brand-blue">Read the guide &rarr;</span>
+        </a>
+        <a href="/scan" class="group rounded-xl border border-gray-200 bg-panel p-5 hover:border-blue-300 hover:shadow-sm transition">
+            <span class="text-xs font-semibold uppercase tracking-wide text-brand-blue">Tool</span>
+            <h3 class="mt-3 text-base font-semibold text-gray-900 group-hover:text-brand-blue">Check a suspicious email</h3>
+            <p class="mt-2 text-sm leading-relaxed text-gray-600">Review a message before you open links or respond to its sender.</p>
+            <span class="inline-block mt-5 text-sm font-medium text-brand-blue">Open email scanner &rarr;</span>
+        </a>
+        <a href="/url-scan" class="group rounded-xl border border-gray-200 bg-panel p-5 hover:border-blue-300 hover:shadow-sm transition">
+            <span class="text-xs font-semibold uppercase tracking-wide text-brand-blue">Tool</span>
+            <h3 class="mt-3 text-base font-semibold text-gray-900 group-hover:text-brand-blue">Inspect a link</h3>
+            <p class="mt-2 text-sm leading-relaxed text-gray-600">Check a URL's destination and available threat signals before visiting it.</p>
+            <span class="inline-block mt-5 text-sm font-medium text-brand-blue">Open URL scanner &rarr;</span>
+        </a>
+    </div>
+</main>
+{% endblock %}

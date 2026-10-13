@@ -1,0 +1,42 @@
+<!-- Illustrative email and findings: no scan or external link is executed here. -->
+<div class="pg-depth" data-evidence-demo aria-label="Interactive phishing analysis example">
+  <div class="pg-depth-scene">
+    <article class="pg-email" aria-label="Sample suspicious email">
+      <header class="pg-email-header">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg" width="23" height="23" alt="Gmail">
+        <span>Suspicious email detected</span>
+      </header>
+      <dl class="pg-email-meta">
+        <div><dt>From</dt><dd>Microsoft Support<br><span class="pg-evidence-target" data-evidence-target="sender">support@micros0ft.example</span></dd></div>
+        <div><dt>To</dt><dd>you@company.example</dd></div>
+        <div><dt>Subject</dt><dd>Action required: verify your account</dd></div>
+      </dl>
+      <div class="pg-email-body">
+        <p>Dear User,</p>
+        <p>We noticed unusual activity in your account. Please verify your identity to keep access.</p>
+        <p><span class="pg-evidence-target" data-evidence-target="urgency">Your account will be suspended today.</span></p>
+        <button type="button" class="pg-email-link" data-select-evidence="link">Verify Account <span aria-hidden="true">↗</span></button>
+        <div class="pg-link-destination"><span>Link destination</span><span class="pg-evidence-target" data-evidence-target="link">account-verify.example/login</span></div>
+      </div>
+      <footer class="pg-email-footer"><span>Email analysis</span><span>Powered by OriginTrace</span></footer>
+    </article>
+
+    <aside class="pg-risk" aria-label="Sample risk assessment">
+      <div class="pg-risk-heading"><span class="pg-risk-symbol" aria-hidden="true">!</span><div><h3>Phishing Detected</h3><span>Risk assessment</span></div></div>
+      <div class="pg-risk-score"><div><strong>92<span>/100</span></strong><small>Risk score</small></div><span class="pg-risk-badge">High Risk</span></div>
+      <div class="pg-indicators">
+        <h4>Explore the indicators</h4>
+        <div class="pg-indicator-list" role="group" aria-label="Highlight evidence in the email">
+          <button type="button" data-select-evidence="sender" aria-pressed="true" aria-controls="pg-evidence-explanation"><span class="pg-indicator-dot"></span>Suspicious domain<span class="pg-indicator-arrow" aria-hidden="true">↗</span></button>
+          <button type="button" data-select-evidence="urgency" aria-pressed="false" aria-controls="pg-evidence-explanation"><span class="pg-indicator-dot"></span>Urgent language<span class="pg-indicator-arrow" aria-hidden="true">↗</span></button>
+          <button type="button" data-select-evidence="link" aria-pressed="false" aria-controls="pg-evidence-explanation"><span class="pg-indicator-dot"></span>Unfamiliar destination<span class="pg-indicator-arrow" aria-hidden="true">↗</span></button>
+        </div>
+      </div>
+      <div id="pg-evidence-explanation" class="pg-explanation" role="status" aria-live="polite" aria-atomic="true">
+        <span class="pg-explanation-label">SENDER IDENTITY</span>
+        <p class="pg-explanation-copy">The sender uses “0” in place of “o” in Microsoft. The displayed brand and sending domain do not match.</p>
+      </div>
+      <div class="pg-risk-footnote">Example findings · Not a live scan</div>
+    </aside>
+  </div>
+</div>

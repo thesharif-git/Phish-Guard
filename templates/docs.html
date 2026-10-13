@@ -1,0 +1,408 @@
+{% extends "base.html" %}
+
+{% block title %}Documentation - PhishGuard{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+  <!-- Header -->
+  <div>
+    <div>
+      <div class="flex items-center gap-2 text-xs font-semibold text-brand-light uppercase tracking-wider mb-1">
+        <span class="material-symbols-outlined text-[16px]">menu_book</span>
+        <span>Documentation</span>
+        <span class="text-muted">•</span>
+        <span class="text-subtext font-normal">Product guide</span>
+      </div>
+      <h1 class="text-xl sm:text-2xl font-extrabold text-text tracking-tight">System Documentation</h1>
+      <p class="text-xs sm:text-sm text-subtext mt-0.5">Understand what each scan checks, how results are explained, and where to find each tool.</p>
+    </div>
+  </div>
+
+  <!-- Mobile Tab Bar -->
+  <div class="lg:hidden flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none border-b border-border text-xs">
+    <button onclick="showDocSection('overview')" id="mtab-overview" class="px-3.5 py-2 rounded-lg font-bold flex items-center gap-1.5 whitespace-nowrap bg-brand text-white shadow-sm transition-all">
+      <span class="material-symbols-outlined text-[17px]">dashboard</span> Overview
+    </button>
+    <button onclick="showDocSection('scoring')" id="mtab-scoring" class="px-3.5 py-2 rounded-lg font-medium flex items-center gap-1.5 whitespace-nowrap text-subtext hover:bg-panel2 hover:text-text transition-all">
+      <span class="material-symbols-outlined text-[17px]">speed</span> Threat Scoring
+    </button>
+    <button onclick="showDocSection('email')" id="mtab-email" class="px-3.5 py-2 rounded-lg font-medium flex items-center gap-1.5 whitespace-nowrap text-subtext hover:bg-panel2 hover:text-text transition-all">
+      <span class="material-symbols-outlined text-[17px]">mark_email_read</span> Email Auth
+    </button>
+    <button onclick="showDocSection('url')" id="mtab-url" class="px-3.5 py-2 rounded-lg font-medium flex items-center gap-1.5 whitespace-nowrap text-subtext hover:bg-panel2 hover:text-text transition-all">
+      <span class="material-symbols-outlined text-[17px]">link</span> URL Scanner
+    </button>
+    <button onclick="showDocSection('inbox')" id="mtab-inbox" class="px-3.5 py-2 rounded-lg font-medium flex items-center gap-1.5 whitespace-nowrap text-subtext hover:bg-panel2 hover:text-text transition-all">
+      <span class="material-symbols-outlined text-[17px]">sync</span> Inbox Sync
+    </button>
+    <button onclick="showDocSection('rules')" id="mtab-rules" class="px-3.5 py-2 rounded-lg font-medium flex items-center gap-1.5 whitespace-nowrap text-subtext hover:bg-panel2 hover:text-text transition-all">
+      <span class="material-symbols-outlined text-[17px]">policy</span> Block Rules
+    </button>
+    <button onclick="showDocSection('api')" id="mtab-api" class="px-3.5 py-2 rounded-lg font-medium flex items-center gap-1.5 whitespace-nowrap text-subtext hover:bg-panel2 hover:text-text transition-all">
+      <span class="material-symbols-outlined text-[17px]">terminal</span> Developer API
+    </button>
+    <button onclick="showDocSection('faq')" id="mtab-faq" class="px-3.5 py-2 rounded-lg font-medium flex items-center gap-1.5 whitespace-nowrap text-subtext hover:bg-panel2 hover:text-text transition-all">
+      <span class="material-symbols-outlined text-[17px]">quiz</span> FAQs
+    </button>
+  </div>
+
+  <!-- Main Grid Layout -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- Sidebar Desktop Navigation (3 Cols) -->
+    <div class="hidden lg:flex lg:col-span-3 flex-col gap-0.5 bg-panel border border-border rounded-xl p-3 shadow-sm">
+      <div class="px-3 py-1.5 text-[11px] font-bold text-muted uppercase tracking-wider">Guides</div>
+
+      <button onclick="showDocSection('overview')" id="tab-overview" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold bg-[#edf3ff] dark:bg-brand/20 text-brand-light border border-transparent border-l-[3px] border-l-brand transition-colors">
+        <span class="material-symbols-outlined w-[18px] shrink-0 text-center text-[18px]">dashboard</span>
+        <span class="flex-1 text-left">Overview</span>
+      </button>
+
+      <button onclick="showDocSection('scoring')" id="tab-scoring" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-subtext border border-transparent border-l-[3px] hover:bg-panel2 hover:text-text transition-colors">
+        <span class="material-symbols-outlined w-[18px] shrink-0 text-center text-[18px]">speed</span>
+        <span class="flex-1 text-left">Threat Scoring</span>
+      </button>
+
+      <button onclick="showDocSection('email')" id="tab-email" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-subtext border border-transparent border-l-[3px] hover:bg-panel2 hover:text-text transition-colors">
+        <span class="material-symbols-outlined w-[18px] shrink-0 text-center text-[18px]">mark_email_read</span>
+        <span class="flex-1 text-left">Email Authentication</span>
+      </button>
+
+      <button onclick="showDocSection('url')" id="tab-url" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-subtext border border-transparent border-l-[3px] hover:bg-panel2 hover:text-text transition-colors">
+        <span class="material-symbols-outlined w-[18px] shrink-0 text-center text-[18px]">link</span>
+        <span class="flex-1 text-left">URL Inspection</span>
+      </button>
+
+      <div class="px-3 pt-3 pb-1 text-[11px] font-bold text-muted uppercase tracking-wider border-t border-border mt-2">Integration</div>
+
+      <button onclick="showDocSection('inbox')" id="tab-inbox" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-subtext border border-transparent border-l-[3px] hover:bg-panel2 hover:text-text transition-colors">
+        <span class="material-symbols-outlined w-[18px] shrink-0 text-center text-[18px]">sync</span>
+        <span class="flex-1 text-left">Inbox Automation</span>
+      </button>
+
+      <button onclick="showDocSection('rules')" id="tab-rules" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-subtext border border-transparent border-l-[3px] hover:bg-panel2 hover:text-text transition-colors">
+        <span class="material-symbols-outlined w-[18px] shrink-0 text-center text-[18px]">policy</span>
+        <span class="flex-1 text-left">Security Rules</span>
+      </button>
+
+      <button onclick="showDocSection('api')" id="tab-api" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-subtext border border-transparent border-l-[3px] hover:bg-panel2 hover:text-text transition-colors">
+        <span class="material-symbols-outlined w-[18px] shrink-0 text-center text-[18px]">terminal</span>
+        <span class="flex-1 text-left">Developer API</span>
+      </button>
+
+      <button onclick="showDocSection('faq')" id="tab-faq" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-subtext border border-transparent border-l-[3px] hover:bg-panel2 hover:text-text transition-colors">
+        <span class="material-symbols-outlined w-[18px] shrink-0 text-center text-[18px]">quiz</span>
+        <span class="flex-1 text-left">Common Questions</span>
+      </button>
+    </div>
+
+    <!-- Content Area (9 Cols) -->
+    <div class="lg:col-span-9 flex flex-col gap-6">
+
+      <!-- ================= SECTION 1: OVERVIEW ================= -->
+      <div id="doc-section-overview" class="flex flex-col gap-6">
+        
+        <!-- Scan flow -->
+        <div class="bg-panel border border-border rounded-xl p-5 sm:p-6 shadow-sm">
+          <div class="border-b border-border pb-4">
+            <h2 class="text-sm font-bold text-text">How a scan works</h2>
+            <p class="text-xs text-subtext mt-1">Every result should show the evidence available for that scan and explain what it means.</p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-0 pt-4">
+            <div class="sm:pr-4 pb-4 sm:pb-0 border-b sm:border-b-0 sm:border-r border-border">
+              <span class="text-[11px] font-bold text-brand-light">01 · Submit</span>
+              <h3 class="text-xs font-bold text-text mt-1">Choose what to check</h3>
+              <p class="text-xs text-subtext mt-1 leading-relaxed">Paste an email or link, or enter a domain.</p>
+            </div>
+            <div class="sm:px-4 py-4 sm:py-0 border-b sm:border-b-0 sm:border-r border-border">
+              <span class="text-[11px] font-bold text-brand-light">02 · Inspect</span>
+              <h3 class="text-xs font-bold text-text mt-1">Review available signals</h3>
+              <p class="text-xs text-subtext mt-1 leading-relaxed">Checks depend on the input and which sources can be reached.</p>
+            </div>
+            <div class="sm:pl-4 pt-4 sm:pt-0">
+              <span class="text-[11px] font-bold text-brand-light">03 · Understand</span>
+              <h3 class="text-xs font-bold text-text mt-1">Read the reason</h3>
+              <p class="text-xs text-subtext mt-1 leading-relaxed">See the risk result, supporting findings, and unavailable checks.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Access Navigation Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="bg-panel border border-border rounded-xl p-4 shadow-sm space-y-3">
+            <div class="w-9 h-9 rounded-lg bg-brand/10 text-brand-light flex items-center justify-center">
+              <span class="material-symbols-outlined text-[20px]">mark_email_read</span>
+            </div>
+            <div>
+              <h3 class="text-xs font-bold text-text">Email Inspection</h3>
+              <p class="text-[11px] text-subtext mt-1">Review message content, links, and authentication results when supplied.</p>
+            </div>
+            <a href="/scan" class="inline-flex items-center gap-1 text-[11px] font-bold text-brand-light hover:underline pt-1">
+              <span>Open Scanner</span>
+              <span class="material-symbols-outlined text-[13px]">arrow_forward</span>
+            </a>
+          </div>
+
+          <div class="bg-panel border border-border rounded-xl p-4 shadow-sm space-y-3">
+            <div class="w-9 h-9 rounded-lg bg-brand/10 text-brand-light flex items-center justify-center">
+              <span class="material-symbols-outlined text-[20px]">link</span>
+            </div>
+            <div>
+              <h3 class="text-xs font-bold text-text">URL Verification</h3>
+              <p class="text-[11px] text-subtext mt-1">Review link structure and reachable destination details.</p>
+            </div>
+            <a href="/url-scan" class="inline-flex items-center gap-1 text-[11px] font-bold text-brand-light hover:underline pt-1">
+              <span>Inspect Link</span>
+              <span class="material-symbols-outlined text-[13px]">arrow_forward</span>
+            </a>
+          </div>
+
+          <div class="bg-panel border border-border rounded-xl p-4 shadow-sm space-y-3">
+            <div class="w-9 h-9 rounded-lg bg-brand/10 text-brand-light flex items-center justify-center">
+              <span class="material-symbols-outlined text-[20px]">policy</span>
+            </div>
+            <div>
+              <h3 class="text-xs font-bold text-text">Block Rules</h3>
+              <p class="text-[11px] text-subtext mt-1">Mark emails high risk when their sender address or domain matches a rule.</p>
+            </div>
+            <a href="/settings" class="inline-flex items-center gap-1 text-[11px] font-bold text-brand-light hover:underline pt-1">
+              <span>Manage Rules</span>
+              <span class="material-symbols-outlined text-[13px]">arrow_forward</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ================= SECTION 2: THREAT SCORING ================= -->
+      <div id="doc-section-scoring" class="hidden flex flex-col gap-6">
+        <div class="bg-panel border border-border rounded-xl p-5 sm:p-6 shadow-sm space-y-5">
+          <div class="border-b border-border pb-3">
+            <h2 class="text-sm font-bold text-text">Reading the risk score</h2>
+            <p class="text-xs text-subtext mt-0.5">Email scans use a 0–100 scale. Open the findings to see which signals contributed.</p>
+          </div>
+          <div class="text-xs">
+            <div class="grid grid-cols-[auto_1fr_auto] gap-x-4 items-start py-3 border-b border-border">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 mt-1.5" aria-hidden="true"></span>
+              <div><h3 class="font-bold text-text text-[13px]">No finding</h3><p class="text-subtext mt-0.5 leading-relaxed">The completed checks found little or no risk. This does not guarantee the email is safe.</p></div>
+              <span class="font-semibold text-subtext tabular-nums whitespace-nowrap">0–44</span>
+            </div>
+            <div class="grid grid-cols-[auto_1fr_auto] gap-x-4 items-start py-3 border-b border-border">
+              <span class="w-2 h-2 rounded-full bg-amber-500 mt-1.5" aria-hidden="true"></span>
+              <div><h3 class="font-bold text-text text-[13px]">Suspicious</h3><p class="text-subtext mt-0.5 leading-relaxed">Concerning signals were found. Check the findings before trusting the message.</p></div>
+              <span class="font-semibold text-subtext tabular-nums whitespace-nowrap">45–74</span>
+            </div>
+            <div class="grid grid-cols-[auto_1fr_auto] gap-x-4 items-start py-3">
+              <span class="w-2 h-2 rounded-full bg-rose-500 mt-1.5" aria-hidden="true"></span>
+              <div><h3 class="font-bold text-text text-[13px]">High risk</h3><p class="text-subtext mt-0.5 leading-relaxed">Strong phishing signals were found. Avoid acting on the email until you review the evidence.</p></div>
+              <span class="font-semibold text-subtext tabular-nums whitespace-nowrap">75–100</span>
+            </div>
+          </div>
+          <p class="text-[11px] text-subtext border-t border-border pt-3">A score reflects the checks that completed. Missing evidence is not treated as proof that an email is safe.</p>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 3: EMAIL AUTH ================= -->
+      <div id="doc-section-email" class="hidden flex flex-col gap-6">
+        <div class="bg-panel border border-border rounded-xl p-5 sm:p-6 shadow-sm">
+          <div class="border-b border-border pb-3">
+            <h2 class="text-sm font-bold text-text">Email Authentication Results</h2>
+            <p class="text-xs text-subtext mt-0.5">When you provide full message headers, the scan can read the authentication outcomes reported there.</p>
+          </div>
+          <div class="text-xs">
+            <div class="grid grid-cols-[3rem_1fr] gap-3 py-4 border-b border-border">
+              <span class="font-bold text-brand-light">SPF</span>
+              <div><h3 class="font-semibold text-text">Sending server</h3><p class="text-subtext mt-0.5 leading-relaxed">Reports whether the header says the sending server was allowed by the sender's domain.</p></div>
+            </div>
+            <div class="grid grid-cols-[3rem_1fr] gap-3 py-4 border-b border-border">
+              <span class="font-bold text-brand-light">DKIM</span>
+              <div><h3 class="font-semibold text-text">Message signature</h3><p class="text-subtext mt-0.5 leading-relaxed">Reports whether the header says the message signature passed or failed.</p></div>
+            </div>
+            <div class="grid grid-cols-[3rem_1fr] gap-3 py-4">
+              <span class="font-bold text-brand-light">DMARC</span>
+              <div><h3 class="font-semibold text-text">Sender alignment</h3><p class="text-subtext mt-0.5 leading-relaxed">Reports whether the header says the visible sender matched the authenticated domain.</p></div>
+            </div>
+          </div>
+          <p class="text-[11px] text-subtext border-t border-border pt-3">These are reported header results, not independent SPF, DKIM, or DMARC verification. A pasted body without headers cannot provide them.</p>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 4: URL INSPECTION ================= -->
+      <div id="doc-section-url" class="hidden flex flex-col gap-6">
+        <div class="bg-panel border border-border rounded-xl p-5 sm:p-6 shadow-sm">
+          <div class="border-b border-border pb-3">
+            <h2 class="text-sm font-bold text-text">How link inspection works</h2>
+            <p class="text-xs text-subtext mt-0.5">The scanner combines link patterns with destination details it can retrieve.</p>
+          </div>
+          <div class="text-xs">
+            <div class="grid grid-cols-[7.5rem_1fr] gap-3 py-3 border-b border-border">
+              <h3 class="font-semibold text-text">Redirects</h3>
+              <p class="text-subtext leading-relaxed">Shows the destination reached when redirect information is available.</p>
+            </div>
+            <div class="grid grid-cols-[7.5rem_1fr] gap-3 py-3 border-b border-border">
+              <h3 class="font-semibold text-text">Lookalike names</h3>
+              <p class="text-subtext leading-relaxed">Checks for spelling and character patterns that resemble familiar domains.</p>
+            </div>
+            <div class="grid grid-cols-[7.5rem_1fr] gap-3 py-3 border-b border-border">
+              <h3 class="font-semibold text-text">Domain age</h3>
+              <p class="text-subtext leading-relaxed">Shows registration age when a reliable lookup is available.</p>
+            </div>
+            <div class="grid grid-cols-[7.5rem_1fr] gap-3 py-3">
+              <h3 class="font-semibold text-text">Threat sources</h3>
+              <p class="text-subtext leading-relaxed">External source results appear only when those checks are configured and reachable.</p>
+            </div>
+          </div>
+          <p class="text-[11px] text-subtext border-t border-border pt-3">If a check cannot run, the result should show it as unavailable rather than safe.</p>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 5: INBOX SYNC ================= -->
+      <div id="doc-section-inbox" class="hidden flex flex-col gap-6">
+        <div class="bg-panel border border-border rounded-xl p-5 sm:p-6 shadow-sm">
+          <div class="border-b border-border pb-3">
+            <h2 class="text-sm font-bold text-text">Connected Gmail inbox</h2>
+            <p class="text-xs text-subtext mt-0.5">Optional background scanning begins after you connect an inbox in Settings.</p>
+          </div>
+          <div class="text-xs">
+            <div class="grid grid-cols-[7.5rem_1fr] gap-3 py-3 border-b border-border">
+              <h3 class="font-semibold text-text">Automatic checks</h3>
+              <p class="text-subtext leading-relaxed">New messages are checked in the background while the connection is available.</p>
+            </div>
+            <div class="grid grid-cols-[7.5rem_1fr] gap-3 py-3 border-b border-border">
+              <h3 class="font-semibold text-text">Read-only access</h3>
+              <p class="text-subtext leading-relaxed">The Gmail connection requests permission to read messages, not send, edit, or delete them.</p>
+            </div>
+            <div class="grid grid-cols-[7.5rem_1fr] gap-3 py-3">
+              <h3 class="font-semibold text-text">Scan history</h3>
+              <p class="text-subtext leading-relaxed">Completed scan summaries can be reviewed in your account.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 6: BLOCK RULES ================= -->
+      <div id="doc-section-rules" class="hidden flex flex-col gap-6">
+        <div class="bg-panel border border-border rounded-xl p-5 sm:p-6 shadow-sm">
+          <div class="border-b border-border pb-3">
+            <h2 class="text-sm font-bold text-text">Custom scan rules</h2>
+            <p class="text-xs text-subtext mt-0.5">Rules currently match the sender of an email scan.</p>
+          </div>
+          <div class="text-xs">
+            <div class="grid grid-cols-[7.5rem_1fr] gap-3 py-3 border-b border-border">
+              <h3 class="font-semibold text-text">Email address</h3>
+              <p class="text-subtext leading-relaxed">Matches the exact sender address entered in a rule.</p>
+            </div>
+            <div class="grid grid-cols-[7.5rem_1fr] gap-3 py-3 border-b border-border">
+              <h3 class="font-semibold text-text">Sender domain</h3>
+              <p class="text-subtext leading-relaxed">Matches the domain after @ in the sender address.</p>
+            </div>
+            <div class="grid grid-cols-[7.5rem_1fr] gap-3 py-3">
+              <h3 class="font-semibold text-text">Scan result</h3>
+              <p class="text-subtext leading-relaxed">A match marks the email scan high risk. It does not prevent delivery to the inbox.</p>
+            </div>
+          </div>
+          <div class="border-t border-border pt-3">
+            <a href="/settings" class="inline-flex items-center gap-1 text-xs font-semibold text-brand-light hover:underline">Manage rules in Settings <span class="material-symbols-outlined text-[15px]">arrow_forward</span></a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 7: DEVELOPER API ================= -->
+      <div id="doc-section-api" class="hidden flex flex-col gap-6">
+        <div class="bg-panel border border-border rounded-xl p-5 sm:p-6 shadow-sm">
+          <div class="border-b border-border pb-3">
+            <h2 class="text-sm font-bold text-text">Scan endpoints</h2>
+            <p class="text-xs text-subtext mt-0.5">Local endpoint reference for integrations and testing.</p>
+          </div>
+          <div class="text-xs">
+            <div class="py-4 border-b border-border">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-bold text-brand-light">POST</span>
+                <code class="font-semibold text-text">/api/scan-email</code>
+                <span class="text-[11px] text-subtext sm:ml-auto">Form data · Sign-in required</span>
+              </div>
+              <p class="text-subtext mt-1.5">Send <code>content</code> or an uploaded <code>file</code>. Optional fields include <code>sender</code>, <code>subject</code>, and <code>headers</code>.</p>
+            </div>
+            <div class="py-4">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-bold text-brand-light">POST</span>
+                <code class="font-semibold text-text">/api/scan-url</code>
+                <span class="text-[11px] text-subtext sm:ml-auto">JSON</span>
+              </div>
+              <p class="text-subtext mt-1.5">Send a JSON object with a <code>url</code> field, for example <code>{"url": "https://example.com"}</code>.</p>
+            </div>
+          </div>
+          <p class="text-[11px] text-subtext border-t border-border pt-3">The email endpoint uses the same signed-in session as the app. For full request and response schemas, open <a href="/api/docs" class="font-semibold text-brand-light hover:underline">API reference</a>.</p>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 8: FAQS ================= -->
+      <div id="doc-section-faq" class="hidden flex flex-col gap-6">
+        <div class="bg-panel border border-border rounded-xl p-5 sm:p-6 shadow-sm">
+          <div class="border-b border-border pb-3">
+            <h2 class="text-sm font-bold text-text">Common questions</h2>
+            <p class="text-xs text-subtext mt-0.5">Answers about scan results, saved history, and account options.</p>
+          </div>
+          <div class="text-xs">
+            <div class="py-3.5 border-b border-border">
+              <h3 class="font-semibold text-text">Why was a familiar message flagged?</h3>
+              <p class="text-subtext mt-1 leading-relaxed">The sender may be familiar, but its links, wording, or reported authentication results can still raise risk. Open the findings to see what applied.</p>
+            </div>
+            <div class="py-3.5 border-b border-border">
+              <h3 class="font-semibold text-text">What is saved in my history?</h3>
+              <p class="text-subtext mt-1 leading-relaxed">Scan records include the sender, subject, risk result, and analysis details. Those details may include a preview of the message.</p>
+            </div>
+            <div class="py-3.5 border-b border-border">
+              <h3 class="font-semibold text-text">What happens after a high-risk result?</h3>
+              <p class="text-subtext mt-1 leading-relaxed">The result shows the risk level and supporting findings. Alerts depend on your notification settings.</p>
+            </div>
+            <div class="py-3.5">
+              <h3 class="font-semibold text-text">Where can I see plan options?</h3>
+              <p class="text-subtext mt-1 leading-relaxed">Open Billing &amp; Plan in Settings to see the options available to your account.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+function showDocSection(name) {
+  const sections = ['overview', 'scoring', 'email', 'url', 'inbox', 'rules', 'api', 'faq'];
+
+  sections.forEach(s => {
+    const secEl = document.getElementById(`doc-section-${s}`);
+    if (secEl) secEl.classList.add('hidden');
+
+    const dtab = document.getElementById(`tab-${s}`);
+    if (dtab) {
+      dtab.className = 'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-subtext border border-transparent border-l-[3px] hover:bg-panel2 hover:text-text transition-colors';
+    }
+
+    const mtab = document.getElementById(`mtab-${s}`);
+    if (mtab) {
+      mtab.className = 'px-3.5 py-2 rounded-lg font-medium flex items-center gap-1.5 whitespace-nowrap text-subtext hover:bg-panel2 hover:text-text transition-all';
+    }
+  });
+
+  const activeSec = document.getElementById(`doc-section-${name}`);
+  if (activeSec) activeSec.classList.remove('hidden');
+
+  const activeDtab = document.getElementById(`tab-${name}`);
+  if (activeDtab) {
+    activeDtab.className = 'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold bg-[#edf3ff] dark:bg-brand/20 text-brand-light border border-transparent border-l-[3px] border-l-brand transition-colors';
+  }
+
+  const activeMtab = document.getElementById(`mtab-${name}`);
+  if (activeMtab) {
+    activeMtab.className = 'px-3.5 py-2 rounded-lg font-bold flex items-center gap-1.5 whitespace-nowrap bg-brand text-white shadow-sm transition-all';
+  }
+}
+
+</script>
+{% endblock %}

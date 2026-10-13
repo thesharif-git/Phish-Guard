@@ -1873,10 +1873,10 @@ footer .container {
    Clean white, bold type, blue accents, premium depth.
    ═══════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
 
 :root {
-    --sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --sans: 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif;
     --blue-brand: #0057FF;
     --blue-dark:  #003FCC;
     --blue-lt:    #EFF4FF;

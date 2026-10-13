@@ -2,187 +2,189 @@
 {% block title %}Email Scanner &middot; PhishGuard{% endblock %}
 
 {% block content %}
-<div class="max-w-[1200px] w-full flex flex-col gap-5">
+<div class="email-scanner max-w-[1200px] w-full flex flex-col gap-5">
 
   <!-- Top Header Bar -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-border pb-4 mb-2 fade-in">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between fade-in">
     <div>
-      <div class="flex items-center gap-2">
-        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-          <span class="material-symbols-outlined text-[13px]">verified</span> Real-time AI Analysis
-        </span>
-        <span class="text-[11px] font-medium text-muted">• Email Threat Inspection</span>
-      </div>
-      <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-text mt-1">Email Analyzer</h1>
+      <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-text">Email Analyzer</h1>
       <p class="text-sm text-subtext mt-0.5">Analyze email headers, sender reputation, and raw content for phishing threats.</p>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 xl:grid-cols-[1.1fr_1fr] gap-6 fade-in">
+  <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] gap-5 fade-in">
     
     <!-- LEFT COLUMN -->
-    <div class="flex flex-col gap-5">
+    <div class="flex min-w-0 flex-col gap-5">
       <!-- Email Content Panel -->
-      <div class="bg-panel rounded-xl border border-border shadow-md flex flex-col overflow-hidden relative">
+      <div class="bg-panel rounded-xl border border-border shadow-md flex flex-1 flex-col overflow-hidden relative">
         
         <!-- Overlay Loader -->
         <div id="result-loading" class="hidden absolute inset-0 z-20 bg-panel/90 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6">
-          <div class="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-3 animate-spin">
+          <div class="w-12 h-12 rounded-full bg-brand/10 text-brand-light flex items-center justify-center mb-3 animate-spin">
             <span class="material-symbols-outlined text-[24px]">sync</span>
           </div>
-          <p class="text-sm font-bold text-text">Analyzing Email Security Vectors...</p>
-          <p class="text-xs text-subtext mt-1">Running LightGBM ML models + VirusTotal + WHOIS threat checks</p>
+          <p class="text-sm font-bold text-text">Analyzing email…</p>
+          <p class="text-xs text-subtext mt-1">Checking the message and available evidence</p>
         </div>
 
         <!-- Toolbar Header -->
-        <div class="px-5 py-4 border-b border-border flex items-center justify-between bg-panel2">
-          <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-emerald-400 text-[20px]">mail</span>
-            <h2 class="text-sm font-bold text-text">Email Content Workspace</h2>
+        <div class="px-5 py-4 border-b border-border flex items-center justify-between bg-panel">
+          <div class="flex items-center">
+            <h2 class="text-sm font-bold text-text">Email content</h2>
           </div>
           <div class="flex items-center gap-2">
-            <span id="eml-badge" class="hidden text-[11px] font-semibold px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-              <span class="material-symbols-outlined text-[13px]">check_circle</span> .eml Loaded
+            <span id="eml-badge" class="hidden text-[11px] font-semibold px-2.5 py-1 rounded-md bg-brand/10 text-brand-light border border-brand/30 flex items-center gap-1">
+              <span class="material-symbols-outlined text-[13px]">check_circle</span> <span id="badge-filename">File Loaded</span>
             </span>
-            <button onclick="document.getElementById('eml-upload').click()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-panel3 hover:bg-panel2 border border-border text-text text-xs font-semibold rounded-lg shadow-sm transition-all cursor-pointer">
-              <span class="material-symbols-outlined text-[16px] text-emerald-400">cloud_upload</span>
-              Upload .eml File
+            <button onclick="document.getElementById('eml-upload').click()" class="inline-flex items-center gap-1.5 px-2 py-1.5 text-brand-light hover:text-brand text-xs font-semibold rounded-md transition-colors cursor-pointer">
+              <span class="material-symbols-outlined text-[16px]">upload_file</span>
+              Upload file
             </button>
-            <input type="file" id="eml-upload" class="hidden" accept=".eml" />
+            <input type="file" id="eml-upload" class="hidden" accept=".eml,.png,.jpg,.jpeg,.webp,.bmp" />
           </div>
         </div>
         
         <!-- Header Fields Grid -->
-        <div class="px-5 py-3.5 border-b border-border bg-panel2/50 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="px-5 py-4 border-b border-border bg-panel grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
-            <label class="block text-[11px] font-semibold text-subtext uppercase tracking-wider mb-1">From (Sender)</label>
-            <input id="email-sender" type="text" class="w-full bg-panel border border-border rounded-lg focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 px-3 py-1.5 text-xs text-text font-medium placeholder:text-muted" placeholder="support@pop-convert.com" />
+            <label for="email-sender" class="block text-xs font-semibold text-subtext mb-1.5">From</label>
+            <input id="email-sender" type="text" class="w-full bg-panel border border-border rounded-lg focus:ring-1 focus:ring-brand focus:border-brand px-3 py-2 text-xs text-text font-medium placeholder:text-muted" placeholder="sender@example.com" />
           </div>
           <div>
-            <label class="block text-[11px] font-semibold text-subtext uppercase tracking-wider mb-1">To (Recipient)</label>
-            <input id="email-to" type="text" class="w-full bg-panel border border-border rounded-lg focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 px-3 py-1.5 text-xs text-text font-medium placeholder:text-muted" placeholder="user@example.com" />
+            <label for="email-to" class="block text-xs font-semibold text-subtext mb-1.5">To</label>
+            <input id="email-to" type="text" class="w-full bg-panel border border-border rounded-lg focus:ring-1 focus:ring-brand focus:border-brand px-3 py-2 text-xs text-text font-medium placeholder:text-muted" placeholder="recipient@example.com" />
           </div>
           <div>
-            <label class="block text-[11px] font-semibold text-subtext uppercase tracking-wider mb-1">Subject</label>
-            <input id="email-subject" type="text" class="w-full bg-panel border border-border rounded-lg focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 px-3 py-1.5 text-xs text-text font-medium placeholder:text-muted" placeholder="Urgent Action Required" />
+            <label for="email-subject" class="block text-xs font-semibold text-subtext mb-1.5">Subject</label>
+            <input id="email-subject" type="text" class="w-full bg-panel border border-border rounded-lg focus:ring-1 focus:ring-brand focus:border-brand px-3 py-2 text-xs text-text font-medium placeholder:text-muted" placeholder="Email subject" />
           </div>
         </div>
 
         <!-- Email Body Textarea -->
         <div class="flex-1 flex flex-col p-5 relative bg-panel">
-           <div class="flex items-center justify-between mb-3 border-b border-border pb-2">
-             <div class="flex items-center gap-4">
-               <button class="text-xs font-bold text-emerald-400 border-b-2 border-emerald-500 pb-2 -mb-[9px]">Raw Email Content / Headers</button>
-             </div>
-             <button onclick="loadSampleEmail()" class="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer">
-               <span class="material-symbols-outlined text-[14px]">extension</span> Load Sample Email
+           <div class="flex items-center justify-between mb-2">
+             <label for="email-body" class="text-xs font-semibold text-subtext">Message and headers</label>
+             <button onclick="loadSampleEmail()" class="text-xs font-semibold text-brand-light hover:text-brand cursor-pointer">
+               Load sample
              </button>
            </div>
-           <textarea id="email-body" class="w-full flex-1 min-h-[220px] resize-y bg-panel2 border border-border rounded-lg p-3 text-xs font-mono text-text leading-relaxed focus:bg-panel focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 placeholder:text-muted scrollbar-thin" placeholder="Paste email body or headers here...
-Example:
-From: billing@paypal-security.net
-Subject: Account Suspended - Action Required Immediately
-Body: Your account access has been restricted. Click here to verify your identity: http://verify-paypal-security.xyz"></textarea>
+           <textarea id="email-body" class="w-full flex-1 min-h-[220px] resize-y bg-panel border border-border rounded-lg p-3 text-xs font-mono text-text leading-relaxed focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand placeholder:text-muted scrollbar-thin" placeholder="Paste the email body or full message here"></textarea>
            <div class="text-[11px] text-muted font-medium text-right mt-2" id="char-count">0 characters</div>
         </div>
 
         <!-- Actions Footer -->
         <div class="px-5 py-3 border-t border-border flex items-center justify-between bg-panel2">
-          <button onclick="clearForm()" class="text-xs font-semibold text-subtext hover:text-text transition-colors cursor-pointer">
+          <button onclick="clearForm()" class="inline-flex items-center rounded-lg bg-slate-700 hover:bg-slate-600 px-3.5 py-2 text-xs font-bold text-white transition-colors cursor-pointer border-none">
             Clear All Fields
           </button>
-          <button onclick="scanEmail()" id="scan-btn" class="inline-flex items-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-emerald-900/20 cursor-pointer border-none">
-            <span class="material-symbols-outlined text-[16px]">bolt</span> Run Scan Analysis
+          <button onclick="scanEmail()" id="scan-btn" class="inline-flex items-center gap-2 px-5 py-2 bg-brand hover:bg-brand-light text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-brand/25 cursor-pointer border-none">
+            Scan email
           </button>
         </div>
       </div>
 
-      <!-- Key Findings -->
-      <div class="bg-panel rounded-xl border border-border shadow-md p-5">
-         <h2 class="text-sm font-bold text-text mb-2">Key Findings</h2>
-         <div id="key-findings-list" class="space-y-0">
-            <p class="text-xs text-subtext py-3 italic">Run a scan to view key findings.</p>
-         </div>
-      </div>
     </div>
 
     <!-- RIGHT COLUMN -->
-    <div class="flex flex-col gap-5">
+    <div class="flex min-w-0 flex-col gap-5">
       <!-- Scan Result (Threat Verdict) -->
       <div class="bg-panel rounded-xl border border-border shadow-md p-5">
          <div class="flex items-center justify-between mb-4 border-b border-border pb-3">
            <h2 class="text-sm font-bold text-text">Threat Verdict</h2>
-           <span id="result-badge" class="hidden text-xs font-semibold px-2.5 py-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">check</span> Completed</span>
+           <span id="result-badge" class="hidden text-xs font-medium text-subtext items-center gap-1.5"><span class="material-symbols-outlined text-[15px]">check</span> Scan complete</span>
          </div>
 
          <!-- Warning Banner -->
          <div id="verdict-banner" class="flex items-start gap-4 mb-5">
             <div class="pt-1">
-               <h1 id="result-headline" class="text-2xl font-bold uppercase mb-2 leading-none text-text tracking-tight">READY TO SCAN</h1>
+               <h1 id="result-headline" class="text-lg font-semibold mb-2 leading-snug text-text tracking-tight">Ready to scan</h1>
                <p id="result-explanation" class="text-xs text-subtext leading-relaxed">Submit an email to analyze it for threats.</p>
             </div>
          </div>
 
-         <!-- Confidence Score -->
+         <!-- Risk score -->
          <div class="mb-5">
             <div class="flex items-center gap-1.5 mb-3">
-              <span class="text-xs font-bold text-text">Confidence Score</span>
-              <span class="material-symbols-outlined text-[14px] text-muted cursor-pointer" title="Score based on AI model and heuristics">info</span>
+              <span class="text-xs font-bold text-text">Risk score</span>
+              <span class="material-symbols-outlined text-[14px] text-muted cursor-pointer" title="Risk score based on the available evidence">info</span>
             </div>
             <div class="flex items-center gap-4">
-              <div id="confidence-bar" class="flex gap-1.5 h-[8px] flex-1">
-                 <!-- JS will inject 10 segments -->
+              <div id="confidence-bar" class="h-1.5 flex-1 rounded-full bg-panel3 overflow-hidden" role="progressbar" aria-label="Risk score" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
               </div>
               <div class="text-xs font-bold font-mono whitespace-nowrap">
-                <span id="score-text" class="text-text">0</span> <span class="text-muted font-medium">/ 100</span>
+                <span id="score-text" class="text-muted">Not yet scanned</span> <span id="score-suffix" class="hidden text-muted font-medium">/ 100</span>
               </div>
             </div>
          </div>
 
          <!-- Metrics -->
          <div id="metric-rows" class="space-y-0 border-t border-border pt-1">
-            <p class="text-xs text-muted py-3">No metrics available.</p>
+            <p class="text-xs text-muted py-3">Scan details will appear after analysis.</p>
          </div>
       </div>
 
       <!-- Risk Breakdown -->
       <div class="bg-panel rounded-xl border border-border shadow-md p-5">
          <div class="flex items-center justify-between mb-3 border-b border-border pb-2">
-           <h2 class="text-sm font-bold text-text">Risk Breakdown</h2>
-           <span class="material-symbols-outlined text-muted text-[16px] cursor-pointer">info</span>
+           <h2 class="text-sm font-bold text-text">Evidence review</h2>
+           <span class="material-symbols-outlined text-muted text-[16px]" title="Impersonation risk includes sender claims, authentication, and lookalike links">info</span>
          </div>
          <div id="risk-breakdown" class="space-y-3">
-            <p class="text-xs text-subtext py-2">Waiting for scan results...</p>
+            <p class="text-xs text-subtext py-2">Evidence scores will appear after a scan.</p>
          </div>
-      </div>
-
-      <!-- AI Explanation -->
-      <div class="bg-panel rounded-xl border border-border shadow-md p-5">
-         <div class="flex items-center justify-between mb-2 border-b border-border pb-2">
-           <div class="flex items-center gap-2">
-             <span class="material-symbols-outlined text-emerald-400 text-[18px]">auto_awesome</span>
-             <h2 class="text-sm font-bold text-text">AI Explanation</h2>
-           </div>
-           <a href="#" class="text-xs font-semibold text-emerald-400 hover:text-emerald-300">View Details</a>
-         </div>
-         <p id="ai-explanation-text" class="text-xs text-subtext leading-relaxed mt-2">Run a scan to see the AI's detailed explanation.</p>
       </div>
 
       <!-- Recommended Actions -->
       <div class="bg-panel rounded-xl border border-border shadow-md p-5">
          <h2 class="text-sm font-bold text-text mb-3 border-b border-border pb-2">Recommended Action</h2>
          <div id="action-cards" class="w-full">
-            <div class="text-xs text-muted py-1">No actions recommended yet.</div>
+            <div class="text-xs text-muted py-1">Recommended steps will appear after a scan.</div>
          </div>
       </div>
 
     </div>
+  </div>
+  <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] gap-5 email-support-panels">
+      <!-- Key Findings -->
+      <div class="bg-panel rounded-xl border border-border shadow-md p-5">
+         <h2 class="text-sm font-bold text-text mb-2 border-b border-border pb-2">Key Findings</h2>
+         <div id="key-findings-list" class="space-y-0">
+            <p class="text-xs text-subtext py-3">Findings will appear after a scan.</p>
+         </div>
+      </div>
+
+      <!-- Result explanation -->
+      <div class="bg-panel rounded-xl border border-border shadow-md p-5">
+         <div class="flex items-center justify-between gap-3 mb-2 border-b border-border pb-2">
+           <h2 class="text-sm font-bold text-text">Why this result</h2>
+           <button id="explanation-details-toggle" type="button" class="hidden text-xs font-semibold text-brand-light hover:underline" aria-expanded="false" aria-controls="explanation-details">View Details</button>
+         </div>
+         <div id="ai-explanation-text" class="text-xs text-subtext leading-relaxed mt-2">The reasons behind the verdict will appear after a scan.</div>
+         <div id="explanation-details" class="hidden mt-4 pt-3 border-t border-border text-xs text-subtext leading-relaxed"></div>
+      </div>
+
   </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <style>
+  .email-scanner .shadow-md { box-shadow: 0 1px 3px rgba(15, 23, 42, .04); }
+  html[data-theme="light"] .email-scanner .text-rose-400 { color: #c73550 !important; }
+  html[data-theme="light"] .email-scanner .text-amber-400 { color: #ad6718 !important; }
+  html[data-theme="light"] .email-scanner .text-emerald-400 { color: #16805f !important; }
+  html[data-theme="light"] .email-scanner #confidence-bar .bg-rose-500 { background-color: #d74560; }
+  html[data-theme="light"] .email-scanner #confidence-bar .bg-amber-500 { background-color: #c47c25; }
+  html[data-theme="light"] .email-scanner #confidence-bar .bg-emerald-500 { background-color: #20906c; }
+  .email-support-panels > div { min-width: 0; min-height: 130px; }
+  .email-scanner #ai-explanation-text,
+  .email-scanner #key-findings-list,
+  .email-scanner #action-cards { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+  .email-scanner #key-findings-list > p,
+  .email-scanner #risk-breakdown > p,
+  .email-scanner #action-cards > div.text-xs { line-height: 1.7; color: var(--subtext); }
+  .email-scanner #email-body { min-height: 190px; }
   .spin { animation: spin 1s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .fade-in { animation: fadeIn 0.3s ease; }
@@ -192,7 +194,9 @@ Body: Your account access has been restricted. Click here to verify your identit
   .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
   .scrollbar-thin::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
   .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+  .finding-description { line-height: 1.5; overflow-wrap: anywhere; }
 </style>
+<script src="/static/js/email-result-policy.js"></script>
 <script>
 function safeSetHTML(id, html) {
   const el = document.getElementById(id);
@@ -204,6 +208,10 @@ function safeSetText(id, text) {
   if (el) el.textContent = text;
 }
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+}
+
 // Character counter
 const emailBody = document.getElementById('email-body');
 const charCount = document.getElementById('char-count');
@@ -213,19 +221,28 @@ if (emailBody && charCount) {
   });
 }
 
-// File Upload Handler
+// File Upload Handler (.eml & image attachments for Quishing detection)
 const emlUpload = document.getElementById('eml-upload');
 if (emlUpload) {
   emlUpload.addEventListener('change', function(e) {
     if (e.target.files.length > 0) {
+      const file = e.target.files[0];
       const badge = document.getElementById('eml-badge');
+      const badgeText = document.getElementById('badge-filename');
+      if (badgeText) badgeText.textContent = file.name;
       if (badge) badge.classList.remove('hidden');
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        if (emailBody) emailBody.value = evt.target.result;
-        if (charCount) charCount.textContent = `${evt.target.result.length.toLocaleString()} characters`;
-      };
-      reader.readAsText(e.target.files[0]);
+
+      if (file.name.endsWith('.eml')) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          if (emailBody) emailBody.value = evt.target.result;
+          if (charCount) charCount.textContent = `${evt.target.result.length.toLocaleString()} characters`;
+        };
+        reader.readAsText(file);
+      } else {
+        if (emailBody) emailBody.value = `[Image Attachment: ${file.name} - Ready for OpenCV 5 Quishing & Visual Threat Scan]`;
+        if (charCount) charCount.textContent = `Image attachment ready: ${file.name}`;
+      }
     }
   });
 }
@@ -277,34 +294,46 @@ function clearForm() {
 function getRiskColor(score) {
   if (score >= 75) return { colorClass:'bg-rose-500', textClass:'text-rose-400', label:'High Risk', icon:'gpp_bad' };
   if (score >= 45) return { colorClass:'bg-amber-500', textClass:'text-amber-400', label:'Suspicious', icon:'warning' };
-  return { colorClass:'bg-emerald-500', textClass:'text-emerald-400', label:'Safe', icon:'check_circle' };
+  return { colorClass:'bg-emerald-500', textClass:'text-emerald-400', label:'Low risk', icon:'check_circle' };
+}
+
+function getMailAuthenticationStatus(headerAuth) {
+  const checks = ['spf', 'dkim', 'dmarc'].map(key => String(headerAuth?.[key] || 'UNKNOWN').toUpperCase());
+  if (checks.some(result => result === 'FAIL')) return { text: 'Reported failure', className: 'text-rose-400' };
+  if (checks.every(result => result === 'PASS')) return { text: 'Reported pass', className: 'text-emerald-400' };
+  if (checks.some(result => result === 'PASS')) return { text: 'Partial result', className: 'text-subtext' };
+  return { text: 'Unavailable', className: 'text-subtext' };
 }
 
 function createMetricRow(icon, label, value, valClass) {
     return `
-    <div class="flex items-center justify-between py-3 border-b border-border last:border-0">
+    <div class="flex items-center justify-between gap-4 py-3 border-b border-border last:border-0">
        <div class="flex items-center gap-3">
-         <div class="w-7 h-7 rounded bg-panel2 flex items-center justify-center shrink-0 border border-border">
-            <span class="material-symbols-outlined text-[15px] text-subtext">${icon}</span>
-         </div>
-         <span class="text-xs font-medium text-subtext">${label}</span>
+         <span class="material-symbols-outlined text-[17px] text-muted shrink-0" aria-hidden="true">${escapeHtml(icon)}</span>
+         <span class="text-xs font-medium text-subtext">${escapeHtml(label)}</span>
        </div>
-       <span class="text-xs font-bold ${valClass}">${value}</span>
+       <span class="text-xs font-semibold ${valClass} text-right break-words">${escapeHtml(value)}</span>
     </div>`;
 }
 
-function createRiskBar(label, score) {
-  let c = getRiskColor(score);
-  let verb = score >= 75 ? 'High Risk' : score >= 45 ? 'Suspicious' : 'Clean';
-  if (label === 'Sender Reputation') {
-      verb = score < 50 ? 'Very Bad' : score < 75 ? 'Neutral' : 'Good';
-      c = getRiskColor(100 - score);
+function createRiskBar(label, score, modelOutput = false) {
+  if (score === null || score === undefined || !Number.isFinite(Number(score))) {
+    return `
+      <div class="grid grid-cols-[minmax(105px,140px)_minmax(0,1fr)_minmax(72px,90px)] items-center gap-3">
+        <span class="text-xs font-medium text-subtext">${escapeHtml(label)}</span>
+        <div class="h-1.5 w-full bg-panel2 rounded-full overflow-hidden border border-border"></div>
+        <span class="text-[11px] font-semibold text-subtext text-right">Unavailable</span>
+      </div>`;
   }
+  const safeScore = Math.max(0, Math.min(100, Number(score) || 0));
+  // Review cues have no validated risk mapping. A model output is a separate
+  // statistical estimate whose reliability is shown in the calibration row.
+  const verb = modelOutput ? `${safeScore}/100` : 'Unvalidated';
   return `
-    <div class="grid grid-cols-[140px_1fr_90px] items-center gap-4">
-      <span class="text-xs font-medium text-subtext truncate">${label}</span>
-      <div class="h-1.5 w-full bg-panel2 rounded-full overflow-hidden border border-border">
-        <div class="h-full rounded-full ${c.colorClass}" style="width:${score}%;"></div>
+    <div class="grid grid-cols-[minmax(105px,140px)_minmax(0,1fr)_minmax(72px,90px)] items-center gap-3">
+      <span class="text-xs font-medium text-subtext">${escapeHtml(label)}</span>
+      <div class="h-1.5 w-full bg-panel2 rounded-full overflow-hidden border border-border" role="progressbar" aria-label="${escapeHtml(label)} ${modelOutput ? 'model output' : 'unvalidated review score'}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${safeScore}">
+        <div class="h-full rounded-full bg-blue-400/60" style="width:${safeScore}%;"></div>
       </div>
       <span class="text-[11px] font-semibold text-text text-right">${verb}</span>
     </div>
@@ -313,22 +342,18 @@ function createRiskBar(label, score) {
 
 function createFindingRow(icon, title, desc, severity) {
     const isHigh = severity === 'High';
-    const dotColor = isHigh ? 'bg-rose-500' : 'bg-amber-500';
+    const severityColor = isHigh ? 'text-rose-400' : 'text-amber-400';
     
     return `
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between py-2.5 border-b border-border last:border-0 gap-3">
-         <div class="grid grid-cols-[20px_130px_1fr] items-center gap-3 w-full">
-            <span class="material-symbols-outlined text-muted text-[16px]">${icon}</span>
-            <span class="text-xs font-semibold text-text">${title}</span>
-            <span class="text-xs text-subtext truncate" title="${desc}">${desc}</span>
+    <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 py-3 border-b border-border last:border-0">
+         <div class="flex min-w-0 items-start gap-3">
+            <span class="material-symbols-outlined text-muted text-[17px] shrink-0 mt-0.5" aria-hidden="true">${escapeHtml(icon)}</span>
+            <div class="min-w-0">
+              <div class="text-xs font-semibold text-text">${escapeHtml(title)}</div>
+              <p class="finding-description mt-1 text-xs text-subtext">${escapeHtml(desc)}</p>
+            </div>
          </div>
-         <div class="flex items-center gap-2 shrink-0 ml-0 sm:ml-4">
-            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-border bg-panel2 shadow-sm text-[10px] font-medium text-text">
-               <span class="w-1.5 h-1.5 rounded-full ${dotColor} inline-block"></span>
-               ${severity}
-            </span>
-            <span class="material-symbols-outlined text-muted text-[16px] hidden sm:block">chevron_right</span>
-         </div>
+         <span class="text-[11px] font-semibold ${severityColor} whitespace-nowrap">${escapeHtml(severity)}</span>
     </div>`;
 }
 
@@ -368,124 +393,181 @@ async function scanEmail() {
     // UI Updates
     if (loader) loader.classList.add('hidden');
     
-    const score = data.final_score || 0;
-    const c = getRiskColor(score);
+    const score = getEmailDisplayScore(data);
+    const c = getEmailDecisionStyle(data);
     
     // Banner / Verdict
     const headlineEl = document.getElementById('result-headline');
     if (headlineEl) {
-      headlineEl.textContent = c.label;
-      headlineEl.className = `text-2xl font-extrabold mb-2 leading-none tracking-tight uppercase ${c.textClass}`;
+      if (data.verdict_state === 'INSUFFICIENT_EVIDENCE') {
+        headlineEl.textContent = 'Insufficient Evidence';
+        headlineEl.className = 'text-xl font-semibold mb-2 leading-snug tracking-tight text-amber-400';
+      } else {
+        headlineEl.textContent = c.label;
+        headlineEl.className = `text-xl font-semibold mb-2 leading-snug tracking-tight ${c.textClass}`;
+      }
     }
     
-    safeSetText('result-explanation', data.explanation?.summary || 'Analysis complete.');
+    const explanationSummary = typeof data.explanation === 'string'
+      ? data.explanation : data.explanation?.summary;
+    safeSetText('result-explanation', explanationSummary || 'The scan completed without a detailed summary.');
     
     // Top Badge (Completed)
     const badge = document.getElementById('result-badge');
     if (badge) {
-      badge.innerHTML = `<span class="material-symbols-outlined text-[14px]">check</span> Completed`;
-      badge.className = `inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-semibold shadow-sm`;
+      const complete = !(data.sensor_errors?.length || data.email_parsing?.text_complete === false);
+      badge.innerHTML = `<span class="material-symbols-outlined text-[15px]">${complete ? 'check' : 'warning'}</span> ${complete ? 'Scan finished' : 'Partial inspection'}`;
+      badge.className = `inline-flex items-center gap-1.5 text-subtext text-xs font-medium`;
       badge.classList.remove('hidden');
     }
 
     // Confidence Bar
-    const segments = 10;
-    const filledSegments = Math.round((score / 100) * segments);
-    const barEl = document.getElementById('confidence-bar');
-    if (barEl) {
-      barEl.innerHTML = '';
-      for(let i=0; i<segments; i++) {
-          const seg = document.createElement('div');
-          seg.className = `flex-1 rounded-sm h-full ${i < filledSegments ? c.colorClass : 'bg-panel3'}`;
-          barEl.appendChild(seg);
-      }
-    }
-    const scoreEl = document.getElementById('score-text');
-    if (scoreEl) {
-      scoreEl.textContent = score;
-      scoreEl.className = c.textClass;
-    }
+    const hasModelProbability = typeof data.content_analysis?.ml_probability === 'number' && Number.isFinite(data.content_analysis.ml_probability);
+    updateEmailScoreDisplay(data, c);
 
     // Metrics Rows
     const flags = data.content_analysis?.flags || [];
     const ti = data.threat_intelligence?.matches || [];
     const threatCount = ti.length + flags.length;
-    const linkCount = data.url_intelligence?.flagged_urls?.length || 0;
+    const flaggedLinks = (data.url_intelligence?.flagged_urls || []).filter(link => Number(link.score) >= 45);
+    const linkCount = flaggedLinks.length;
     
     const metricHtml = [];
-    metricHtml.push(createMetricRow('shield', 'Threats Detected', threatCount, threatCount > 0 ? 'text-rose-400' : 'text-text'));
+    metricHtml.push(createMetricRow('fact_check', 'Saved calibration', data.conformal_guarantee?.calibration_valid === true ? 'Version matches' : 'Not valid for this scan', data.conformal_guarantee?.calibration_valid === true ? 'text-subtext' : 'text-amber-400'));
+    metricHtml.push(createMetricRow('shield', 'Risk signals', threatCount, threatCount > 0 ? 'text-rose-400' : 'text-text'));
     metricHtml.push(createMetricRow('link', 'Suspicious Links', linkCount, linkCount > 0 ? 'text-rose-400' : 'text-text'));
-    
-    let attachRisk = 'None';
-    let attachClass = 'text-subtext';
-    if (body.toLowerCase().includes('attachment') || body.toLowerCase().includes('invoice')) {
-        attachRisk = 'Medium';
-        attachClass = 'text-amber-400 font-semibold';
+    if (data.verdict_state) {
+        const vState = data.verdict_state;
+        const vClass = c.textClass + ' font-bold';
+        metricHtml.push(createMetricRow('gavel', 'Verdict State', vState, vClass));
     }
-    metricHtml.push(createMetricRow('attach_file', 'Attachment Risk', attachRisk, attachClass));
     
-    const haScore = data.header_authentication?.score ?? 0;
-    const uaScore = data.url_intelligence?.score ?? 0;
-    const caScore = data.content_analysis?.score ?? 0;
+    const attachmentSummary = getEmailAttachmentSummary(data);
+    metricHtml.push(createMetricRow('attach_file', 'Attachment inspection', attachmentSummary.label, attachmentSummary.className));
+
+    const langName = data.language || data.content_analysis?.language || 'English';
+    const isEn = data.is_english ?? (data.content_analysis?.is_english ?? true);
+    const langClass = isEn ? 'text-subtext' : 'text-amber-400 font-bold';
+    metricHtml.push(createMetricRow('translate', 'Language', langName, langClass));
     
-    const senderRep = haScore >= 50 ? 'Poor' : 'Good';
-    const repClass = senderRep === 'Poor' ? 'text-rose-400 font-semibold' : 'text-emerald-400 font-semibold';
-    metricHtml.push(createMetricRow('person', 'Sender Reputation', senderRep, repClass));
+    const mailAuth = getMailAuthenticationStatus(data.header_authentication);
+    metricHtml.push(createMetricRow('verified_user', 'Reported mail authentication', mailAuth.text, mailAuth.className));
     
     safeSetHTML('metric-rows', metricHtml.join(''));
 
-    // Risk Breakdown
+    // OriginTrace 4-Pillars Evidential Risk Breakdown
     const rHtml = [];
-    rHtml.push(createRiskBar('Sender Reputation', 100 - haScore));
-    rHtml.push(createRiskBar('URL / Links', uaScore));
-    rHtml.push(createRiskBar('Content Analysis', caScore));
-    const hasUrgency = data.content_analysis?.has_urgency_language || false;
-    const socialScore = hasUrgency ? Math.max(caScore, 65) : Math.min(caScore, 20);
-    rHtml.push(createRiskBar('Social Engineering', socialScore));
+    const p = data.pillars || {};
+    const p1Score = p.pillar1_provenance?.available === false ? null : (p.pillar1_provenance?.score ?? null);
+    const rawUrlScore = data.url_intelligence?.score;
+    const rawInfrastructureScore = p.pillar2_infrastructure?.score;
+    const p2Score = (p.pillar2_infrastructure?.available === false && !(data.url_intelligence?.urls_analyzed > 0)) ||
+      (rawUrlScore == null && rawInfrastructureScore == null)
+      ? null : Math.max(Number(rawUrlScore) || 0, Number(rawInfrastructureScore) || 0);
+    const p3Score = p.pillar3_semantic?.score ?? null;
+    const p4Score = hasModelProbability ? score : null;
+
+    rHtml.push(createRiskBar('Identity review cues', p1Score));
+    rHtml.push(createRiskBar('Link review cues', p2Score));
+    rHtml.push(createRiskBar('Content review cues', p3Score));
+    rHtml.push(createRiskBar('Email model output', p4Score, true));
     safeSetHTML('risk-breakdown', rHtml.join(''));
 
-    // AI Explanation
-    safeSetText('ai-explanation-text', data.explanation?.ai_paragraph || 'The email was processed cleanly with no major anomalies detected by the behavioral model.');
+    // Keep the visible explanation tied to the scan's checked signals.
+    const detailText = typeof data.explanation === 'string'
+      ? data.explanation : data.explanation?.ai_paragraph;
+    safeSetText('ai-explanation-text', detailText || 'No further explanation is available for this scan.');
+    const detailsToggle = document.getElementById('explanation-details-toggle');
+    const detailsPanel = document.getElementById('explanation-details');
+    const technicalSignals = Array.isArray(data.explanation?.risk_signals) ? data.explanation.risk_signals : [];
+    if (detailsToggle && detailsPanel) {
+      detailsPanel.innerHTML = technicalSignals.length
+        ? `<p class="font-semibold text-text mb-2">Signals checked</p><ul class="list-disc pl-4 space-y-2">${technicalSignals.map(signal => `<li>${escapeHtml(signal)}</li>`).join('')}</ul>`
+        : '<p>No additional signal details were returned for this scan.</p>';
+      detailsPanel.classList.add('hidden');
+      detailsToggle.textContent = 'View Details';
+      detailsToggle.setAttribute('aria-expanded', 'false');
+      detailsToggle.classList.remove('hidden');
+      detailsToggle.onclick = () => {
+        const isOpen = detailsToggle.getAttribute('aria-expanded') === 'true';
+        detailsPanel.classList.toggle('hidden', isOpen);
+        detailsToggle.setAttribute('aria-expanded', String(!isOpen));
+        detailsToggle.textContent = isOpen ? 'View Details' : 'Hide Details';
+      };
+    }
 
     // Key Findings
     const findingsHtml = [];
-    if (senderRep === 'Poor') findingsHtml.push(createFindingRow('person_alert', 'Sender spoofing', 'The sender domain fails SPF/DKIM checks.', 'High'));
-    if (linkCount > 0) findingsHtml.push(createFindingRow('link', 'Suspicious link', 'The email contains links to flagged malicious sites.', 'High'));
-    if (data.content_analysis?.has_urgency_language) findingsHtml.push(createFindingRow('schedule', 'Urgency language', 'The email uses urgent language to pressure you to act.', 'Medium'));
-    if (attachRisk !== 'None') findingsHtml.push(createFindingRow('attach_file', 'Attachment risk', 'The email references attachments which could be unsafe.', 'Medium'));
+    if (data.vision_intelligence && data.vision_intelligence.has_quishing) {
+        const targetUrl = data.vision_intelligence.qr_urls?.[0] || 'Hidden QR URL';
+        findingsHtml.push(createFindingRow(
+            'qr_code_scanner',
+            'QR payload detected',
+            `QR destination: ${targetUrl}. Its presence alone does not establish phishing; review the destination findings.`,
+            'Medium'
+        ));
+    }
+    if (data.bec_intelligence && data.bec_intelligence.is_bec) {
+        findingsHtml.push(createFindingRow(
+            'gavel',
+            'BEC review signal',
+            `${data.bec_intelligence.intent_category}: unvalidated review score ${data.bec_intelligence.bec_score}/100. This is not a calibrated fraud probability.`,
+            'Medium'
+        ));
+    }
+    if (data.vector_intelligence && data.vector_intelligence.has_match) {
+        findingsHtml.push(createFindingRow(
+            'dataset',
+            'ChromaDB Vector Match',
+            `Semantic match: ${data.vector_intelligence.match_percentage}% similarity to memory entry "${data.vector_intelligence.matched_title}". Similarity alone is not verified phishing evidence.`,
+            'Medium'
+        ));
+    }
+    if (data.contradiction_analysis && data.contradiction_analysis.is_contradictory) {
+        const mismatchSummary = getEvidenceMismatchSummary(data.contradiction_analysis.mismatches);
+        findingsHtml.push(createFindingRow(
+            'compare_arrows',
+            'Link destination review',
+            mismatchSummary || 'An observed destination relationship requires review. Sender authorization and deception have not been verified.',
+            'Medium'
+        ));
+    }
+    if (!isEn) {
+        findingsHtml.push(createFindingRow(
+            'translate',
+            `Multilingual Content (${langName})`,
+            `Language identified as ${langName}. Coverage depends on available models; language alone is not a threat.`,
+            'Medium'
+        ));
+    }
+    if ((data.header_authentication?.fail_count ?? 0) >= 2) findingsHtml.push(createFindingRow('person_alert', 'Mail authentication', 'Supplied headers report multiple failed authentication checks.', 'High'));
+    if (linkCount > 0) findingsHtml.push(createFindingRow('link', 'Suspicious link', 'Link checks returned review signals. Consult the destination evidence.', 'High'));
+    if (data.content_analysis?.has_urgency_language) findingsHtml.push(createFindingRow('schedule', 'Account-action wording', 'A configured account-action or urgency term matched. Legitimate security notices use this wording too; coercion has not been established.', 'Medium'));
+    if (attachmentSummary.label === 'Incomplete inspection') findingsHtml.push(createFindingRow('attach_file', 'Incomplete attachment inspection', 'Some attachment evidence could not be analyzed. Review it separately.', 'Medium'));
     
-    safeSetHTML('key-findings-list', findingsHtml.length === 0 ? '<p class="text-xs text-subtext py-3 italic">No key findings detected.</p>' : findingsHtml.join(''));
+    safeSetHTML('key-findings-list', findingsHtml.length === 0 ? '<p class="text-xs text-subtext py-3">No key findings detected.</p>' : findingsHtml.join(''));
 
     // Recommended Actions
     let actionCards = '';
-    if (score >= 75) {
+    if (data.security_action === 'AUTO_QUARANTINE' || data.security_action === 'BLOCK_BY_POLICY') {
         actionCards = `
-          <div class="w-full border border-rose-500/30 bg-rose-500/10 rounded-lg p-4 flex items-center gap-3">
-             <span class="material-symbols-outlined text-rose-400 text-[22px]">warning</span>
-             <div>
-               <h4 class="text-xs font-bold text-rose-400 mb-0.5">Do not click on any links or reply to this email.</h4>
-               <p class="text-[11px] text-rose-300">This email may try to steal your credentials or personal information.</p>
-             </div>
+          <div class="min-w-0 border-l-2 border-rose-500 pl-3 py-1">
+             <h4 class="text-xs font-semibold text-text mb-1">Do not open links or reply to this email</h4>
+             <p class="text-xs text-subtext leading-relaxed">Verify the sender through a trusted channel before taking action.</p>
           </div>
         `;
-    } else if (score >= 45) {
+    } else if (data.security_action !== 'SAFE_DELIVERY' || data.conformal_guarantee?.calibration_valid !== true) {
         actionCards = `
-          <div class="border border-amber-500/30 bg-amber-500/10 rounded-xl p-4 text-center">
-             <div class="w-9 h-9 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto mb-2">
-               <span class="material-symbols-outlined text-[18px]">visibility</span>
-             </div>
-             <h4 class="text-xs font-bold text-text mb-0.5">Proceed with caution</h4>
-             <p class="text-[11px] text-subtext leading-relaxed">Verify sender identity out-of-band before clicking links.</p>
+          <div class="min-w-0 border-l-2 border-amber-500 pl-3 py-1">
+             <h4 class="text-xs font-semibold text-text mb-1">Verify before responding</h4>
+             <p class="text-xs text-subtext leading-relaxed">Confirm the sender through a trusted channel before opening links.</p>
           </div>
         `;
     } else {
         actionCards = `
-          <div class="w-full border border-emerald-500/30 bg-emerald-500/10 rounded-lg p-4 flex items-center gap-3">
-             <span class="material-symbols-outlined text-emerald-400 text-[22px]">check_circle</span>
-             <div>
-               <h4 class="text-xs font-bold text-emerald-400 mb-0.5">No action required</h4>
-               <p class="text-[11px] text-emerald-300">This email appears safe based on analyzed security signals.</p>
-             </div>
+          <div class="min-w-0 border-l-2 border-emerald-500 pl-3 py-1">
+             <h4 class="text-xs font-semibold text-text mb-1">No immediate action indicated</h4>
+             <p class="text-xs text-subtext leading-relaxed">No suspicious signals were found in the checks that completed.</p>
           </div>
         `;
     }

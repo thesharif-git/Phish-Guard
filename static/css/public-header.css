@@ -1,0 +1,89 @@
+/* Match the shared public-page header to the landing-page navigation. */
+.public-site-header {
+  width: 90%;
+  max-width: 1280px;
+  height: 80px;
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 24px;
+  position: relative;
+  z-index: 50;
+  font-family: 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif;
+}
+.public-site-header a { text-decoration: none; }
+.public-site-header a:focus-visible { outline: 2px solid #006aff; outline-offset: 4px; }
+.public-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  color: #08172f;
+  font-size: 19px;
+  font-weight: 650;
+  letter-spacing: -.045em;
+  white-space: nowrap;
+}
+.public-brand:hover { color: #08172f; }
+.public-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 37px;
+  flex: none;
+  border-radius: 9px;
+  background: #076aff;
+  box-shadow: inset 0 0 0 1px #ffffff30;
+  color: #fff;
+}
+.public-brand-mark svg { width: 23px; height: 23px; }
+.public-main-nav { display: flex; align-items: center; gap: 22px; color: #4d6282; font-size: 13.6px; }
+.public-main-nav a { color: inherit; white-space: nowrap; padding-block: 8px; }
+.public-main-nav a:hover { color: #006aff; }
+.public-resources-link { display: inline-flex; align-items: center; gap: 6px; }
+.public-resources-link svg { width: 14px; height: 14px; flex: none; opacity: .65; }
+.public-header-actions { display: flex; align-items: center; justify-self: end; gap: 19px; }
+.public-login { color: #5c7090; font-size: 12.8px; white-space: nowrap; }
+.public-login:hover { color: #006aff; }
+.public-header-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 43px;
+  padding: 10px 17px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: #0068ff;
+  box-shadow: inset 0 0 0 1px #3182ff40, 0 2px 5px #005cff10;
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background .18s, box-shadow .18s;
+}
+.public-header-button:hover { background: #0059df; box-shadow: 0 6px 16px #0068ff22; color: #fff; }
+.public-header-button svg { width: 19px; height: 19px; flex: none; }
+@media (min-width: 701px) and (max-width: 900px) {
+  .public-site-header { display: flex; gap: 14px; }
+  .public-brand { font-size: 17px; gap: 9px; }
+  .public-main-nav { margin-left: auto; gap: 12px; font-size: 11.5px; }
+  .public-header-actions { gap: 11px; }
+  .public-header-button { min-height: 42px; padding: 9px 13px; font-size: 11.5px; }
+}
+@media (min-width: 701px) and (max-width: 800px) {
+  .public-main-nav { display: none; }
+  .public-header-actions { margin-left: auto; }
+}
+@media (max-width: 700px) {
+  .public-site-header { display: flex; justify-content: space-between; width: calc(100% - 36px); height: 70px; gap: 10px; flex-wrap: nowrap; }
+  .public-brand { font-size: 16px; gap: 10px; }
+  .public-brand-mark { width: 30px; height: 32px; }
+  .public-main-nav, .public-login { display: none; }
+  .public-header-button { min-height: 38px; padding: 8px 12px; font-size: 11.5px; gap: 6px; }
+  .public-header-button svg { width: 16px; height: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .public-header-button { transition: none; }
+}

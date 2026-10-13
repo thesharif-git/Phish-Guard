@@ -12,7 +12,7 @@
     <div class="flex items-center gap-3">
         <span
             class="badge {% if email.risk_level == 'critical' %}badge-critical{% elif email.risk_level == 'medium' %}badge-medium{% else %}badge-safe{% endif %} text-base px-4 py-1.5">
-            Risk: {{ email.risk_score }}/100 &nbsp;·&nbsp; {{ email.status }}
+            Risk: {% if email.risk_score is none %}Unavailable{% else %}{{ email.risk_score }}/100{% endif %} &nbsp;·&nbsp; {{ email.status }}
         </span>
     </div>
 </div>

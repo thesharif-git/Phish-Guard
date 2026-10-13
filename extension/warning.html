@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚠️ Threat Intercepted · PhishGuard OriginTrace</title>
+  <style>
+    :root {
+      --bg: #070b14;
+      --card-bg: #0f172a;
+      --card-border: #1e293b;
+      --danger: #ef4444;
+      --danger-glow: rgba(239, 68, 68, 0.35);
+      --warning: #f59e0b;
+      --safe: #10b981;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --brand: #3b82f6;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: radial-gradient(circle at 50% 20%, #1e1124 0%, var(--bg) 70%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px;
+    }
+    .container {
+      max-width: 820px;
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px var(--danger-glow);
+      overflow: hidden;
+      animation: fadeIn 0.4s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .header-banner {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(15, 23, 42, 0.95) 100%);
+      border-bottom: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 36px 36px 28px;
+      display: flex;
+      align-items: flex-start;
+      gap: 22px;
+    }
+    .shield-icon {
+      width: 68px;
+      height: 68px;
+      background: rgba(239, 68, 68, 0.15);
+      border: 2px solid var(--danger);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      flex-shrink: 0;
+      box-shadow: 0 0 24px var(--danger-glow);
+      animation: pulse 2s infinite ease-in-out;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 20px var(--danger-glow); }
+      50% { transform: scale(1.05); box-shadow: 0 0 35px rgba(239, 68, 68, 0.6); }
+    }
+    .header-text h1 {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fee2e2;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-text p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    .url-chip {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 5px 12px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid #334155;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 13px;
+      color: #fca5a5;
+      word-break: break-all;
+    }
+    .content-body {
+      padding: 28px 36px;
+    }
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 700;
+      color: #94a3b8;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .pillars-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .pillar-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .pillar-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #60a5fa;
+    }
+    .pillar-content {
+      font-size: 12px;
+      color: #cbd5e1;
+      line-height: 1.45;
+    }
+    .actions-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--card-border);
+      padding-top: 22px;
+      margin-top: 10px;
+    }
+    .btn {
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+    .btn-safety {
+      background: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+    }
+    .btn-safety:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+    }
+    .btn-bypass {
+      background: transparent;
+      color: #94a3b8;
+      font-size: 12px;
+      padding: 8px 14px;
+    }
+    .btn-bypass:hover {
+      color: #fca5a5;
+      text-decoration: underline;
+    }
+    .score-badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid var(--danger);
+      color: #fca5a5;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header-banner">
+      <div class="shield-icon">🛡️</div>
+      <div class="header-text">
+        <h1>
+          Threat Intercepted by OriginTrace
+          <span id="risk-score-badge" class="score-badge">95/100 HIGH RISK</span>
+        </h1>
+        <p>PhishGuard actively prevented your browser from visiting a deceptive phishing website designed to steal your credentials or compromise your system.</p>
+        <div id="target-url" class="url-chip">Loading target URL...</div>
+      </div>
+    </div>
+
+    <div class="content-body">
+      <div class="section-title">
+        <span>ORIGINTRACE 4-PILLARS FORENSIC TELEMETRY</span>
+        <span id="uncertainty-tag" style="color:#10b981; font-weight:600;">Confidence: High (97%)</span>
+      </div>
+
+      <div class="pillars-grid">
+        <!-- Pillar 1 -->
+        <div class="pillar-card">
+          <div class="pillar-header">
+            <span>🏛️ Pillar 1: Provenance Matrix</span>
+          </div>
+          <div id="pillar-provenance" class="pillar-content">
+            Evaluating brand impersonation and homoglyphic typosquatting...
+          </div>
+        </div>
+
+        <!-- Pillar 2 -->
+        <div class="pillar-card">
+          <div class="pillar-header">
+            <span>🌐 Pillar 2: Infrastructure Lineage</span>
+          </div>
+          <div id="pillar-infrastructure" class="pillar-content">
+            Analyzing autonomous systems, hosting origin, and certificate age...
+          </div>
+        </div>
+
+        <!-- Pillar 3 -->
+        <div class="pillar-card">
+          <div class="pillar-header">
+            <span>🎭 Pillar 3: Semantic Deception</span>
+          </div>
+          <div id="pillar-deception" class="pillar-content">
+            Checking URL paths, credential harvesting traps, and manipulative tokens...
+          </div>
+        </div>
+
+        <!-- Pillar 4 -->
+        <div class="pillar-card">
+          <div class="pillar-header">
+            <span>⚖️ Pillar 4: Evidential Synthesis</span>
+          </div>
+          <div id="pillar-evidence" class="pillar-content">
+            Dempster-Shafer multi-source convergence: 95% Threat Consensus.
+          </div>
+        </div>
+      </div>
+
+      <div class="actions-bar">
+        <button id="btn-close-tab" class="btn btn-safety">
+          🛡️ Return to Safety (Close Tab)
+        </button>
+        <button id="btn-proceed-unsafe" class="btn btn-bypass">
+          I understand the risks, proceed anyway &rarr;
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="warning.js"></script>
+</body>
+</html>

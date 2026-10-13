@@ -6,31 +6,39 @@ function updateThemeIcon(theme) {
     if (!btn) return;
     const icon = btn.querySelector('.material-symbols-outlined');
     if (icon) {
-        icon.textContent = theme === 'dark' ? 'light_mode' : 'dark_mode';
+        // Subtle micro-rotation on click
+        icon.style.transition = 'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        icon.style.transform = 'rotate(180deg) scale(0.85)';
+        setTimeout(() => {
+            icon.textContent = theme === 'dark' ? 'light_mode' : 'dark_mode';
+            icon.style.transform = 'rotate(0deg) scale(1)';
+        }, 120);
     }
-    btn.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+    btn.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to OLED dark mode';
 }
 
 function initTheme() {
-    const saved = localStorage.getItem('pg-theme') || 'light';
+    const saved = localStorage.getItem('pg-theme') || 'dark';
     document.documentElement.setAttribute('data-theme', saved);
+    document.documentElement.classList.toggle('dark', saved === 'dark');
     updateThemeIcon(saved);
 }
 
 function toggleTheme(override) {
-    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
     const next = override || (current === 'dark' ? 'light' : 'dark');
     
-    // Add temporary class to enforce fully synchronized transitions across all elements
-    document.body.classList.add('theme-transitioning');
+    // Add temporary class to root to enforce fully synchronized transitions across all elements
+    document.documentElement.classList.add('theme-transitioning');
     
     document.documentElement.setAttribute('data-theme', next);
+    document.documentElement.classList.toggle('dark', next === 'dark');
     localStorage.setItem('pg-theme', next);
     updateThemeIcon(next);
     
     setTimeout(() => {
-        document.body.classList.remove('theme-transitioning');
-    }, 250); // Remove after transition finishes (200ms + buffer)
+        document.documentElement.classList.remove('theme-transitioning');
+    }, 260); // Cleanly remove after 220ms transition completes
 
     // Save to profile if logged in
     fetch('/api/profile', {
@@ -117,7 +125,7 @@ async function loadNotifications() {
                 <div class="flex items-start gap-2">
                     <span class="text-xs px-1.5 py-0.5 rounded border ${levelClasses[n.level] || levelClasses.info} whitespace-nowrap font-medium">${n.level}</span>
                     <div class="flex-1 min-w-0">
-                        <p class="text-xs text-white font-medium truncate">${n.title}</p>
+                        <p class="text-xs text-text font-medium truncate">${n.title}</p>
                         <p class="text-[10px] text-muted mt-0.5 leading-relaxed">${n.message}</p>
                         <p class="text-[10px] text-muted/60 mt-1">${n.created_at}</p>
                     </div>

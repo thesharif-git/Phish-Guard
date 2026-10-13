@@ -3,17 +3,18 @@
 
 {% block extra_head %}
 <style>
-        .info-hero { background: linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #020617 100%); padding: 100px 0 64px; text-align: center; }
-        .info-hero-tag { display: inline-block; background: rgba(37,99,235,.15); color: #93c5fd; border: 1px solid rgba(37,99,235,.3); border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 18px; }
-        .info-hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; color: #fff; margin: 0 0 14px; line-height: 1.15; }
-        .info-hero p { color: rgba(255,255,255,.65); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
-        .legal-wrap { display: flex; gap: 40px; max-width: 1020px; margin: 0 auto; padding: 64px 24px 80px; }
+        .info-hero { background: linear-gradient(180deg, #f8fbff 0%, #fff 100%); padding: 48px 0 42px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        .info-hero .container { max-width: 1020px; margin: 0 auto; padding: 0 24px; }
+        .info-hero-tag { display: inline-block; background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe; border-radius: 20px; padding: 4px 12px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 12px; }
+        .info-hero h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); font-weight: 650; color: #0f172a; margin: 0 0 8px; line-height: 1.15; }
+        .info-hero p { color: #64748b; font-size: 1rem; max-width: 660px; margin: 0; line-height: 1.6; }
+        .legal-wrap { display: flex; gap: 40px; max-width: 1020px; margin: 0 auto; padding: 40px 24px 64px; }
         .legal-sidebar { min-width: 200px; position: sticky; top: 90px; align-self: flex-start; }
         .legal-sidebar ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
         .legal-sidebar li a { display: block; padding: 7px 12px; border-radius: 8px; font-size: .85rem; color: #475569; text-decoration: none; transition: background .15s, color .15s; }
         .legal-sidebar li a:hover, .legal-sidebar li a.active { background: rgba(37,99,235,.08); color: #2563eb; font-weight: 600; }
         .legal-content { flex: 1; min-width: 0; }
-        .back-link { display: inline-flex; align-items: center; gap: 6px; color: #2563eb; text-decoration: none; font-size: .9rem; font-weight: 500; margin-bottom: 32px; }
+        .back-link { display: inline-flex; align-items: center; gap: 6px; color: #2563eb; text-decoration: none; font-size: .9rem; font-weight: 500; margin-bottom: 24px; }
         .back-link:hover { opacity: .8; }
         .legal-content h2 { font-size: 1.25rem; font-weight: 700; color: #18181b; margin: 40px 0 10px; padding-top: 8px; }
         .legal-content h2:first-of-type { margin-top: 0; }
@@ -114,3 +115,4 @@
     </div>
 </div>
 {% endblock %}
+{% block footer_cta %}{% endblock %}

@@ -2,218 +2,120 @@
 {% block title %}Scan History · PhishGuard{% endblock %}
 
 {% block content %}
-<div class="flex justify-between items-center mb-4 fade-in">
-    <div>
-        <h1 class="text-[26px] font-bold text-text tracking-tight leading-none mb-1.5">History</h1>
-        <p class="text-[13px] text-subtext">All URL, Domain, and Email scans in one place.</p>
-    </div>
-    <div class="flex items-center gap-3">
-        <a href="/scan" class="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-colors shadow-sm bg-panel border border-border hover:bg-panel2 text-text">
-            <span class="material-symbols-outlined text-[17px]">mail</span> Scan Email
-        </a>
-        <a href="/url-scan" class="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-colors shadow-sm bg-panel border border-border hover:bg-panel2 text-text">
-            <span class="material-symbols-outlined text-[17px]">link</span> Scan URL
-        </a>
-        <a href="/domain-reputation" class="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-colors shadow-sm bg-navy text-white hover:opacity-90">
-            <span class="material-symbols-outlined text-[17px]">add</span> Scan Domain
-        </a>
-    </div>
-</div>
+<div class="w-full max-w-[1200px] space-y-5">
+    <header>
+        <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-text">History</h1>
+        <p class="text-sm text-subtext mt-1">Scans saved to your account.</p>
+    </header>
 
-<!-- Stats strip -->
-<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-    
-    <!-- Total Scans -->
-    <div class="bg-panel rounded-xl border border-border shadow-sm p-4 flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-panel2 border border-border flex items-center justify-center flex-shrink-0">
-            <span class="material-symbols-outlined text-[18px] text-brand">manage_search</span>
+    <section class="grid grid-cols-2 lg:grid-cols-5 bg-panel border border-border rounded-xl overflow-hidden" aria-label="Scan totals">
+        <div class="px-4 py-3 border-r border-b lg:border-b-0 border-border">
+            <div class="text-xs text-subtext">Total scans</div><div class="text-xl font-bold text-text mt-1">{{ total }}</div>
         </div>
-        <div>
-            <div class="text-xl font-bold font-mono text-text leading-tight">{{ total }}</div>
-            <div class="text-[10px] text-muted font-bold uppercase tracking-widest mt-0.5">Total Scanned</div>
+        <div class="px-4 py-3 border-b lg:border-b-0 lg:border-r border-border">
+            <div class="text-xs text-subtext">Phishing</div><div class="text-xl font-bold text-danger mt-1">{{ phishing }}</div>
         </div>
-    </div>
-    
-    <!-- Clean -->
-    <div class="bg-panel rounded-xl border border-border shadow-sm p-4 flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-panel2 border border-border flex items-center justify-center flex-shrink-0">
-            <span class="material-symbols-outlined text-[18px] text-safe">check_circle</span>
+        <div class="px-4 py-3 border-r border-b lg:border-b-0 border-border">
+            <div class="text-xs text-subtext">Suspicious</div><div class="text-xl font-bold text-medium mt-1">{{ suspicious }}</div>
         </div>
-        <div>
-            <div class="text-xl font-bold font-mono text-text leading-tight">{{ clean }}</div>
-            <div class="text-[10px] text-muted font-bold uppercase tracking-widest mt-0.5">Clean</div>
+        <div class="px-4 py-3 border-b lg:border-b-0 lg:border-r border-border">
+            <div class="text-xs text-subtext">Clean</div><div class="text-xl font-bold text-safe mt-1">{{ clean }}</div>
         </div>
-    </div>
-    
-    <!-- Suspicious -->
-    <div class="bg-panel rounded-xl border border-border shadow-sm p-4 flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-panel2 border border-border flex items-center justify-center flex-shrink-0">
-            <span class="material-symbols-outlined text-[18px] text-medium">warning</span>
+        <div class="px-4 py-3 col-span-2 lg:col-span-1">
+            <div class="text-xs text-subtext">Not verified</div><div class="text-xl font-bold text-text mt-1">{{ unknown }}</div>
         </div>
-        <div>
-            <div class="text-xl font-bold font-mono text-text leading-tight">{{ suspicious }}</div>
-            <div class="text-[10px] text-muted font-bold uppercase tracking-widest mt-0.5">Suspicious</div>
-        </div>
-    </div>
-    
-    <!-- Phishing -->
-    <div class="bg-panel rounded-xl border border-border shadow-sm p-4 flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-panel2 border border-border flex items-center justify-center flex-shrink-0">
-            <span class="material-symbols-outlined text-[18px] text-danger" style="font-variation-settings:'FILL' 1;">gpp_bad</span>
-        </div>
-        <div>
-            <div class="text-xl font-bold font-mono text-text leading-tight">{{ phishing }}</div>
-            <div class="text-[10px] text-muted font-bold uppercase tracking-widest mt-0.5">Phishing</div>
-        </div>
-    </div>
-    
-</div>
+    </section>
 
-<!-- Filters bar -->
-<div class="bg-panel rounded-xl border border-border shadow-sm p-4 mb-4 flex items-center gap-3 flex-wrap fade-in">
-    <div class="relative flex-1 min-w-48">
-        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-muted">search</span>
-        <input id="inboxSearch" type="text" placeholder="Search scans... (Press '/')"
-            class="w-full pl-9 pr-3 py-2 text-[12px] border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-brand bg-panel text-text font-medium"
-            oninput="filterInbox()">
-    </div>
-    <select id="typeFilter" onchange="filterInbox()" class="px-3 py-2 text-[12px] border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-brand bg-panel text-text font-medium">
-        <option value="">All Types</option>
-        <option value="email">Email</option>
-        <option value="url">URL</option>
-        <option value="domain">Domain</option>
-    </select>
-    <select id="statusFilter" onchange="filterInbox()" class="px-3 py-2 text-[12px] border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-brand bg-panel text-text font-medium">
-        <option value="">All Statuses</option>
-        <option value="CLEAN">Clean</option>
-        <option value="SUSPICIOUS">Suspicious</option>
-        <option value="PHISHING">Phishing</option>
-    </select>
-    <select id="sortFilter" onchange="filterInbox()" class="px-3 py-2 text-[12px] border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-brand bg-panel text-text font-medium">
-        <option value="newest">Newest First</option>
-        <option value="oldest">Oldest First</option>
-    </select>
-    <span id="rowCount" class="text-[12px] text-subtext font-semibold whitespace-nowrap">{{ scans|length }} scans</span>
-</div>
+    <section class="bg-panel border border-border rounded-xl overflow-hidden" aria-label="Saved scans">
+        <div class="flex flex-col gap-3 p-4 border-b border-border sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h2 class="text-sm font-bold text-text">Saved scans</h2>
+                <p id="rowCount" class="text-xs text-subtext mt-0.5">{{ scans|length }} scans</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <input id="inboxSearch" type="search" placeholder="Search scans" aria-label="Search scans"
+                    class="w-full sm:w-48 px-3 py-2 text-xs border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-brand bg-panel text-text"
+                    oninput="filterInbox()">
+                <select id="typeFilter" aria-label="Scan type" onchange="filterInbox()" class="px-3 py-2 text-xs border border-border rounded-lg bg-panel text-text">
+                    <option value="">All types</option><option value="email">Email</option><option value="url">URL</option><option value="domain">Domain</option>
+                </select>
+                <select id="statusFilter" aria-label="Scan result" onchange="filterInbox()" class="px-3 py-2 text-xs border border-border rounded-lg bg-panel text-text">
+                    <option value="">All results</option><option value="PHISHING">Phishing</option><option value="SUSPICIOUS">Suspicious</option><option value="CLEAN">Clean</option><option value="UNKNOWN">Not verified</option>
+                </select>
+                <select id="sortFilter" aria-label="Sort scans" onchange="filterInbox()" class="px-3 py-2 text-xs border border-border rounded-lg bg-panel text-text">
+                    <option value="newest">Newest first</option><option value="oldest">Oldest first</option>
+                </select>
+            </div>
+        </div>
 
-<!-- Scans Table -->
-<div class="bg-panel rounded-xl border border-border shadow-sm overflow-hidden fade-in">
-    <table id="scansTable" class="w-full text-left border-collapse">
-        <thead class="bg-panel2 border-b border-border">
-            <tr class="text-[11px] font-bold text-subtext uppercase tracking-widest">
-                <th class="py-2 px-3 font-semibold">Type</th>
-                <th class="py-2 px-3 font-semibold">Status</th>
-                <th class="py-2 px-3 font-semibold">Target</th>
-                <th class="py-2 px-3 font-semibold">Subject / URL</th>
-                <th class="py-2 px-3 font-semibold">Risk Score</th>
-                <th class="py-2 px-3 font-semibold">Scanned</th>
-                <th class="py-2 px-3 font-semibold text-right">Action</th>
+        <div class="overflow-x-auto">
+        <table id="scansTable" class="w-full min-w-[720px] text-left border-collapse">
+        <thead class="border-b border-border">
+            <tr class="text-[11px] font-semibold text-subtext uppercase tracking-wide">
+                <th class="py-3 px-4 font-semibold w-[43%]">Scan</th>
+                <th class="py-3 px-4 font-semibold">Result</th>
+                <th class="py-3 px-4 font-semibold">Risk score</th>
+                <th class="py-3 px-4 font-semibold">Scanned</th>
+                <th class="py-3 px-4 font-semibold text-right">Action</th>
             </tr>
         </thead>
         <tbody id="inboxBody" class="text-[13px] divide-y divide-border text-subtext">
             {% for scan in scans %}
-            <tr class="hover:bg-panel2 transition-colors cursor-pointer inbox-row"
-                data-status="{{ scan.status }}"
+            <tr class="hover:bg-panel2 transition-colors inbox-row"
+                data-status="{{ scan.status if scan.status in ('CLEAN', 'SUSPICIOUS', 'PHISHING') else 'UNKNOWN' }}"
                 data-type="{{ scan.scan_type }}"
-                data-risk="{{ scan.risk_score }}"
+                data-risk="{{ scan.risk_score if scan.risk_score is not none else '' }}"
                 data-ts="{{ scan.timestamp }}"
-                {% if scan.scan_type == 'email' %}onclick="window.location.href='/email/{{ scan.scan_id }}'"{% endif %}>
-                
-                <!-- Type -->
-                <td class="py-2 px-3">
-                    {% if scan.scan_type == 'url' %}
-                    <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-border bg-panel shadow-sm text-text text-[11px] font-medium">
-                        <span class="material-symbols-outlined text-[14px] text-brand">link</span> URL
-                    </span>
-                    {% elif scan.scan_type == 'domain' %}
-                    <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-border bg-panel shadow-sm text-text text-[11px] font-medium">
-                        <span class="material-symbols-outlined text-[14px] text-purple-500">language</span> Domain
-                    </span>
-                    {% else %}
-                    <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-border bg-panel shadow-sm text-text text-[11px] font-medium">
-                        <span class="material-symbols-outlined text-[14px] text-slate-500">mail</span> Email
-                    </span>
-                    {% endif %}
-                </td>
-
-                <!-- Status -->
-                <td class="py-2 px-3">
-                    {% if scan.status == 'PHISHING' %}
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border bg-panel shadow-sm text-[11px] font-medium text-text">
-                        <span class="w-1.5 h-1.5 rounded-full bg-danger inline-block animate-pulse" style="box-shadow: 0 0 8px var(--danger);"></span>
-                        Phishing
-                    </span>
-                    {% elif scan.status == 'SUSPICIOUS' %}
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border bg-panel shadow-sm text-[11px] font-medium text-text">
-                        <span class="w-1.5 h-1.5 rounded-full bg-medium inline-block"></span>
-                        Suspicious
-                    </span>
-                    {% else %}
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border bg-panel shadow-sm text-[11px] font-medium text-text">
-                        <span class="w-1.5 h-1.5 rounded-full bg-safe inline-block"></span>
-                        Clean
-                    </span>
-                    {% endif %}
-                </td>
-                
-                <!-- Sender / Domain -->
-                <td class="py-2 px-3 font-semibold text-text">
-                    <span class="truncate max-w-[150px] block" title="{{ scan.sender }}">{{ scan.sender or '—' }}</span>
-                </td>
-                
-                <!-- Subject / URL -->
-                <td class="py-2 px-3 text-subtext font-medium max-w-[200px]">
-                    <span class="truncate block" title="{{ scan.subject }}">{{ scan.subject or 'No subject' }}</span>
-                </td>
-                
-                <!-- Risk Score bar -->
-                <td class="py-2 px-3">
-                    <div class="flex items-center gap-2">
-                        <div class="h-1.5 w-16 bg-panel3 rounded-full overflow-hidden">
-                            <div class="h-full rounded-full {% if scan.risk_score >= 75 %}bg-danger{% elif scan.risk_score >= 40 %}bg-medium{% else %}bg-safe{% endif %}"
-                                style="width: {{ scan.risk_score }}%"></div>
-                        </div>
-                        <span class="text-[11px] font-mono font-bold {% if scan.risk_score >= 75 %}text-danger{% elif scan.risk_score >= 40 %}text-medium{% else %}text-safe{% endif %}">{{ scan.risk_score }}</span>
+                >
+                <td class="py-3 px-4 max-w-0">
+                    <div class="font-semibold text-text truncate" title="{{ scan.sender }}">{{ scan.sender or 'Unknown target' }}</div>
+                    <div class="text-[11px] text-subtext mt-0.5 truncate" title="{{ scan.subject }}">
+                        {{ 'URL' if scan.scan_type == 'url' else scan.scan_type|capitalize }}{% if scan.subject and scan.subject != scan.sender %} · {{ scan.subject }}{% endif %}
                     </div>
                 </td>
-                
-                <td class="py-2 px-3 text-[11px] font-mono text-muted whitespace-nowrap">{{ scan.timestamp }}</td>
-                
-                <td class="py-2 px-3 text-right">
-                    {% if scan.scan_type == 'email' %}
-                    <a href="/email/{{ scan.scan_id }}" class="text-[12px] text-brand hover:text-brand-hi font-bold transition-colors" onclick="event.stopPropagation()">View →</a>
-                    {% else %}
-                    <span class="text-[12px] text-muted font-semibold">—</span>
-                    {% endif %}
+                <td class="py-3 px-4 whitespace-nowrap">
+                    {% if scan.status == 'PHISHING' %}<span class="font-semibold text-danger">Phishing</span>
+                    {% elif scan.status == 'SUSPICIOUS' %}<span class="font-semibold text-medium">Suspicious</span>
+                    {% elif scan.status == 'CLEAN' %}<span class="font-semibold text-safe">Clean</span>
+                    {% else %}<span class="font-semibold text-subtext">Not verified</span>{% endif %}
+                </td>
+                <td class="py-3 px-4 text-text font-semibold">
+                    {% if scan.risk_score is none %}Unavailable{% elif scan.status not in ('CLEAN', 'SUSPICIOUS', 'PHISHING') %}—{% else %}{{ scan.risk_score }}<span class="text-subtext font-normal">/100</span>{% endif %}
+                </td>
+                <td class="py-3 px-4 text-xs text-subtext whitespace-nowrap">{{ scan.timestamp }}</td>
+                <td class="py-3 px-4 text-right whitespace-nowrap">
+                    {% if scan.scan_type == 'email' %}<a href="/email/{{ scan.scan_id }}" class="text-xs text-brand hover:text-brand-hi font-semibold">View result →</a>
+                    {% elif scan.scan_type == 'url' %}<a href="/url-scan?url={{ scan.subject|urlencode }}" class="text-xs text-brand hover:text-brand-hi font-semibold">Scan again →</a>
+                    {% else %}<a href="/domain-reputation?domain={{ scan.sender|urlencode }}" class="text-xs text-brand hover:text-brand-hi font-semibold">Scan again →</a>{% endif %}
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="7" class="py-16 text-center text-muted">
-                    <span class="material-symbols-outlined text-[40px] block mb-3 text-muted">manage_search</span>
-                    <p class="text-[14px] font-semibold">No scans recorded yet.</p>
-                    <p class="text-[12px] text-muted mt-1">Run a URL, domain, or email scan to populate history.</p>
+                <td colspan="5" class="py-16 text-center text-subtext">
+                    <p class="text-sm font-semibold text-text">No scans saved yet</p>
+                    <p class="text-xs mt-1">Run a scan while signed in to see it here.</p>
+                    <a href="/scan" class="inline-block text-xs font-semibold text-brand mt-3">Scan an email →</a>
                 </td>
             </tr>
             {% endfor %}
         </tbody>
-    </table>
-    <!-- Empty search hint -->
-    <div id="searchEmptyHint" class="hidden py-10 text-center text-[12px] text-subtext font-semibold bg-panel2">No scans match your filter.</div>
-</div>
+        </table>
+        </div>
+        <div id="searchEmptyHint" class="hidden py-10 text-center text-xs text-subtext">No scans match these filters.</div>
+    </section>
 
-<!-- Pagination Controls -->
-<div id="paginationBar" class="flex items-center justify-between mt-4 text-[12px] text-subtext" style="display:none!important;">
+    <div id="paginationBar" class="hidden items-center justify-between text-xs text-subtext">
     <span id="pageInfo"></span>
     <div class="flex items-center gap-2">
-        <button id="prevBtn" onclick="changePage(-1)" class="px-3 py-1.5 rounded-lg border border-border text-[12px] font-semibold text-subtext hover:bg-panel2 transition-colors shadow-sm bg-panel cursor-pointer">
+        <button id="prevBtn" onclick="changePage(-1)" class="px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-subtext hover:bg-panel2 transition-colors bg-panel cursor-pointer disabled:opacity-40">
             ← Prev
         </button>
         <span id="pageNumbers" class="flex items-center gap-1"></span>
-        <button id="nextBtn" onclick="changePage(1)" class="px-3 py-1.5 rounded-lg border border-border text-[12px] font-semibold text-subtext hover:bg-panel2 transition-colors shadow-sm bg-panel cursor-pointer">
+        <button id="nextBtn" onclick="changePage(1)" class="px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-subtext hover:bg-panel2 transition-colors bg-panel cursor-pointer disabled:opacity-40">
             Next →
         </button>
     </div>
+</div>
 </div>
 
 <script>
@@ -222,7 +124,7 @@ let _currentPage = 1;
 let _visibleRows = [];
 
 function filterInbox() {
-    const q = document.getElementById('inboxSearch').value.toLowerCase();
+    const q = document.getElementById('inboxSearch').value.trim().toLowerCase();
     const status = document.getElementById('statusFilter').value;
     const type = document.getElementById('typeFilter').value;
     const rows = document.querySelectorAll('.inbox-row');
@@ -236,40 +138,50 @@ function filterInbox() {
         if (matchText && matchStatus && matchType) _visibleRows.push(row);
     });
 
+    const oldestFirst = document.getElementById('sortFilter').value === 'oldest';
+    _visibleRows.sort((a, b) => oldestFirst
+        ? a.dataset.ts.localeCompare(b.dataset.ts)
+        : b.dataset.ts.localeCompare(a.dataset.ts));
     _currentPage = 1;
     renderPage();
     document.getElementById('rowCount').textContent = `${_visibleRows.length} scan${_visibleRows.length !== 1 ? 's' : ''}`;
-    document.getElementById('searchEmptyHint').classList.toggle('hidden', _visibleRows.length > 0);
+    document.getElementById('searchEmptyHint').classList.toggle('hidden', _visibleRows.length > 0 || rows.length === 0);
 }
 
 function renderPage() {
     const start = (_currentPage - 1) * PAGE_SIZE;
     const end   = start + PAGE_SIZE;
     const allRows = document.querySelectorAll('.inbox-row');
+    const body = document.getElementById('inboxBody');
 
     allRows.forEach(r => r.style.display = 'none');
+    _visibleRows.forEach(r => body.appendChild(r));
     _visibleRows.slice(start, end).forEach(r => r.style.display = '');
 
     const totalPages = Math.ceil(_visibleRows.length / PAGE_SIZE);
     const bar = document.getElementById('paginationBar');
 
     if (totalPages > 1) {
-        bar.style.cssText = 'display:flex!important;align-items:center;justify-content:space-between;margin-top:16px;';
+        bar.classList.remove('hidden');
+        bar.classList.add('flex');
         document.getElementById('pageInfo').textContent = `Page ${_currentPage} of ${totalPages}`;
         document.getElementById('prevBtn').disabled = _currentPage === 1;
         document.getElementById('nextBtn').disabled = _currentPage === totalPages;
 
         const nums = document.getElementById('pageNumbers');
         nums.innerHTML = '';
-        for (let i = 1; i <= Math.min(totalPages, 7); i++) {
+        const firstPage = Math.max(1, Math.min(_currentPage - 3, totalPages - 6));
+        const lastPage = Math.min(totalPages, firstPage + 6);
+        for (let i = firstPage; i <= lastPage; i++) {
             const btn = document.createElement('button');
             btn.textContent = i;
             btn.onclick = () => { _currentPage = i; renderPage(); };
-            btn.style.cssText = `padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;border:1px solid var(--border);cursor:pointer;transition:all .14s;background:${i === _currentPage ? 'var(--brand)' : 'transparent'};color:${i === _currentPage ? '#fff' : 'var(--subtext)'}`;
+            btn.className = `px-2.5 py-1.5 rounded-lg border border-border text-xs font-semibold ${i === _currentPage ? 'bg-brand text-white' : 'bg-panel text-subtext hover:bg-panel2'}`;
             nums.appendChild(btn);
         }
     } else {
-        bar.style.cssText = 'display:none!important;';
+        bar.classList.add('hidden');
+        bar.classList.remove('flex');
     }
 }
 
@@ -281,8 +193,13 @@ function changePage(dir) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    _visibleRows = Array.from(document.querySelectorAll('.inbox-row'));
-    renderPage();
+    const params = new URLSearchParams(window.location.search);
+    document.getElementById('inboxSearch').value = params.get('search') || '';
+    const status = params.get('status') || '';
+    const type = params.get('type') || '';
+    if ([...document.getElementById('statusFilter').options].some(option => option.value === status)) document.getElementById('statusFilter').value = status;
+    if ([...document.getElementById('typeFilter').options].some(option => option.value === type)) document.getElementById('typeFilter').value = type;
+    filterInbox();
 });
 
 document.addEventListener('keydown', (e) => {

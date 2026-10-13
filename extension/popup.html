@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhishGuard AI</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-blue: #3b82f6;
+      --safe-green: #22c55e;
+      --warning-yellow: #eab308;
+      --danger-red: #ef4444;
+    }
+    body {
+      width: 340px;
+      margin: 0;
+      padding: 16px;
+      font-family: system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      box-sizing: border-box;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 16px;
+      color: #60a5fa;
+    }
+    .status-pill {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background-color: #1e3a8a;
+      color: #93c5fd;
+    }
+    .input-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    input {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background-color: var(--card-bg);
+      color: var(--text-main);
+      font-size: 13px;
+      outline: none;
+    }
+    input:focus {
+      border-color: var(--accent-blue);
+    }
+    button {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: none;
+      background-color: var(--accent-blue);
+      color: white;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #2563eb;
+    }
+    .current-url-btn {
+      width: 100%;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      font-size: 12px;
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .current-url-btn:hover {
+      background-color: #334155;
+      color: var(--text-main);
+    }
+    .result-card {
+      display: none;
+      padding: 14px;
+      border-radius: 8px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+    }
+    .verdict-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .verdict-badge {
+      font-weight: 700;
+      font-size: 14px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+    .badge-safe { background-color: rgba(34, 197, 94, 0.2); color: var(--safe-green); }
+    .badge-suspicious { background-color: rgba(234, 179, 8, 0.2); color: var(--warning-yellow); }
+    .badge-phishing { background-color: rgba(239, 68, 68, 0.2); color: var(--danger-red); }
+    
+    .score-meter {
+      font-size: 20px;
+      font-weight: 800;
+    }
+    .detail-item {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 16px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="brand" style="display: flex; align-items: center; gap: 8px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M12 3L4.5 6.5V12.2C4.5 16.9 7.7 21 12 22.2C16.3 21 19.5 16.9 19.5 12.2V6.5L12 3Z" stroke="#34d399" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" fill="#10B981" fill-opacity="0.2"/>
+        <path d="M8.5 12.3L10.8 14.6L15.5 9.9" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span style="font-weight: 800; font-size: 15px; color: #f8fafc; letter-spacing: -0.02em;">PhishGuard</span>
+    </div>
+    <div class="status-pill">Active</div>
+  </div>
+
+  <button id="scanCurrentBtn" class="current-url-btn">
+    📍 Scan current tab URL
+  </button>
+
+  <div class="input-group">
+    <input type="text" id="urlInput" placeholder="Enter link URL (e.g. https://...)" />
+    <button id="scanBtn">Scan</button>
+  </div>
+
+  <div id="loading" class="loading">
+    🔍 Analyzing URL threat indicators...
+  </div>
+
+  <div id="resultCard" class="result-card">
+    <div class="verdict-header">
+      <span id="verdictBadge" class="verdict-badge badge-safe">SAFE</span>
+      <span id="scoreMeter" class="score-meter">0/100</span>
+    </div>
+    <div id="domainDetail" class="detail-item">Domain: -</div>
+    <div id="reasonDetail" class="detail-item">Recommendation: Safe to visit</div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

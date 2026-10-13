@@ -1,0 +1,73 @@
+<section id="features" class="pg-scans" aria-labelledby="features-title">
+    <div class="pg-section-shell pg-scans-layout">
+        <header class="pg-scans-intro">
+            <p class="pg-section-index">01 <span>What you can scan</span></p>
+            <h2 id="features-title">Start with what you have.</h2>
+            <p>Bring a message, a link or a domain. Go straight to the right check.</p>
+        </header>
+        <div class="pg-scans-list" aria-label="Scan options">
+            <a href="/scan" class="pg-scan-row">
+                <span class="pg-scan-row-number">01</span>
+                <span class="pg-scan-row-main"><strong>Email analysis</strong><span>Sender, headers and message content</span></span>
+                <span class="pg-scan-row-action">Scan email <span aria-hidden="true">↗</span></span>
+            </a>
+            <a href="/url-scan" class="pg-scan-row">
+                <span class="pg-scan-row-number">02</span>
+                <span class="pg-scan-row-main"><strong>URL analysis</strong><span>Destination and link risk</span></span>
+                <span class="pg-scan-row-action">Check URL <span aria-hidden="true">↗</span></span>
+            </a>
+            <a href="/domain-reputation" class="pg-scan-row">
+                <span class="pg-scan-row-number">03</span>
+                <span class="pg-scan-row-main"><strong>Domain analysis</strong><span>Reputation and certificate details</span></span>
+                <span class="pg-scan-row-action">Check domain <span aria-hidden="true">↗</span></span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<section id="workspace" class="pg-workspace" aria-labelledby="workspace-title">
+    <div class="pg-section-shell">
+        <header class="pg-workspace-heading">
+            <div>
+                <p class="pg-section-index">02 <span>The workspace</span></p>
+                <h2 id="workspace-title">Keep scan activity in view.</h2>
+            </div>
+            <p>See scan totals and threat status in one place. Open the response queue when a finding needs attention.</p>
+        </header>
+        <div class="pg-workspace-layout">
+            <aside class="pg-workspace-guide" aria-label="Dashboard guide">
+                <p class="pg-guide-label">On this screen</p>
+                <div class="pg-guide-item"><span>01</span><div><strong>Activity at a glance</strong><p>The top row shows scan totals and current threat status.</p></div></div>
+                <div class="pg-guide-item"><span>02</span><div><strong>Findings to review</strong><p>The response queue and recent detections lead back to individual results.</p></div></div>
+                <div class="pg-guide-item"><span>03</span><div><strong>Source context</strong><p>Recorded locations appear alongside the detections.</p></div></div>
+                <a class="pg-text-link" href="/dashboard">Open dashboard <span aria-hidden="true">↗</span></a>
+            </aside>
+            <figure class="pg-workspace-figure">
+                <a href="{{ url_for('static', path='images/dashboard-full.jpg') }}" target="_blank" rel="noopener" aria-label="View the complete PhishGuard dashboard image">
+                    <img src="{{ url_for('static', path='images/dashboard-full.jpg') }}" alt="PhishGuard dashboard with scan totals, a response queue, recent detections and source locations" loading="lazy" decoding="async">
+                </a>
+                <figcaption><span>Actual PhishGuard dashboard</span><a href="{{ url_for('static', path='images/dashboard-full.jpg') }}" target="_blank" rel="noopener">View full size ↗</a></figcaption>
+            </figure>
+        </div>
+    </div>
+</section>
+
+<section id="origintrace" class="pg-trace" aria-labelledby="origintrace-title">
+    <div class="pg-section-shell pg-trace-layout">
+        <header class="pg-trace-intro">
+            <p class="pg-section-index">03 <span>OriginTrace Engine</span></p>
+            <h2 id="origintrace-title">A finding should show its reasons.</h2>
+            <p>OriginTrace examines the sender, the route and the request in the message. The assessment keeps those findings together so you can see what raised concern.</p>
+            <a class="pg-text-link" href="/scan">Explore email analysis <span aria-hidden="true">↗</span></a>
+        </header>
+        <div class="pg-trace-study" aria-label="OriginTrace evidence flow">
+            <div class="pg-trace-source"><span>INPUT</span><strong>Email and headers</strong><small>Identity · Route · Content · Links</small></div>
+            <ol class="pg-trace-checks">
+                <li><span class="pg-trace-number">01</span><div><h3>Sender identity</h3><p>Compare the sender name with the sending domain and authentication results.</p></div><span class="pg-trace-meta">SPF · DKIM · DMARC</span></li>
+                <li><span class="pg-trace-number">02</span><div><h3>Message route</h3><p>Read the mail hops and inspect where links lead.</p></div><span class="pg-trace-meta">Headers · Destinations</span></li>
+                <li><span class="pg-trace-number">03</span><div><h3>Message intent</h3><p>Look for impersonation and pressure in the request.</p></div><span class="pg-trace-meta">Language · Request</span></li>
+            </ol>
+            <div class="pg-trace-outcome"><span>ASSESSMENT</span><strong>One result with the evidence behind it.</strong><p>If a signal is missing, it stays unknown.</p></div>
+        </div>
+    </div>
+</section>
