@@ -1,0 +1,29 @@
+{
+  "model_type": "LightGBM + Sigmoid Calibration (Hybrid Char-Ngram + 33 Dense)",
+  "n_trees": 258,
+  "feature_counts": {
+    "tfidf": 2000,
+    "dense": 33,
+    "total": 2033
+  },
+  "thresholds": {
+    "tau_balanced": 0.958,
+    "tau_strict": 0.989,
+    "tau_inspection": 0.8
+  },
+  "test_metrics": {
+    "accuracy": 0.9964,
+    "precision": 0.9968,
+    "recall": 0.9961,
+    "f1_score": 0.9965,
+    "roc_auc": 0.9997,
+    "pr_auc": 0.9998,
+    "fpr": 0.0032,
+    "fpr_strict": 0.0006,
+    "fnr": 0.0039,
+    "ece": 0.0032,
+    "p95_latency_ms": 1.93
+  },
+  "all_gates_passed": true,
+  "trained_at_iso": "2026-10-09T07:51:58Z"
+}

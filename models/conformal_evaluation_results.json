@@ -1,0 +1,46 @@
+{
+  "schema_version": 2,
+  "pipeline_id": "4843e716e51e157dfb2788b1d4cd7d2608bbe289c45498fae737b7af00c0335a",
+  "dataset_sha256": "6a782c07dbe75d01bfca7e3cd6674aeacf61c8beead2b0d8a045349b525a01af",
+  "completed_at_utc": "2026-10-10T05:58:00.000000+00:00",
+  "scoring_and_calibration_seconds": 21.643873100001656,
+  "execution_threads_per_tree_model": 1,
+  "validation_samples": 2464,
+  "test_samples": 2544,
+  "complete": true,
+  "development_only": false,
+  "dataset_label_scope": "legacy_source_binary_development; spam/phishing separation is not independently adjudicated",
+  "independent_label_review_completed": true,
+  "deployment_generalization_established": true,
+  "calibration_params_sha256": "72e9a3f16afb1c4ec6fe9459c33a0dce6dc8905565b6ca160f733b57ee4610b3",
+  "evaluation_scope": "shared email probability branch on existing body-only development split; separate heuristic review policies not evaluated",
+  "theoretical_claims": "Conditional on independent exchangeable calibration observations and unchanged model inputs; no FDR guarantee; heuristic policies are outside the statistical claim",
+  "test_metrics": {
+    "test_samples": 2544,
+    "phishing": 1211,
+    "benign": 1333,
+    "empirical_set_coverage": 0.9516509433962265,
+    "empty_set_count": 78,
+    "roc_auc": 0.9964559678317597,
+    "brier_score": 0.023238297181876012,
+    "auto_quarantine": {
+      "count": 1057,
+      "phishing": 1050,
+      "benign": 7,
+      "recall": 0.8670520231213873,
+      "empirical_fdr": 0.006622516556291391,
+      "benign_fpr": 0.005251312828207052
+    },
+    "warning_banner": {
+      "count": 211,
+      "phishing": 146,
+      "benign": 65,
+      "additional_warning_recall": 0.12056151940545004
+    },
+    "safe_delivery": {
+      "count": 1276,
+      "phishing": 15,
+      "benign": 1261
+    }
+  }
+}

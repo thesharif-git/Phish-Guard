@@ -1,0 +1,29 @@
+{
+  "model_type": "LightGBM + Sigmoid Calibration (Prefit Single Estimator)",
+  "n_trees": 1000,
+  "feature_counts": {
+    "tfidf": 5000,
+    "structural": 28,
+    "total": 5028
+  },
+  "thresholds": {
+    "tau_balanced": 0.8825,
+    "tau_strict": 0.98,
+    "tau_inspection": 0.5
+  },
+  "test_metrics": {
+    "accuracy": 0.9744,
+    "precision": 0.9848,
+    "recall": 0.9612,
+    "f1_score": 0.9728,
+    "roc_auc": 0.9975,
+    "pr_auc": 0.9972,
+    "fpr": 0.0135,
+    "fpr_strict": 0.0015,
+    "fnr": 0.0388,
+    "ece": 0.0182,
+    "p95_latency_ms": 2.0
+  },
+  "all_gates_passed": true,
+  "trained_at_iso": "2026-10-09T06:07:11Z"
+}

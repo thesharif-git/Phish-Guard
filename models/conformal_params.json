@@ -1,0 +1,9 @@
+{
+  "schema_version": 2,
+  "q_coverage": 0.2904305339818908,
+  "q_quarantine": 0.959131178032792,
+  "alpha_coverage": 0.05,
+  "alpha_fpr": 0.01,
+  "pipeline_id": "4843e716e51e157dfb2788b1d4cd7d2608bbe289c45498fae737b7af00c0335a",
+  "uncertainty_kind": "assigned_subjective_logic_ignorance"
+}
