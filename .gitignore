@@ -1,19 +1,59 @@
 # ── Secrets & Config ──────────────────────────────────────────────
 .env
 *.env.*
+!.env.example
 
-# ── Database (never commit live user data) ────────────────────────
+# ── Database & Backups (never commit live user data or backups) ───
 *.db
 *.sqlite
 *.sqlite3
 phishguard.db
+*.bak
+*.db.bak
 
-# ── Logs ──────────────────────────────────────────────────────────
+# ── Logs & Temporary Test Artifacts ──────────────────────────────
 *.log
 server.log
 startup_*.txt
 server_start_log.txt
 logs/
+.pytest_cache/
+.pytest_tmp/
+pytest_tmp*/
+*_tmp/
+
+# ── Benchmarks & Research Evaluation Dumps ────────────────────────
+# Preserved on local disk; excluded from GitHub version control
+benchmarks/
+
+# ── Datasets & Vector Stores (large files / local stores) ─────────
+data/chroma_db/
+data/*.csv
+data/*.jsonl
+data/*.jsonl.gz
+data/*.manifest.json
+data/*.mbox
+data/*.tar.bz2
+data/*.txt
+data/email_evidence_*/
+data/email_root_audit_sources_*/
+data/external_email_validation/
+data/origintrace_prepared/
+data/brown_email_benchmark_*/
+data/email_evidence_sources/
+data/brown_pages/
+
+# ── ML Models & Experimental Artifacts ────────────────────────────
+models/*.bak
+models/frozen_pipeline/
+models/audited_candidates/
+
+# ── Screenshots, Prototypes & Scratch Notes ──────────────────────
+*-review.png
+*-live.png
+scripts/*.txt
+scripts/*.json
+static/prototypes/
 
 # ── Python ────────────────────────────────────────────────────────
 __pycache__/
@@ -27,7 +67,7 @@ dist/
 build/
 .eggs/
 
-# ── Virtual Environment ────────────────────────────────────────────
+# ── Virtual Environment ───────────────────────────────────────────
 .venv/
 venv/
 env/
@@ -46,8 +86,9 @@ ENV/
 Thumbs.db
 desktop.ini
 
-# ── ML Models (large binary files — use git-lfs or download separately) ──
-# models/*.pkl   # Uncomment if you don't want to track model files
+# ── ML Models ─────────────────────────────────────────────────────
+# Compact production models (*.pkl) are tracked; backups/heavy pipelines ignored above
 
-# ── Alembic versions (keep tracked, but ignore generated cache) ───
+# ── Alembic versions (keep migrations tracked, ignore cache) ──────
 alembic/__pycache__/
+
