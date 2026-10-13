@@ -11,59 +11,10 @@ from scipy.sparse import hstack, csr_matrix
 import lightgbm as lgb
 
 
-# ─────────────────────────────────────────
-#  Text Cleaning
-# ─────────────────────────────────────────
-def clean_text(text):
-    if not isinstance(text, str):
-        return ""
-    text = text.lower()
-    text = re.sub(r'<[^>]+>', ' ', text)           # strip HTML tags
-    text = re.sub(r'https?://[^\s<>"\']+|www\.[^\s<>"\']+', ' ', text)  # strip URLs
-    text = re.sub(r'[^a-z0-9\s]', ' ', text)       # keep only alphanumeric
-    text = re.sub(r'\s+', ' ', text).strip()
-    return text
+# Ensure parent directory is in sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.feature_extractor import clean_text, extract_features
 
-
-# ─────────────────────────────────────────
-#  Feature Engineering
-# ─────────────────────────────────────────
-def extract_features(texts: pd.Series) -> np.ndarray:
-    """
-    Extracts a set of handcrafted numerical features from raw email text.
-    These structural signals complement TF-IDF and greatly improve LightGBM accuracy.
-    """
-    df = pd.DataFrame({'text': texts.fillna('')})
-
-    features = pd.DataFrame()
-
-    # URL signals
-    features['url_count']          = df['text'].str.count(r'https?://')
-    features['has_ip_url']         = df['text'].str.contains(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', regex=True).astype(int)
-    features['has_suspicious_tld'] = df['text'].str.contains(r'\.(xyz|biz|info|click|link|top|tk|pw|gq|ml)\b', regex=True).astype(int)
-    features['has_shortener']      = df['text'].str.contains(r'bit\.ly|tinyurl|goo\.gl|t\.co|ow\.ly', regex=True).astype(int)
-
-    # Urgency / manipulation signals
-    features['urgent_words']       = df['text'].str.count(r'urgent|verify|suspended|click here|act now|expires|limited time|immediate|unauthorized|confirm|update your')
-    features['exclamation_count']  = df['text'].str.count(r'!')
-    features['dollar_signs']       = df['text'].str.count(r'\$')
-    features['all_caps_words']     = df['text'].apply(lambda t: len(re.findall(r'\b[A-Z]{3,}\b', t)))
-
-    # Brand impersonation signals
-    features['brand_keywords']     = df['text'].str.count(r'paypal|microsoft|apple|amazon|google|netflix|bank of america|docusign|dropbox')
-
-    # Structure signals
-    features['has_html']           = df['text'].str.contains('<html|<body|<table|<div', regex=True, case=False).astype(int)
-    features['html_link_count']    = df['text'].str.count(r'<a\s+href', re.IGNORECASE)
-    features['text_length']        = df['text'].str.len()
-    features['word_count']         = df['text'].str.split().str.len()
-    features['avg_word_len']       = features['text_length'] / (features['word_count'] + 1)
-
-    # Punctuation / style signals
-    features['question_marks']     = df['text'].str.count(r'\?')
-    features['comma_count']        = df['text'].str.count(r',')
-
-    return features.fillna(0).values
 
 
 # ─────────────────────────────────────────

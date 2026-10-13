@@ -4,17 +4,10 @@ import os
 import sys
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 
-# Same cleaning function as in train_model
-def clean_text(text):
-    import re
-    if not isinstance(text, str):
-        return ""
-    text = text.lower()
-    text = re.sub(r'<[^>]+>', ' ', text)
-    text = re.sub(r'https?://[^\s<>\"\']+|www\.[^\s<>\"\']+', ' ', text)
-    text = re.sub(r'[^a-z0-9\s]', ' ', text)
-    text = re.sub(r'\s+', ' ', text).strip()
-    return text
+# Ensure parent directory is in sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.feature_extractor import clean_text, extract_features
+from scipy.sparse import hstack, csr_matrix
 
 def evaluate_model():
     print("="*50)
@@ -29,7 +22,7 @@ def evaluate_model():
     
     if not os.path.exists(model_path) or not os.path.exists(vectorizer_path):
         print("Error: Trained model or vectorizer not found.")
-        print(f"Please run 'python train_model.py' first.")
+        print(f"Please run 'python training/train_model.py' first.")
         sys.exit(1)
         
     print("Loading model and vectorizer...")
@@ -37,51 +30,56 @@ def evaluate_model():
     vectorizer = joblib.load(vectorizer_path)
     print("Models loaded successfully!")
     
-    # We will test it on a small sample of the other dataset (e.g. Enron or SpamAssasin) 
-    # to see how well it generalizes. Or just the Phishing_Email.csv again (different split).
-    # Since we don't have the original exact test split saved, we can just load a sample.
     csv_path = r"C:\Users\shari\OneDrive\Desktop\Phishing_Email.csv"
     
     if not os.path.exists(csv_path):
-        print(f"Dataset {csv_path} not found. Exiting.")
-        sys.exit(1)
-        
-    print("\nLoading dataset for evaluation...")
-    df = pd.read_csv(csv_path).sample(n=20000, random_state=123) # Load a random sample
-    
-    if 'Email Text' in df.columns and 'Email Type' in df.columns:
-        df = df.rename(columns={'Email Text': 'text', 'Email Type': 'label'})
+        print(f"Dataset {csv_path} not found. Running benchmark on sample test cases...")
+        sample_texts = [
+            "URGENT: Your PayPal account has been suspended! Click http://paypa1-verify.xyz immediately.",
+            "Hey team, here is the updated meeting agenda for tomorrow's sync. Best regards.",
+            "Your Microsoft 365 password expires today! Confirm your billing at http://microsoft-365verify.net",
+            "Attached is the project status report for Q3 review. Thanks!",
+            "UNAUTHORIZED ACCESS DETECTED! Act now to avoid account termination: http://bit.ly/secure-login"
+        ]
+        sample_labels = [1, 0, 1, 0, 1]
+        df = pd.DataFrame({'text': sample_texts, 'label': sample_labels})
     else:
-        df.columns = ['text', 'label'] + list(df.columns[2:])
+        print("\nLoading dataset for evaluation...")
+        df = pd.read_csv(csv_path).sample(n=min(20000, len(pd.read_csv(csv_path))), random_state=123)
+        if 'Email Text' in df.columns and 'Email Type' in df.columns:
+            df = df.rename(columns={'Email Text': 'text', 'Email Type': 'label'})
+        else:
+            df.columns = ['text', 'label'] + list(df.columns[2:])
+            
+        df = df.dropna(subset=['text', 'label'])
         
-    df = df.dropna(subset=['text', 'label'])
-    
-    def map_label(val):
-        if isinstance(val, str):
-            val = val.lower().strip()
-            if 'phish' in val or 'spam' in val or val == '1':
-                return 1
-            elif 'safe' in val or 'ham' in val or val == '0':
-                return 0
-        elif isinstance(val, (int, float)):
-            return 1 if val > 0 else 0
-        return 0
-        
-    df['label'] = df['label'].apply(map_label)
+        def map_label(val):
+            if isinstance(val, str):
+                val = val.lower().strip()
+                if 'phish' in val or 'spam' in val or val == '1':
+                    return 1
+                elif 'safe' in val or 'ham' in val or val == '0':
+                    return 0
+            elif isinstance(val, (int, float)):
+                return 1 if val > 0 else 0
+            return 0
+            
+        df['label'] = df['label'].apply(map_label)
     
     print("Cleaning text...")
     df['clean_text'] = df['text'].apply(clean_text)
     df = df[df['clean_text'].str.len() > 5]
     
-    X_test = df['clean_text']
     y_test = df['label']
     
-    print("\nVectorizing test set...")
-    X_test_vectorized = vectorizer.transform(X_test)
+    print("\nVectorizing text & extracting structural features...")
+    X_test_tfidf = vectorizer.transform(df['clean_text'])
+    X_test_feat = csr_matrix(extract_features(df['text']))
+    X_test_combined = hstack([X_test_tfidf, X_test_feat])
     
-    print("Predicting...")
-    y_pred = model.predict(X_test_vectorized)
-    y_prob = model.predict_proba(X_test_vectorized)[:, 1] # Probability of being phishing
+    print("Predicting with combined feature vectors...")
+    y_pred = model.predict(X_test_combined)
+    y_prob = model.predict_proba(X_test_combined)[:, 1] # Probability of being phishing
     
     print("\n--- Evaluation Results ---")
     accuracy = accuracy_score(y_test, y_pred)

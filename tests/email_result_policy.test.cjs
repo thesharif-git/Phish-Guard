@@ -1,0 +1,16 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const context = vm.createContext({});
+vm.runInContext(fs.readFileSync('static/js/email-result-policy.js', 'utf8'), context);
+const style = context.getEmailDecisionStyle;
+assert.equal(style({final_score:2, security_action:'WARNING_BANNER'}).label, 'Review required');
+assert.equal(style({final_score:99, security_action:'AUTO_QUARANTINE'}).label, 'Quarantine recommended');
+assert.equal(style({security_action:'SAFE_DELIVERY', conformal_guarantee:{calibration_valid:false}}).label, 'Review required');
+assert.equal(style({security_action:'SAFE_DELIVERY', conformal_guarantee:{calibration_valid:true}}).icon, 'check_circle');
+assert.equal(style({security_action:'BLOCK_BY_POLICY'}).label, 'Blocked by policy');
+assert.equal(context.getEmailAttachmentSummary({vision_intelligence:{has_quishing:true}}).label, 'QR payload detected');
+assert.equal(context.getEmailAttachmentSummary({sensor_errors:['QR analysis incomplete']} ).label, 'Incomplete inspection');
+assert.equal(context.getEmailAttachmentSummary({email_parsing:{unscanned_parts:[{}]}}).label, 'Incomplete inspection');
+assert.equal(context.getEmailAttachmentSummary({}).label, 'No attachment inspected');
+console.log('9 email result presentation checks passed');
